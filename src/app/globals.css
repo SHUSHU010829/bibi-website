@@ -1,0 +1,71 @@
+/* ── Main site design tokens ─────────────────────────────────────────────────
+   Used via var() in inline styles throughout page.tsx / stamp.tsx.
+   No Tailwind import — avoids @layer conflicts with fumadocs-ui/style.css.    */
+
+:root {
+  --color-shell:    #080a08;
+  --color-panel:    #0f110f;
+  --color-card:     #1a1c1a;
+  --color-feature:  #d8e3c4;
+  --color-hairline: oklch(100% 0 0 / 7%);
+  --color-primary:  #e2e4e0;
+  --color-secondary:#545654;
+  --color-ghost:    #323432;
+  --color-ink:      #181a16;
+  --color-ink-dim:  #3c3e38;
+}
+
+/* ── Fumadocs light mode — warm paper palette ────────────────────────────────
+   :root:not(.dark) is more specific than fumadocs' @layer theme :root,
+   so these values win without !important.                                     */
+
+:root:not(.dark) {
+  --color-fd-background:         #f8f5f0;
+  --color-fd-foreground:         #2c2824;
+  --color-fd-muted:              #ede8e0;
+  --color-fd-muted-foreground:   #78706a;
+  --color-fd-card:               #f3efe8;
+  --color-fd-card-foreground:    #2c2824;
+  --color-fd-popover:            #faf7f3;
+  --color-fd-popover-foreground: #222018;
+  --color-fd-border:             rgba(175, 162, 145, 0.38);
+  --color-fd-primary:            #2c2824;
+  --color-fd-primary-foreground: #f8f5f0;
+  --color-fd-secondary:          #e8e2d8;
+  --color-fd-secondary-foreground: #2c2824;
+  --color-fd-accent:             rgba(175, 162, 145, 0.35);
+  --color-fd-accent-foreground:  #2c2824;
+  --color-fd-ring:               #a89e92;
+}
+
+/* ── Fumadocs dark mode — warm dark ──────────────────────────────────────────
+   Slightly warmer than the default neutral dark.                              */
+
+.dark {
+  --color-fd-background:         #161310;
+  --color-fd-foreground:         #e6e0d6;
+  --color-fd-muted:              #221e1a;
+  --color-fd-muted-foreground:   rgba(210, 200, 185, 0.75);
+  --color-fd-card:               #1c1814;
+  --color-fd-card-foreground:    #e0d8cc;
+  --color-fd-popover:            #1e1a16;
+  --color-fd-popover-foreground: #ddd5c8;
+  --color-fd-border:             rgba(120, 108, 92, 0.28);
+  --color-fd-primary:            #e6e0d6;
+  --color-fd-primary-foreground: #161310;
+  --color-fd-secondary:          #241f1b;
+  --color-fd-secondary-foreground: #e6e0d6;
+  --color-fd-accent:             rgba(120, 108, 92, 0.32);
+  --color-fd-accent-foreground:  #e6e0d6;
+  --color-fd-ring:               rgba(180, 168, 150, 0.55);
+}
+
+/* ── Page-specific classes ───────────────────────────────────────────────────*/
+
+.discord-link {
+  color: var(--color-primary);
+  transition: color 0.15s ease;
+}
+.discord-link:hover {
+  color: var(--color-secondary);
+}
