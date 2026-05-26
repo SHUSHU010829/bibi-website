@@ -1,0 +1,16 @@
+{
+  "title": "賭場遊戲",
+  "pages": [
+    "index",
+    "slot",
+    "dice",
+    "blackjack",
+    "hilo",
+    "roulette",
+    "keno",
+    "crash",
+    "dragon-gate",
+    "horse-racing",
+    "poker"
+  ]
+}

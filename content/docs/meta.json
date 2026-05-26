@@ -1,4 +1,19 @@
 {
   "title": "文件",
-  "pages": ["index"]
+  "pages": [
+    "index",
+    "getting-started",
+    "leveling",
+    "economy",
+    "casino",
+    "lottery",
+    "stocks",
+    "shop",
+    "activities",
+    "utilities",
+    "community",
+    "server-features",
+    "automated",
+    "admin-commands"
+  ]
 }
