@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SuccessPoller from "./success-poller";
+import DonateNav from "../_components/donate-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -10,12 +11,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
 
   return (
     <>
-      <nav className="donate-nav">
-        <span className="donate-nav-brand">BB</span>
-        <Link href="/">概覽</Link>
-        <Link href="/docs">文件</Link>
-        <Link href="/donate" className="active">抖內</Link>
-      </nav>
+      <DonateNav active="/donate" />
       <div className="donate-shell">
         <div className="donate-panel">
           <div className="donate-panel-header">

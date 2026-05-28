@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
 import { readSession, avatarUrl } from "@/lib/donation/session";
+import DonateNav from "./_components/donate-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -82,24 +83,6 @@ export default async function DonatePage() {
         </div>
       </div>
     </>
-  );
-}
-
-function DonateNav({ active }: { active: string }) {
-  const links = [
-    { label: "概覽", href: "/" },
-    { label: "文件", href: "/docs" },
-    { label: "抖內", href: "/donate" },
-  ];
-  return (
-    <nav className="donate-nav">
-      <span className="donate-nav-brand">BB</span>
-      {links.map((l) => (
-        <Link key={l.label} href={l.href} className={l.href === active ? "active" : undefined}>
-          {l.label}
-        </Link>
-      ))}
-    </nav>
   );
 }
 

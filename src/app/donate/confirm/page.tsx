@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { readSession, avatarUrl, type DiscordSession } from "@/lib/donation/session";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
 import ConfirmForm from "./confirm-form";
-import Link from "next/link";
+import DonateNav from "../_components/donate-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +13,7 @@ export default async function ConfirmPage() {
 
   return (
     <>
-      <nav className="donate-nav">
-        <span className="donate-nav-brand">BB</span>
-        <Link href="/">概覽</Link>
-        <Link href="/docs">文件</Link>
-        <Link href="/donate" className="active">抖內</Link>
-      </nav>
+      <DonateNav active="/donate" />
       <div className="donate-shell">
         <div className="donate-panel">
           <div className="donate-panel-header">

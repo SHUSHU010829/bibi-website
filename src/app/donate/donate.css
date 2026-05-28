@@ -20,15 +20,6 @@
   flex-shrink: 0;
 }
 
-.donate-nav-brand {
-  font-family: var(--font-fraunces), Georgia, serif;
-  font-style: italic;
-  font-size: 19px;
-  color: var(--color-primary);
-  letter-spacing: -0.01em;
-  margin-right: 20px;
-}
-
 .donate-nav a {
   font-size: 13px;
   color: var(--color-secondary);
@@ -36,6 +27,16 @@
 }
 .donate-nav a:hover { color: var(--color-primary); }
 .donate-nav .active { color: var(--color-primary); }
+
+.donate-nav a.donate-nav-brand,
+.donate-nav .donate-nav-brand {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 19px;
+  color: var(--color-primary);
+  letter-spacing: -0.01em;
+  margin-right: 20px;
+}
 
 .donate-shell {
   flex: 1;
