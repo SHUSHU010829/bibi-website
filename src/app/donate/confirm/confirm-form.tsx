@@ -1,16 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { DonationTier } from "@/lib/donation/tiers";
 
 type Platform = "ecpay" | "opay";
 
+type CreatedSession = {
+  sessionId: string;
+  code: string;
+  paymentUrl: string;
+  stub?: boolean;
+};
+
 export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
+  const router = useRouter();
   const [tierId, setTierId] = useState<string>(tiers[1].id);
   const [amount, setAmount] = useState<number>(tiers[1].defaultAmount);
   const [platform, setPlatform] = useState<Platform>("ecpay");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [created, setCreated] = useState<CreatedSession | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const selectedTier = useMemo(
     () => tiers.find((t) => t.id === tierId) ?? tiers[0],
@@ -35,7 +46,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
 
   async function submit() {
     if (amount < 50) {
-      setError("最低贊助金額為 NT$50");
+      setError("最低贊助金額為 NT$50（未滿不發放方案回饋）");
       return;
     }
     setError(null);
@@ -50,28 +61,95 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
       if (!r.ok || !data.ok) {
         throw new Error(data.error || `HTTP ${r.status}`);
       }
-      if (data.stub) {
-        window.location.href = `/donate/success?sessionId=${encodeURIComponent(data.sessionId)}&stub=1`;
-        return;
-      }
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = data.paymentUrl;
-      for (const [k, v] of Object.entries(data.paymentParams as Record<string, string>)) {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = k;
-        input.value = v;
-        form.appendChild(input);
-      }
-      document.body.appendChild(form);
-      form.submit();
+      setCreated({
+        sessionId: data.sessionId,
+        code: data.code,
+        paymentUrl: data.paymentUrl,
+        stub: data.stub,
+      });
     } catch (e) {
       setError((e as Error).message);
+    } finally {
       setSubmitting(false);
     }
   }
 
+  async function copyCode() {
+    if (!created) return;
+    try {
+      await navigator.clipboard.writeText(created.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // 不支援 clipboard API → 忽略，使用者可手動選取
+    }
+  }
+
+  function goToPayment() {
+    if (!created) return;
+    // 開新分頁去付款
+    window.open(created.paymentUrl, "_blank", "noopener,noreferrer");
+    // 本分頁推進 success page（持續輪詢 + 顯示 code 提醒）
+    const suffix = created.stub ? "&stub=1" : "";
+    router.push(
+      `/donate/success?sessionId=${encodeURIComponent(created.sessionId)}&code=${encodeURIComponent(created.code)}${suffix}`,
+    );
+  }
+
+  // ── Stage 2: 顯示 code + 開付款頁 ───────────────────────────────────────
+  if (created) {
+    const platformName = platform === "ecpay" ? "綠界" : "歐付寶";
+    return (
+      <>
+        <div className="section-label">付款代碼</div>
+        <div className="code-card">
+          <span className="code-label">請複製此代碼，並在{platformName}的「贊助者留言」欄輸入</span>
+          <div className="code-value-row">
+            <span className="code-value">{created.code}</span>
+            <button type="button" className="donate-btn ghost" onClick={copyCode}>
+              {copied ? "已複製 ✓" : "複製"}
+            </button>
+          </div>
+        </div>
+
+        <ol className="steps">
+          <li>點下方「開啟付款頁」會在新分頁開啟{platformName}收款頁</li>
+          <li>填寫贊助者名稱、金額 NT${amount}、付款方式</li>
+          <li>
+            <strong>務必在「贊助者留言」欄輸入</strong>：
+            <code className="inline-code">{created.code}</code>
+          </li>
+          <li>完成付款後可關閉付款分頁，本頁會自動偵測結果</li>
+        </ol>
+
+        <p className="notice">
+          代碼 30 分鐘內有效。若不慎打錯或忘記輸入，可請管理員人工補發。
+          {created.stub && (
+            <>
+              <br />
+              <strong>※ stub 模式</strong>：bot 端 API 尚未上線，付款不會真的發放回饋，
+              此次僅供 UI 流程測試。
+            </>
+          )}
+        </p>
+
+        <div className="action-row">
+          <button
+            type="button"
+            className="donate-btn ghost"
+            onClick={() => setCreated(null)}
+          >
+            ← 重選
+          </button>
+          <button type="button" className="donate-btn" onClick={goToPayment}>
+            開啟{platformName}付款頁 →
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // ── Stage 1: 選方案 / 金額 / 平台 ──────────────────────────────────────
   return (
     <>
       <div className="section-label">贊助方案</div>
@@ -111,7 +189,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
           onClick={() => setPlatform("ecpay")}
         >
           <span className="ptitle">綠界 ECPay</span>
-          <span className="pmeta">信用卡 · 一次性付款</span>
+          <span className="pmeta">信用卡 / ATM / 超商</span>
         </button>
         <button
           type="button"
@@ -120,7 +198,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
           onClick={() => setPlatform("opay")}
         >
           <span className="ptitle">歐付寶 O&apos;Pay</span>
-          <span className="pmeta">信用卡 · 一次性付款</span>
+          <span className="pmeta">信用卡 / ATM / TWQR</span>
         </button>
       </div>
 
@@ -142,7 +220,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
           onClick={submit}
           disabled={submitting}
         >
-          {submitting ? "建立付款中…" : `前往付款 NT$${amount}`}
+          {submitting ? "建立中…" : `取得付款代碼 NT$${amount}`}
         </button>
       </div>
     </>

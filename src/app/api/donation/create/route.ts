@@ -1,4 +1,5 @@
 import { readSession } from "@/lib/donation/session";
+import { generateCode } from "@/lib/donation/code";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -7,6 +8,9 @@ type Body = {
   amountNtd?: unknown;
   platform?: unknown;
 };
+
+const ECPAY_DONATE_URL_PREFIX = "https://payment.ecpay.com.tw/Broadcaster/Donate/";
+const OPAY_DONATE_URL_PREFIX = "https://payment.opay.tw/Broadcaster/Donate/";
 
 export async function POST(req: Request) {
   const session = await readSession();
@@ -19,29 +23,45 @@ export async function POST(req: Request) {
   const platform = String(body.platform ?? "");
 
   if (!Number.isFinite(amountNtd) || amountNtd < 50) {
-    return Response.json({ ok: false, error: "amountNtd 必須 ≥ 50" }, { status: 400 });
+    return Response.json(
+      { ok: false, error: "amountNtd 必須 ≥ 50（未滿 NT$50 不發放方案回饋）" },
+      { status: 400 },
+    );
   }
   if (platform !== "ecpay" && platform !== "opay") {
     return Response.json({ ok: false, error: "platform 必須是 ecpay / opay" }, { status: 400 });
+  }
+
+  const broadcasterId =
+    platform === "ecpay"
+      ? process.env.ECPAY_BROADCASTER_ID
+      : process.env.OPAY_BROADCASTER_ID;
+  if (!broadcasterId) {
+    return Response.json(
+      { ok: false, error: `${platform.toUpperCase()}_BROADCASTER_ID 未設定` },
+      { status: 503 },
+    );
   }
 
   const guildId = process.env.PRIMARY_GUILD_ID;
   const botBase = process.env.BOT_API_BASE_URL;
   const secret = process.env.DONATION_GRANT_SECRET;
 
-  // bot 端 session API 還沒上線 → 回 stub 讓 UI 流程可走完
+  // bot 端 session API 還沒上線 → 本地生 code，回 stub 讓 UI 流程可走完
   if (!botBase || !secret || !guildId) {
     const stubSessionId = `stub-${crypto.randomUUID()}`;
+    const code = generateCode();
     return Response.json({
       ok: true,
       stub: true,
       sessionId: stubSessionId,
-      merchantTradeNo: `DON${stubSessionId.replace(/-/g, "").slice(0, 17)}`,
+      code,
+      paymentUrl: buildPaymentUrl(platform, broadcasterId),
       note: "BOT_API_BASE_URL / DONATION_GRANT_SECRET / PRIMARY_GUILD_ID 未設定；回傳 stub session 供 UI 測試。",
     });
   }
 
-  // bot 端就緒後：建立真實 session（之後 W3 再把金流表單參數組起來）
+  // bot 端就緒後：建立真實 session（bot 內部產生 code，避免兩邊撞 code）
   let botResp: Response;
   try {
     botResp = await fetch(`${botBase}/api/donation/session`, {
@@ -76,15 +96,19 @@ export async function POST(req: Request) {
   const botData = (await botResp.json()) as {
     ok: boolean;
     sessionId: string;
-    merchantTradeNo: string;
+    code: string;
   };
 
-  // TODO(W3): 用 merchantTradeNo + ECPAY_HASH_KEY/IV 組金流表單參數 + CheckMacValue
   return Response.json({
     ok: true,
     sessionId: botData.sessionId,
-    merchantTradeNo: botData.merchantTradeNo,
-    stub: true,
-    note: "session 已建立；金流表單參數（CheckMacValue 等）待 W3 實作。",
+    code: botData.code,
+    paymentUrl: buildPaymentUrl(platform, broadcasterId),
   });
+}
+
+function buildPaymentUrl(platform: "ecpay" | "opay", broadcasterId: string): string {
+  const prefix =
+    platform === "ecpay" ? ECPAY_DONATE_URL_PREFIX : OPAY_DONATE_URL_PREFIX;
+  return prefix + broadcasterId;
 }
