@@ -88,8 +88,7 @@ async function handleCallback(req: Request): Promise<Response> {
     iat: Math.floor(Date.now() / 1000),
   });
 
-  const origin = new URL(req.url).origin;
-  return Response.redirect(new URL(next, origin), 302);
+  return Response.redirect(new URL(next, baseUrl()), 302);
 }
 
 async function handleLogout(): Promise<Response> {
