@@ -325,9 +325,13 @@ DONATION_GRANT_SECRET=       # 與 bot 端同值
 # --- 共用 MongoDB（唯讀） ---
 MONGODB_URI_READONLY=        # Atlas 上只讀 MorningBot 的角色
 
-# --- 實況主收款 ID（從付款 URL 拿） ---
+# --- 實況主收款設定 ---
+# BROADCASTER_ID = 實況主收款 URL 後面那串 hex（用來組導向付款的 URL）
+# MERCHANT_ID    = 特店編號 / 會員編號（廠商後台首頁的數字 ID；webhook MerchantID 比對）
 ECPAY_BROADCASTER_ID=DB653B5A8412C200A0997E7DDDCFF539
+ECPAY_MERCHANT_ID=
 OPAY_BROADCASTER_ID=37AAD58C9C2DF7993500AB06A67A8F57
+OPAY_MERCHANT_ID=
 
 # --- HashKey / HashIV（廠商後台 → 系統介接設定） ---
 ECPAY_HASH_KEY=

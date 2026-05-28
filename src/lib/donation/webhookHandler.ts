@@ -11,13 +11,13 @@ type PlatformConfig = {
 
 function getPlatformConfig(platform: Platform): PlatformConfig | null {
   if (platform === "ecpay") {
-    const merchantId = process.env.ECPAY_BROADCASTER_ID;
+    const merchantId = process.env.ECPAY_MERCHANT_ID;
     const hashKey = process.env.ECPAY_HASH_KEY;
     const hashIV = process.env.ECPAY_HASH_IV;
     if (!merchantId || !hashKey || !hashIV) return null;
     return { merchantId, hashKey, hashIV };
   }
-  const merchantId = process.env.OPAY_BROADCASTER_ID;
+  const merchantId = process.env.OPAY_MERCHANT_ID;
   const hashKey = process.env.OPAY_HASH_KEY;
   const hashIV = process.env.OPAY_HASH_IV;
   if (!merchantId || !hashKey || !hashIV) return null;
