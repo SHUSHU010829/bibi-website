@@ -24,6 +24,20 @@ description: 需要管理權限的指令一覽
 | `/lotteryadmin` | 樂透管理（強制開獎、建立期數、執行訂閱、發送提醒等） |
 | `/stock-event` | 觸發或管理股市事件（崩盤、利多等） |
 
+## 開發者測試
+
+僅限開發者使用的測試工具，整合在 `/dev` 底下，以子指令群組呼叫：
+
+| 子指令 | 用途 |
+| --- | --- |
+| `/dev level givexp` | 給自己或他人加 XP（會觸發升級流程） |
+| `/dev level levelupcard` | 純預覽升級卡（不寫 DB、不公告） |
+| `/dev level reset` | 把自己或他人的 XP / 等級歸零 |
+| `/dev daily preview` | 產生一張簽到卡（不寫 DB、不給 XP） |
+| `/dev daily reset` | 刪掉今日簽到紀錄，讓你重新測試 |
+| `/dev slot spin` | 跑一次拉霸抽獎，回傳純 JSON |
+| `/dev slot preview` | 預覽指定狀態的拉霸圖卡 |
+
 ## 內容管理
 
 | 指令 | 用途 |
