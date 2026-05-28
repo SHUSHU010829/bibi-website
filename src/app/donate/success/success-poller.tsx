@@ -16,7 +16,15 @@ type StatusResponse = {
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLLS = 15;
 
-export default function SuccessPoller({ sessionId, stub }: { sessionId: string; stub: boolean }) {
+export default function SuccessPoller({
+  sessionId,
+  stub,
+  code,
+}: {
+  sessionId: string;
+  stub: boolean;
+  code?: string;
+}) {
   const [state, setState] = useState<StatusResponse>({ status: "pending" });
   const [attempts, setAttempts] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
@@ -101,6 +109,7 @@ export default function SuccessPoller({ sessionId, stub }: { sessionId: string; 
         <p className="status-sub">
           金流平台尚未通知，可能稍後仍會到帳。bot 對帳排程會自動補發。
         </p>
+        {code && <p className="status-tradeno">code {code}</p>}
         <p className="status-tradeno">session {sessionId}</p>
       </div>
     );
@@ -111,6 +120,14 @@ export default function SuccessPoller({ sessionId, stub }: { sessionId: string; 
       <div className="spinner" />
       <p className="status-headline">付款處理中…</p>
       <p className="status-sub">輪詢付款結果（{attempts}/{MAX_POLLS}）</p>
+      {code && (
+        <p
+          className="status-sub"
+          style={{ marginTop: 4, fontSize: 12 }}
+        >
+          還沒輸入留言？代碼：<strong style={{ color: "var(--color-feature)" }}>{code}</strong>
+        </p>
+      )}
       <p className="status-tradeno">session {sessionId}</p>
     </div>
   );

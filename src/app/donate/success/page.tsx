@@ -4,10 +4,10 @@ import DonateNav from "../_components/donate-nav";
 
 export const dynamic = "force-dynamic";
 
-type SP = Promise<{ sessionId?: string; stub?: string }>;
+type SP = Promise<{ sessionId?: string; stub?: string; code?: string }>;
 
 export default async function SuccessPage({ searchParams }: { searchParams: SP }) {
-  const { sessionId, stub } = await searchParams;
+  const { sessionId, stub, code } = await searchParams;
 
   return (
     <>
@@ -20,7 +20,7 @@ export default async function SuccessPage({ searchParams }: { searchParams: SP }
           </div>
           <div className="donate-body">
             {sessionId ? (
-              <SuccessPoller sessionId={sessionId} stub={stub === "1"} />
+              <SuccessPoller sessionId={sessionId} stub={stub === "1"} code={code} />
             ) : (
               <div className="status-center">
                 <p className="status-headline">缺少 sessionId</p>
