@@ -1,0 +1,51 @@
+import { redirect } from "next/navigation";
+import { readSession, avatarUrl, type DiscordSession } from "@/lib/donation/session";
+import { DONATION_TIERS } from "@/lib/donation/tiers";
+import ConfirmForm from "./confirm-form";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+export default async function ConfirmPage() {
+  const session = await readSession();
+  if (!session) redirect("/donate");
+  const s: DiscordSession = session;
+
+  return (
+    <>
+      <nav className="donate-nav">
+        <span className="donate-nav-brand">BB</span>
+        <Link href="/">概覽</Link>
+        <Link href="/docs">文件</Link>
+        <Link href="/donate" className="active">抖內</Link>
+      </nav>
+      <div className="donate-shell">
+        <div className="donate-panel">
+          <div className="donate-panel-header">
+            <h1>確認身份</h1>
+            <span className="crumb">/ donate / confirm</span>
+          </div>
+          <div className="donate-body">
+            <div className="identity-card">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="avatar" src={avatarUrl(s)} alt="" width={44} height={44} />
+              <div className="who">
+                <span className="greeting">
+                  你好，{s.globalName ?? s.username}
+                </span>
+                <span className="uid">id {s.id}</span>
+              </div>
+              <form action="/api/auth/discord/logout" method="post" style={{ marginLeft: "auto", marginBottom: 0 }}>
+                <button type="submit" className="donate-btn ghost" style={{ padding: "8px 14px", fontSize: 12 }}>
+                  不是我
+                </button>
+              </form>
+            </div>
+
+            <ConfirmForm tiers={DONATION_TIERS} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
