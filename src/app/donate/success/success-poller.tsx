@@ -28,6 +28,36 @@ export default function SuccessPoller({
   const [state, setState] = useState<StatusResponse>({ status: "pending" });
   const [attempts, setAttempts] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function copyCode() {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // 不支援 clipboard API → 忽略，使用者可手動選取（code-value 有 user-select:all）
+    }
+  }
+
+  // 交易期間顯示的醒目代碼區塊：防止使用者沒在留言欄貼好對應碼
+  const codeBlock = code ? (
+    <div
+      className="code-card"
+      style={{ marginTop: 24, textAlign: "left", width: "100%", maxWidth: 440 }}
+    >
+      <span className="code-label">
+        還沒在付款頁的「贊助者留言」貼上代碼？複製這組貼進去，bot 才對得到你
+      </span>
+      <div className="code-value-row">
+        <span className="code-value">{code}</span>
+        <button type="button" className="donate-btn ghost" onClick={copyCode}>
+          {copied ? "已複製 ✓" : "複製"}
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -110,7 +140,7 @@ export default function SuccessPoller({
         <p className="status-sub">
           金流平台尚未通知，可能稍後仍會到帳。bot 對帳排程會自動補發。
         </p>
-        {code && <p className="status-tradeno">code {code}</p>}
+        {codeBlock}
         <p className="status-tradeno">session {sessionId}</p>
       </div>
     );
@@ -121,14 +151,7 @@ export default function SuccessPoller({
       <div className="spinner" />
       <p className="status-headline">付款處理中…</p>
       <p className="status-sub">輪詢付款結果（{attempts}/{MAX_POLLS}）</p>
-      {code && (
-        <p
-          className="status-sub"
-          style={{ marginTop: 4, fontSize: 12 }}
-        >
-          還沒輸入留言？代碼：<strong style={{ color: "var(--color-feature)" }}>{code}</strong>
-        </p>
-      )}
+      {codeBlock}
       <p className="status-tradeno">session {sessionId}</p>
     </div>
   );
