@@ -1,4 +1,8 @@
-import { decryptData, findMatchingCheckMac } from "./ecpayCrypto";
+import {
+  computeCheckMac,
+  decryptDataToString,
+  safeEqual,
+} from "./ecpayCrypto";
 import { extractCode } from "./code";
 
 export type Platform = "ecpay" | "opay";
@@ -71,38 +75,40 @@ export async function handleBroadcasterWebhook(
     return err();
   }
 
-  // 1. CheckMacValue 驗證 — fan-out 多種候選演算法
-  const macCheck = findMatchingCheckMac(body, cfg.hashKey, cfg.hashIV, incomingMac);
-  const allowInsecure = process.env.DONATION_WEBHOOK_ALLOW_INSECURE === "1";
-  if (macCheck.matched) {
-    console.log(`[${platform}-webhook] CheckMacValue matched via algo=${macCheck.algo}`);
-  } else {
-    // 失敗時印出所有候選 mac + payload top-level keys + RpHeader 內容，
-    // 方便比對是哪一套對得上
-    const debugKeys = Object.keys(body).sort().join(",");
-    const rpHeader = body.RpHeader ? JSON.stringify(body.RpHeader) : "(none)";
-    const candidateLines = macCheck.candidates
-      .map((c) => `  ${c.name}=${c.mac}`)
-      .join("\n");
-    const msg = `CheckMacValue mismatch got=${incomingMac} keys=${debugKeys} rpHeader=${rpHeader}\ncandidates:\n${candidateLines}`;
-    if (allowInsecure) {
-      console.warn(`[${platform}-webhook] ${msg} (bypassed by DONATION_WEBHOOK_ALLOW_INSECURE)`);
-    } else {
-      console.error(`[${platform}-webhook] ${msg}`);
-      return err();
-    }
-  }
-
-  // 2. 解 Data
-  let data: Record<string, unknown>;
+  // 1. 解 Data 為「明文 JSON 字串」— CheckMacValue 用這個字串算
+  let plaintext: string;
   try {
-    data = decryptData(String(dataField), cfg.hashKey, cfg.hashIV);
+    plaintext = decryptDataToString(String(dataField), cfg.hashKey, cfg.hashIV);
   } catch (e) {
     console.error(`[${platform}-webhook] decrypt failed:`, (e as Error).message);
     return err();
   }
 
+  // 2. CheckMacValue 驗證
+  const expectedMac = computeCheckMac(plaintext, cfg.hashKey, cfg.hashIV);
+  const allowInsecure = process.env.DONATION_WEBHOOK_ALLOW_INSECURE === "1";
+  if (!safeEqual(incomingMac, expectedMac)) {
+    if (allowInsecure) {
+      console.warn(
+        `[${platform}-webhook] CheckMacValue mismatch (bypassed) want=${expectedMac} got=${incomingMac}`,
+      );
+    } else {
+      console.error(
+        `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac} plaintext-prefix=${plaintext.slice(0, 80)}`,
+      );
+      return err();
+    }
+  }
+
   // 3. 業務檢查
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(plaintext) as Record<string, unknown>;
+  } catch (e) {
+    console.error(`[${platform}-webhook] plaintext JSON parse failed:`, (e as Error).message);
+    return err();
+  }
+
   if (Number(data.RtnCode) !== 1) {
     console.warn(
       `[${platform}-webhook] non-success RtnCode=${data.RtnCode} RtnMsg=${data.RtnMsg}`,
