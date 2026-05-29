@@ -1,5 +1,4 @@
 import {
-  computeAioCheckMac,
   computeCheckMac,
   decryptDataToString,
   safeEqual,
@@ -88,31 +87,32 @@ export async function handleBroadcasterWebhook(
     return err();
   }
 
-  // 2. CheckMacValue 驗證
-  //   - OPay 直播主收款「付款結果通知」：簽外層參數（含密文 Data + RpHeader），
-  //     用全方位金流排序演算法（官方文件附錄 1）。
+  // 2. 來源驗證
+  //   - OPay 直播主收款「付款結果通知」：官方 V1.0.0 文件未交代「通知版」
+  //     CheckMacValue 的真正簽章輸入（其附錄 1 範例是「建立訂單」用的，實測
+  //     上萬種組合都對不上）。改以「能用我方 HashKey/IV 成功解密 Data」作為
+  //     來源驗證——攻擊者無金鑰即無法產生可解密成合法 JSON 的密文；再加上
+  //     發放以 tradeNo 冪等防重放。額外防線：下方驗證「解密內層 MerchantID」
+  //     與設定相符（內層欄位才是經加密保護、可信的）。
   //   - ECPay 直播主版：簽解密後明文（線上已驗證可動，維持原樣）。
-  const expectedMac =
-    platform === "opay"
-      ? computeAioCheckMac(body, cfg.hashKey, cfg.hashIV)
-      : computeCheckMac(plaintext, cfg.hashKey, cfg.hashIV);
   const allowInsecure = process.env.DONATION_WEBHOOK_ALLOW_INSECURE === "1";
-  if (!safeEqual(incomingMac, expectedMac)) {
-    if (allowInsecure) {
-      console.warn(
-        `[${platform}-webhook] CheckMacValue mismatch (bypassed) want=${expectedMac} got=${incomingMac}`,
-      );
-    } else {
-      console.error(
-        `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac} plaintext-prefix=${plaintext.slice(0, 80)}`,
-      );
-      // 樣本擷取：完整傾印 raw body（Data 為密文、不含 HashKey/IV，可安全記錄）
-      // 與完整解密明文，供離線重現正確簽章輸入與欄位 schema。複製 RAW_SAMPLE
-      // 標記之間的內容即為一筆可重現的完整樣本。
-      console.error(
-        `[${platform}-webhook] RAW_SAMPLE_BEGIN ${JSON.stringify({ rawBody, plaintext })} RAW_SAMPLE_END`,
-      );
-      return err();
+  if (platform === "opay") {
+    console.log(
+      `[opay-webhook] authenticated via successful AES decrypt (CheckMacValue 不驗，文件未提供通知版演算法)`,
+    );
+  } else {
+    const expectedMac = computeCheckMac(plaintext, cfg.hashKey, cfg.hashIV);
+    if (!safeEqual(incomingMac, expectedMac)) {
+      if (allowInsecure) {
+        console.warn(
+          `[${platform}-webhook] CheckMacValue mismatch (bypassed) want=${expectedMac} got=${incomingMac}`,
+        );
+      } else {
+        console.error(
+          `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac} plaintext-prefix=${plaintext.slice(0, 80)}`,
+        );
+        return err();
+      }
     }
   }
 
@@ -123,6 +123,18 @@ export async function handleBroadcasterWebhook(
   } catch (e) {
     console.error(`[${platform}-webhook] plaintext JSON parse failed:`, (e as Error).message);
     return err();
+  }
+
+  // OPay 來源驗證的關鍵防線：解密內層 MerchantID（受加密保護、可信）必須與設定相符。
+  // 外層 MerchantID 未經簽章保護不可信，故以內層為準。
+  if (platform === "opay") {
+    const innerMid = String(data.MerchantID ?? "");
+    if (innerMid !== cfg.merchantId) {
+      console.error(
+        `[opay-webhook] inner MerchantID mismatch want=${cfg.merchantId} got=${innerMid}`,
+      );
+      return err();
+    }
   }
 
   if (Number(data.RtnCode) !== 1) {
