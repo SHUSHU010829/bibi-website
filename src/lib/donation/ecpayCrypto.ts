@@ -16,25 +16,24 @@ import crypto from "node:crypto";
  */
 
 /**
- * 模擬 PHP `urlencode()` 行為（與文件 PHP 範例一致）：
- * - 保留 A-Z a-z 0-9 - _ .
- * - 空白編成 `+`（不是 %20）
- * - 其他全部 percent-encoded（大寫 hex；後續流程會 .toLowerCase()）
- * - 包含 `! * ' ( ) ~` 都會被編碼（這些 JS encodeURIComponent 預設不編）
+ * 綠界 / 歐付寶 CheckMacValue 專用的 URL encode（.NET HttpUtility.UrlEncode 相容）。
  *
- * 注意：文件「.NET 注意事項」推薦 Uri.EscapeDataString（RFC 3986 / 空白 %20）
- * 但 PHP 範例與多數實作都用 urlencode，本實作從 PHP 行為（用 + 替空白）
- * 因為 plaintext 含 TradeDate / PaymentDate 等帶空白的欄位，差別會直接體
- * 現在最終雜湊上。
+ * 綠界官方檢查碼機制：urlencode 後做 .NET 相容置換，把
+ *   `- _ . ! * ( )` 還原成「字面字元（不編碼）」，空白編成 `+`。
+ * 其餘字元一律 percent-encoded（後續 .toLowerCase() 轉小寫）。
+ *
+ * 實作對應：
+ * - `encodeURIComponent` 預設就「不編」`- _ . ! ~ * ' ( )`，故 `! * ( )` 自然維持字面，
+ *   與綠界規則一致 → 不可再額外編碼（先前誤編成 %21/%28/%29/%2A 導致 CheckMacValue
+ *   在 donor 暱稱 / 留言含這些符號時驗證失敗）。
+ * - 空白：`%20` → `+`。
+ * - `'`：encodeURIComponent 不編，但綠界 urlencode 會編 → 補成 `%27`。
+ * - `~`：encodeURIComponent 不編，但綠界 urlencode 會編 → 補成 `%7E`。
  */
 export function uriEscapeDataString(s: string): string {
   return encodeURIComponent(s)
     .replace(/%20/g, "+")
-    .replace(/!/g, "%21")
     .replace(/'/g, "%27")
-    .replace(/\(/g, "%28")
-    .replace(/\)/g, "%29")
-    .replace(/\*/g, "%2A")
     .replace(/~/g, "%7E");
 }
 
