@@ -1,4 +1,4 @@
-// 顯示用方案資料；數值權威定義在 bot 的 src/config/donation_tiers.json。
+// 顯示用方案資料；數值權威定義在 bot 的 src/config/donation.json。
 // 這裡只用於前端展示，實際發放以 bot 為準。
 
 export type DonationTier = {

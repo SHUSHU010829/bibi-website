@@ -213,7 +213,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
 
       <p className="notice">
         將收取的回饋方案：<strong>{selectedTier.emoji} {selectedTier.name}</strong>。
-        實際發放方案以後端依金額判定為準（權威定義在 bot 的 <code>donation_tiers.json</code>）。
+        實際發放方案以後端依金額判定為準（權威定義在 bot 的 <code>donation.json</code>）。
       </p>
 
       {error && (
