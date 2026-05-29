@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   }
 
   const guildId = process.env.PRIMARY_GUILD_ID;
-  const botBase = process.env.BOT_API_BASE_URL;
+  const botBase = process.env.BOT_API_BASE_URL?.replace(/\/+$/, "");
   const secret = process.env.DONATION_GRANT_SECRET;
 
   // bot 端 session API 還沒上線 → 本地生 code，回 stub 讓 UI 流程可走完

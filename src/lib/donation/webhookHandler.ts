@@ -129,7 +129,7 @@ export async function handleBroadcasterWebhook(
   }
 
   // 5. 呼叫 bot grant API（未設定時就先 log，回 1|OK 終止重送）
-  const botBase = process.env.BOT_API_BASE_URL;
+  const botBase = process.env.BOT_API_BASE_URL?.replace(/\/+$/, "");
   const secret = process.env.DONATION_GRANT_SECRET;
   if (!botBase || !secret) {
     console.warn(
