@@ -18,10 +18,15 @@ export default async function DonatePage() {
             <span className="crumb">/ donate</span>
           </div>
           <div className="donate-body">
-            <p style={{ fontSize: 14, color: "var(--color-primary)", opacity: 0.85, maxWidth: 640, lineHeight: 1.75 }}>
-              支持 SHUSHU 與逼逼機器人持續開發。先用 Discord 登入確認身份，付款完成後金幣、身分組與限定外觀會由
-              機器人直接發送到你的帳號。
-            </p>
+            <div className="donate-hero">
+              <div className="deco" />
+              <div className="k">☕ Support · 抖內</div>
+              <h2>喜歡這隻機器人嗎？<br />請它喝杯咖啡吧。</h2>
+              <p>
+                你旺它一下，它旺你一整季——抖內可以換金幣、限定身分組、限定卡面，還有挖礦運氣加成。
+                先用 Discord 登入確認身份，付款完成後一切都由機器人直接發到你的帳號。
+              </p>
+            </div>
 
             <div className="section-label">贊助方案</div>
             <div className="tier-grid">
