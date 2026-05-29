@@ -1,4 +1,4 @@
-import { computeCheckMac, decryptData, safeEqual } from "./ecpayCrypto";
+import { decryptData, findMatchingCheckMac } from "./ecpayCrypto";
 import { extractCode } from "./code";
 
 export type Platform = "ecpay" | "opay";
@@ -71,21 +71,24 @@ export async function handleBroadcasterWebhook(
     return err();
   }
 
-  // 1. CheckMacValue 驗證
-  const expectedMac = computeCheckMac(body, cfg.hashKey, cfg.hashIV);
+  // 1. CheckMacValue 驗證 — fan-out 多種候選演算法
+  const macCheck = findMatchingCheckMac(body, cfg.hashKey, cfg.hashIV, incomingMac);
   const allowInsecure = process.env.DONATION_WEBHOOK_ALLOW_INSECURE === "1";
-  if (!safeEqual(incomingMac, expectedMac)) {
-    // 失敗時印出 payload top-level keys 與 RpHeader 內容，方便比對演算法
+  if (macCheck.matched) {
+    console.log(`[${platform}-webhook] CheckMacValue matched via algo=${macCheck.algo}`);
+  } else {
+    // 失敗時印出所有候選 mac + payload top-level keys + RpHeader 內容，
+    // 方便比對是哪一套對得上
     const debugKeys = Object.keys(body).sort().join(",");
     const rpHeader = body.RpHeader ? JSON.stringify(body.RpHeader) : "(none)";
+    const candidateLines = macCheck.candidates
+      .map((c) => `  ${c.name}=${c.mac}`)
+      .join("\n");
+    const msg = `CheckMacValue mismatch got=${incomingMac} keys=${debugKeys} rpHeader=${rpHeader}\ncandidates:\n${candidateLines}`;
     if (allowInsecure) {
-      console.warn(
-        `[${platform}-webhook] CheckMacValue mismatch (bypassed by DONATION_WEBHOOK_ALLOW_INSECURE) want=${expectedMac} got=${incomingMac} keys=${debugKeys} rpHeader=${rpHeader}`,
-      );
+      console.warn(`[${platform}-webhook] ${msg} (bypassed by DONATION_WEBHOOK_ALLOW_INSECURE)`);
     } else {
-      console.error(
-        `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac} keys=${debugKeys} rpHeader=${rpHeader}`,
-      );
+      console.error(`[${platform}-webhook] ${msg}`);
       return err();
     }
   }

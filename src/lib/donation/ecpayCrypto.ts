@@ -23,46 +23,114 @@ export function dotnetUrlEncode(s: string): string {
     .replace(/~/g, "%7e");
 }
 
-/**
- * 把 webhook top-level params 序列化成 CheckMacValue 計算用的 key=value 字串。
- * 物件值（如 RpHeader）以 JSON.stringify（無空格）整段塞進去，**不**展平鍵。
- * 參考 ECPay V3 callback 規格：RpHeader 在簽章內是 JSON 字串 `{"Timestamp":...}`。
- */
-function serializeForCheckMac(params: Record<string, unknown>): string {
-  const entries: Array<[string, string]> = [];
-  for (const [k, v] of Object.entries(params)) {
-    if (k === "CheckMacValue") continue;
-    if (v === null || v === undefined) continue;
-    const value = typeof v === "object" ? JSON.stringify(v) : String(v);
-    entries.push([k, value]);
-  }
-  // .NET 預設 byte-order 排序；ASCII 大小寫敏感
-  entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return entries.map(([k, v]) => `${k}=${v}`).join("&");
+function sha256Upper(s: string): string {
+  return crypto.createHash("sha256").update(s).digest("hex").toUpperCase();
 }
 
 /**
- * 計算 CheckMacValue：
- *   1. 把所有 top-level 參數（除 CheckMacValue）序列化為 key=value，
- *      物件值用 JSON.stringify（無空格）
- *   2. 依 key 排序（byte order）後串連，前綴 HashKey=xxx&、後綴 HashIV=xxx
- *   3. .NET 風格 URL encode
- *   4. 全部轉小寫
- *   5. SHA256
- *   6. 轉大寫
+ * V3 callback CheckMacValue 候選實作集。實機驗證階段全部試一輪，
+ * 找到能對上的留下即可。
+ */
+type Candidate = {
+  name: string;
+  mac: string;
+};
+
+export function computeCheckMacCandidates(
+  params: Record<string, unknown>,
+  hashKey: string,
+  hashIV: string,
+): Candidate[] {
+  const noMac: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (k === "CheckMacValue") continue;
+    if (v === null || v === undefined) continue;
+    noMac[k] = v;
+  }
+
+  // A. 全參數、排序、物件 JSON.stringify、dotnet urlencode
+  const entriesA: Array<[string, string]> = Object.entries(noMac).map(([k, v]) => [
+    k,
+    typeof v === "object" ? JSON.stringify(v) : String(v),
+  ]);
+  entriesA.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const rawA = `HashKey=${hashKey}&${entriesA.map(([k, v]) => `${k}=${v}`).join("&")}&HashIV=${hashIV}`;
+  const macA = sha256Upper(dotnetUrlEncode(rawA).toLowerCase());
+
+  // B. 全參數、排序、物件展平成 RpHeader.Timestamp 等扁平鍵
+  const flat: Array<[string, string]> = [];
+  for (const [k, v] of Object.entries(noMac)) {
+    if (typeof v === "object" && v !== null) {
+      for (const [k2, v2] of Object.entries(v as Record<string, unknown>)) {
+        if (v2 === null || v2 === undefined) continue;
+        flat.push([`${k}.${k2}`, String(v2)]);
+      }
+    } else {
+      flat.push([k, String(v)]);
+    }
+  }
+  flat.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const rawB = `HashKey=${hashKey}&${flat.map(([k, v]) => `${k}=${v}`).join("&")}&HashIV=${hashIV}`;
+  const macB = sha256Upper(dotnetUrlEncode(rawB).toLowerCase());
+
+  // C. 只簽 Data 一個欄位
+  const dataStr = String(noMac.Data ?? "");
+  const rawC = `HashKey=${hashKey}&Data=${dataStr}&HashIV=${hashIV}`;
+  const macC = sha256Upper(dotnetUrlEncode(rawC).toLowerCase());
+
+  // D. 只簽 Data，不做 URL encode（直接 raw 串 + SHA256）
+  const macD = sha256Upper(`HashKey=${hashKey}&Data=${dataStr}&HashIV=${hashIV}`);
+
+  // E. 全 JSON 字串：HashKey + JSON.stringify(body) + HashIV，dotnet urlencode
+  const rawE = `HashKey=${hashKey}&${JSON.stringify(noMac)}&HashIV=${hashIV}`;
+  const macE = sha256Upper(dotnetUrlEncode(rawE).toLowerCase());
+
+  // F. 全 JSON 字串：HashKey + JSON.stringify(body) + HashIV，不做 URL encode
+  const macF = sha256Upper(`HashKey=${hashKey}&${JSON.stringify(noMac)}&HashIV=${hashIV}`);
+
+  // G. 全參數 lowercase 排序（保留以防排序行為不同）
+  const entriesG = [...entriesA].sort(([a], [b]) =>
+    a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0,
+  );
+  const rawG = `HashKey=${hashKey}&${entriesG.map(([k, v]) => `${k}=${v}`).join("&")}&HashIV=${hashIV}`;
+  const macG = sha256Upper(dotnetUrlEncode(rawG).toLowerCase());
+
+  return [
+    { name: "A_full_jsonObj_byteSort", mac: macA },
+    { name: "B_full_flatObj_byteSort", mac: macB },
+    { name: "C_dataOnly_urlEncoded", mac: macC },
+    { name: "D_dataOnly_raw", mac: macD },
+    { name: "E_jsonBody_urlEncoded", mac: macE },
+    { name: "F_jsonBody_raw", mac: macF },
+    { name: "G_full_jsonObj_lowerSort", mac: macG },
+  ];
+}
+
+/**
+ * 預設的計算（沿用 A 變體）。verify 流程裡會 fan-out 所有 candidate。
  */
 export function computeCheckMac(
   params: Record<string, unknown>,
   hashKey: string,
   hashIV: string,
 ): string {
-  const body = serializeForCheckMac(params);
-  const raw = `HashKey=${hashKey}&${body}&HashIV=${hashIV}`;
-  return crypto
-    .createHash("sha256")
-    .update(dotnetUrlEncode(raw).toLowerCase())
-    .digest("hex")
-    .toUpperCase();
+  return computeCheckMacCandidates(params, hashKey, hashIV)[0].mac;
+}
+
+/** 任一候選對上即視為有效，回傳對上的 candidate 名稱供 log。 */
+export function findMatchingCheckMac(
+  params: Record<string, unknown>,
+  hashKey: string,
+  hashIV: string,
+  incoming: string,
+): { matched: true; algo: string } | { matched: false; candidates: Candidate[] } {
+  const candidates = computeCheckMacCandidates(params, hashKey, hashIV);
+  for (const c of candidates) {
+    if (c.mac.length === incoming.length && safeEqual(c.mac, incoming)) {
+      return { matched: true, algo: c.name };
+    }
+  }
+  return { matched: false, candidates };
 }
 
 /** Constant-time string compare for CheckMacValue verification. */
