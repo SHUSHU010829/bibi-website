@@ -16,20 +16,26 @@ import crypto from "node:crypto";
  */
 
 /**
- * 模擬 .NET Uri.EscapeDataString：RFC 3986 unreserved 字元（A-Z a-z 0-9 - _ . ~）
- * 不編碼，其餘全部 percent-encoded（大寫 hex；後續流程會 .toLowerCase()）。
+ * 模擬 PHP `urlencode()` 行為（與文件 PHP 範例一致）：
+ * - 保留 A-Z a-z 0-9 - _ .
+ * - 空白編成 `+`（不是 %20）
+ * - 其他全部 percent-encoded（大寫 hex；後續流程會 .toLowerCase()）
+ * - 包含 `! * ' ( ) ~` 都會被編碼（這些 JS encodeURIComponent 預設不編）
  *
- * 與 JS 內建 encodeURIComponent 差別：
- * - encodeURIComponent 保留 `! * ' ( )`（RFC 2396 mark），這裡要補編碼
- * - 空白編成 %20（不是 +）
+ * 注意：文件「.NET 注意事項」推薦 Uri.EscapeDataString（RFC 3986 / 空白 %20）
+ * 但 PHP 範例與多數實作都用 urlencode，本實作從 PHP 行為（用 + 替空白）
+ * 因為 plaintext 含 TradeDate / PaymentDate 等帶空白的欄位，差別會直接體
+ * 現在最終雜湊上。
  */
 export function uriEscapeDataString(s: string): string {
   return encodeURIComponent(s)
+    .replace(/%20/g, "+")
     .replace(/!/g, "%21")
     .replace(/'/g, "%27")
     .replace(/\(/g, "%28")
     .replace(/\)/g, "%29")
-    .replace(/\*/g, "%2A");
+    .replace(/\*/g, "%2A")
+    .replace(/~/g, "%7E");
 }
 
 /**
