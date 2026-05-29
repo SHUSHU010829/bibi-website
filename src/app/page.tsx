@@ -42,7 +42,7 @@ export default function Home() {
         <header className="hero wrap">
           <div className="hero-kicker reveal"><span className="blip" /> 逼逼機器人 · BIBIBOT</div>
           <h1 className="hero-title reveal" style={{ animationDelay: ".06s" }}>
-            <span className="l">在 Discord 裡，</span>
+            <span className="l intro">在 Discord 裡，</span>
             <span className="l">迎接<span className="uni">戲劇人生</span></span>
           </h1>
           <p className="hero-sub reveal" style={{ animationDelay: ".12s" }}>

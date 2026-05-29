@@ -10,30 +10,78 @@
   flex-direction: column;
 }
 
+/* ── navbar — 與首頁 lp-nav 同步（sticky + blur + brand / mid / CTA） ──────── */
 .donate-nav {
-  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 66px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding-inline: 20px;
+  padding-inline: 24px;
+  backdrop-filter: blur(10px);
+  background: color-mix(in oklab, var(--color-shell) 78%, transparent);
   border-bottom: 1px solid var(--color-hairline);
   flex-shrink: 0;
 }
 
-.donate-nav a {
-  font-size: 13px;
+.donate-nav-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.donate-nav-mid {
+  display: flex;
+  gap: 28px;
+}
+.donate-nav-mid a {
+  font-size: 14px;
   color: var(--color-secondary);
   text-decoration: none;
+  transition: color 0.15s;
 }
-.donate-nav a:hover { color: var(--color-primary); }
-.donate-nav .active { color: var(--color-primary); }
+.donate-nav-mid a:hover { color: var(--color-primary); }
+.donate-nav-mid a.active { color: var(--color-primary); }
+
+.donate-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.donate-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--color-feature);
+  color: var(--color-ink);
+  border: 1px solid var(--color-feature);
+  transition: transform 0.14s ease, box-shadow 0.2s;
+}
+.donate-nav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px -8px color-mix(in oklab, var(--color-feature) 60%, transparent);
+}
+.donate-nav-cta .dc { width: 18px; height: 18px; flex-shrink: 0; }
 
 .donate-nav a.donate-nav-brand,
 .donate-nav .donate-nav-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-right: 20px;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .donate-nav-mid { display: none; }
 }
 
 .donate-nav .donate-nav-brand .mark {
@@ -366,6 +414,19 @@
   font-size: 18px;
   font-variant-numeric: tabular-nums;
   width: 100%;
+}
+
+.coin-preview {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--color-secondary);
+}
+.coin-preview strong {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-feature);
+  font-variant-numeric: tabular-nums;
 }
 
 .platform-row {

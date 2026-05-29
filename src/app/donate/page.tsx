@@ -24,27 +24,9 @@ export default async function DonatePage() {
               <h2>喜歡這隻機器人嗎？<br />請它喝杯咖啡吧。</h2>
               <p>
                 你旺它一下，它旺你一整季——抖內可以換金幣、限定身分組、限定卡面，還有挖礦運氣加成。
+                金幣會依你實際贊助的金額遞增，付越多、領越多。
                 先用 Discord 登入確認身份，付款完成後一切都由機器人直接發到你的帳號。
               </p>
-            </div>
-
-            <div className="section-label">贊助方案</div>
-            <div className="tier-grid">
-              {DONATION_TIERS.map((t) => (
-                <div key={t.id} className="tier-card">
-                  <div className="head">
-                    <span className="name">
-                      <span className="emoji">{t.emoji}</span> {t.name}
-                    </span>
-                    <span className="amount">{t.amountLabel}</span>
-                  </div>
-                  <ul>
-                    {t.perks.map((p) => (
-                      <li key={p}>{p}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
             </div>
 
             <div className="section-label">開始</div>
@@ -79,6 +61,25 @@ export default async function DonatePage() {
                 <DiscordLogo /> 使用 Discord 登入
               </a>
             )}
+
+            <div className="section-label">贊助方案</div>
+            <div className="tier-grid">
+              {DONATION_TIERS.map((t) => (
+                <div key={t.id} className="tier-card">
+                  <div className="head">
+                    <span className="name">
+                      <span className="emoji">{t.emoji}</span> {t.name}
+                    </span>
+                    <span className="amount">{t.amountLabel}</span>
+                  </div>
+                  <ul>
+                    {t.perks.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
 
             <p className="notice">
               本站僅取得 Discord <code>identify</code> 權限（你的 ID、使用者名稱與頭像），不會讀取訊息或加入伺服器的資訊。
