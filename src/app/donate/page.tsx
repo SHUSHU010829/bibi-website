@@ -29,25 +29,6 @@ export default async function DonatePage() {
               </p>
             </div>
 
-            <div className="section-label">贊助方案</div>
-            <div className="tier-grid">
-              {DONATION_TIERS.map((t) => (
-                <div key={t.id} className="tier-card">
-                  <div className="head">
-                    <span className="name">
-                      <span className="emoji">{t.emoji}</span> {t.name}
-                    </span>
-                    <span className="amount">{t.amountLabel}</span>
-                  </div>
-                  <ul>
-                    {t.perks.map((p) => (
-                      <li key={p}>{p}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-
             <div className="section-label">開始</div>
             {session ? (
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -80,6 +61,25 @@ export default async function DonatePage() {
                 <DiscordLogo /> 使用 Discord 登入
               </a>
             )}
+
+            <div className="section-label">贊助方案</div>
+            <div className="tier-grid">
+              {DONATION_TIERS.map((t) => (
+                <div key={t.id} className="tier-card">
+                  <div className="head">
+                    <span className="name">
+                      <span className="emoji">{t.emoji}</span> {t.name}
+                    </span>
+                    <span className="amount">{t.amountLabel}</span>
+                  </div>
+                  <ul>
+                    {t.perks.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
 
             <p className="notice">
               本站僅取得 Discord <code>identify</code> 權限（你的 ID、使用者名稱與頭像），不會讀取訊息或加入伺服器的資訊。

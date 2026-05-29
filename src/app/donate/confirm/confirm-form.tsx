@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { DonationTier } from "@/lib/donation/tiers";
+import { coinsForAmount, type DonationTier } from "@/lib/donation/tiers";
 
 type Platform = "ecpay" | "opay";
 
@@ -27,6 +27,8 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
     () => tiers.find((t) => t.id === tierId) ?? tiers[0],
     [tiers, tierId],
   );
+
+  const previewCoins = useMemo(() => coinsForAmount(amount), [amount]);
 
   function pickTier(id: string) {
     const t = tiers.find((x) => x.id === id);
@@ -179,6 +181,13 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
           onChange={(e) => changeAmount(e.target.value)}
         />
       </div>
+      <p className="coin-preview" aria-live="polite">
+        {previewCoins > 0 ? (
+          <>→ 可獲得 <strong>{previewCoins.toLocaleString()}</strong> 金幣（付越多領越多）</>
+        ) : (
+          <>最低贊助金額 NT$50</>
+        )}
+      </p>
 
       <div className="section-label">付款平台</div>
       <div className="platform-row">
