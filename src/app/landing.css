@@ -152,6 +152,12 @@
   text-wrap: balance;
 }
 .lp .hero-title .l { display: block; }
+.lp .hero-title .l.intro {
+  font-size: clamp(26px, 4.2vw, 52px);
+  line-height: 1.15;
+  margin: 0.2em 0 0.42em;
+  letter-spacing: -0.01em;
+}
 .lp .hero-title em { font-style: italic; color: var(--accent); }
 .lp .hero-title .uni {
   position: relative;
