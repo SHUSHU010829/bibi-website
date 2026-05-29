@@ -24,32 +24,28 @@ export function dotnetUrlEncode(s: string): string {
 }
 
 /**
- * 把 webhook top-level params flatten 成 CheckMacValue 計算用的字串。
- * RpHeader 物件展開成 RpHeader.Timestamp 等扁平鍵。
+ * 把 webhook top-level params 序列化成 CheckMacValue 計算用的 key=value 字串。
+ * 物件值（如 RpHeader）以 JSON.stringify（無空格）整段塞進去，**不**展平鍵。
+ * 參考 ECPay V3 callback 規格：RpHeader 在簽章內是 JSON 字串 `{"Timestamp":...}`。
  */
-function flattenForCheckMac(
-  params: Record<string, unknown>,
-): Record<string, string> {
-  const out: Record<string, string> = {};
+function serializeForCheckMac(params: Record<string, unknown>): string {
+  const entries: Array<[string, string]> = [];
   for (const [k, v] of Object.entries(params)) {
     if (k === "CheckMacValue") continue;
     if (v === null || v === undefined) continue;
-    if (typeof v === "object") {
-      for (const [k2, v2] of Object.entries(v as Record<string, unknown>)) {
-        if (v2 === null || v2 === undefined) continue;
-        out[`${k}.${k2}`] = String(v2);
-      }
-    } else {
-      out[k] = String(v);
-    }
+    const value = typeof v === "object" ? JSON.stringify(v) : String(v);
+    entries.push([k, value]);
   }
-  return out;
+  // .NET 預設 byte-order 排序；ASCII 大小寫敏感
+  entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return entries.map(([k, v]) => `${k}=${v}`).join("&");
 }
 
 /**
  * 計算 CheckMacValue：
- *   1. 依參數名 A-Z 排序（大小寫不敏感比較）
- *   2. 前綴 HashKey=xxx&、串連 key=value&...、後綴 HashIV=xxx
+ *   1. 把所有 top-level 參數（除 CheckMacValue）序列化為 key=value，
+ *      物件值用 JSON.stringify（無空格）
+ *   2. 依 key 排序（byte order）後串連，前綴 HashKey=xxx&、後綴 HashIV=xxx
  *   3. .NET 風格 URL encode
  *   4. 全部轉小寫
  *   5. SHA256
@@ -60,11 +56,7 @@ export function computeCheckMac(
   hashKey: string,
   hashIV: string,
 ): string {
-  const flat = flattenForCheckMac(params);
-  const sortedKeys = Object.keys(flat).sort((a, b) =>
-    a.toLowerCase().localeCompare(b.toLowerCase()),
-  );
-  const body = sortedKeys.map((k) => `${k}=${flat[k]}`).join("&");
+  const body = serializeForCheckMac(params);
   const raw = `HashKey=${hashKey}&${body}&HashIV=${hashIV}`;
   return crypto
     .createHash("sha256")
