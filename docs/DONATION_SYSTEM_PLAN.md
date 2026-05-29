@@ -4,9 +4,9 @@
 >
 > 本文件規劃 Discord OAuth2 登入 → 在 bibi-website 產生短代碼 → 導向實況主收款頁 → 解析 webhook 對應 session → 呼叫 bot 發放回饋。
 >
-> **職責邊界**：website 負責「身份 + 短碼 + 解析 webhook」；**金錢 / 身分組 / DM / 公告等 Discord 端效果一律由 bibi-bot 執行**——website 在 webhook 驗證成功後，呼叫 bibi-bot 的內部 API `POST /api/donation/grant`。本文件「API 介接契約」章節與 `bibi-bot/docs/MINING_SYSTEM_PLAN.md` 逐字一致。
+> **職責邊界**：website 負責「身份 + 短碼 + 解析 webhook」；**金錢 / 身分組 / DM / 公告等 Discord 端效果一律由 bibi-bot 執行**——website 在 webhook 驗證成功後，呼叫 bibi-bot 的內部 API `POST /api/donation/grant`。本文件「API 介接契約」章節以 bibi-bot 的 `BIBI_BOT_API_CONTRACT.md`（以 `src/httpServer/` 程式碼為準）為權威來源，任一邊修改都要同步。
 >
-> 最後更新：2026-05-28
+> 最後更新：2026-05-29
 
 ---
 
@@ -75,7 +75,7 @@
   - 綠界 ECPay：付款 URL `https://payment.ecpay.com.tw/Broadcaster/Donate/{id}`
   - 歐付寶 OPay：付款 URL `https://payment.opay.tw/Broadcaster/Donate/{id}`
 - 從廠商後台抓 `HashKey` / `HashIV`（**敏感資訊，只填到 Zeabur 環境變數**）。
-- bibi-bot 端需先完成 `POST /api/donation/session` 與 `POST /api/donation/grant`（見 `bibi-bot/docs/MINING_SYSTEM_PLAN.md` Phase 8）。
+- bibi-bot 端需先完成 `POST /api/donation/session` 與 `POST /api/donation/grant`（契約見 bibi-bot 的 `BIBI_BOT_API_CONTRACT.md`，現已實作）。
 
 ---
 
@@ -121,7 +121,7 @@
 | 💎 大額贊助 | NT$500–999 | 6,000 | — | 贊助者（90 天） | 限定卡面（永久） | 自訂稱號 30 天 + luck +8%（90 天） |
 | 👑 頂級贊助 | NT$1,000+ | 15,000 | — | 頂級贊助者（**永久**） | 限定卡面（永久） | 自訂稱號 90 天 + luck +12%（永久）+ 可提名限定稱號 |
 
-> 方案數值的**權威定義在 bot 的 `src/config/donation_tiers.json`**。website 只用於前端顯示，實際發放以 bot 為準（避免兩邊數值飄移）。`amountNtd` 對應哪個方案由 bot 判定。
+> 方案數值的**權威定義在 bot 的 `src/config/donation.json`**。website 只用於前端顯示，實際發放以 bot 為準（避免兩邊數值飄移）。`amountNtd` 對應哪個方案由 bot 判定。
 >
 > NT$10–49 仍能在實況主收款頁付款，但**未達門檻不發回饋**（bot 寫進 `unmatched_donations` 或 `donation_records` 中標 `tierId=null`）。
 
@@ -266,7 +266,7 @@ export async function handleBroadcasterWebhook(req: Request, platform: "ecpay" |
 }
 ```
 
-> 不傳 `tierId` / `userId`：方案由 bot 依 `amountNtd` 對 `donation_tiers.json` 判定，`userId` 由 bot 從 session 還原（code → session.userId）——數值與身分都單一權威來源在 bot。
+> 不傳 `tierId` / `userId`：方案由 bot 依 `amountNtd` 對 `donation.json` 判定，`userId` 由 bot 從 session 還原（code → session.userId）——數值與身分都單一權威來源在 bot。
 
 ---
 
@@ -382,9 +382,10 @@ DONATION_WEBHOOK_ALLOW_INSECURE=0   # 1 時跳過 CheckMacValue 驗證
 
 ## API 介接契約
 
-> **本章節與 `bibi-bot/docs/MINING_SYSTEM_PLAN.md` 的「API 介接契約」逐字一致。任一邊修改都要同步。**
+> **本章節以 bibi-bot 的 `BIBI_BOT_API_CONTRACT.md`（以 `src/httpServer/` 程式碼為準）為權威來源。任一邊修改都要同步。**
 >
-> **2026-05-28 變更**：對應鍵從 `merchantTradeNo` 改為 `code`（DON-XXXXXX 短碼）。bot 端 Phase 8 規格需同步更新。
+> **2026-05-28 變更**：對應鍵從 `merchantTradeNo` 改為 `code`（DON-XXXXXX 短碼）。
+> **2026-05-29 變更**：bibi-bot 兩支抖內 API 已實作；`grant` 回傳的 `perks` 由物件改為**字串清單**並新增 `grants` 旗標物件（見下）。錯誤一律回 `{ "error": "<reason>" }`。`platform` 僅接受 `"ecpay"` / `"opay"`。
 
 ### 安全模型
 
@@ -406,8 +407,10 @@ website 對共用 MongoDB 只持有**唯讀**帳號；所有寫入一律經由 b
 { "ok": true, "sessionId": "uuid", "code": "DON-AB12CD" }
 ```
 
-- 行為：bot 產生 `sessionId` 與 `code`（6 字元 Crockford-ish，前綴 `DON-`，去掉 0/1/I/L/O），寫 `donation_sessions`（pending，TTL 30 分），回傳給 website 顯示。
+- 行為：bot 產生 `sessionId` 與 `code`（6 字元 Crockford-ish，前綴 `DON-`，去掉 0/1/I/L/O），寫 `donation_sessions`（pending，TTL 30 分，`donation.sessionTtlMinutes`），回傳給 website 顯示。
 - 碰撞處理：若 6 碼撞到 30 分鐘內既有未完成 session，重試最多 5 次。
+- 參數規則：`amountNtd ≥ 1`（會無條件取整）；`platform` 僅 `"ecpay"` / `"opay"`。
+- 錯誤碼（格式 `{ "error": "<reason>" }`）：`400`（`missing userId` / `missing guildId` / `invalid amountNtd` / `invalid platform`）、`401`（Bearer 不符）、`503`（`donation disabled` / `secret not configured` / `db not ready` / `code collision`）。
 
 ### 跨服務呼叫 2：發放（website → bot）
 
@@ -426,18 +429,29 @@ website 對共用 MongoDB 只持有**唯讀**帳號；所有寫入一律經由 b
 }
 ```
 
-- Response 200：
+- Response 200 — 共三種情形：
 
-```json
+```jsonc
+// 1. 發放成功
 { "ok": true, "matched": true, "alreadyGranted": false,
-  "perks": { "coins": 6000, "roleId": "...", "items": {"cd_ticket":0}, "luck": 0.08, "theme": "theme_donor", "title": "custom_30d" } }
+  "perks": ["6,000 金幣", "贈舒人身分組（90 天）", "限定卡面（永久）", "自訂稱號 30 天", "挖礦 luck +8%（90 天）"],
+  "grants": { /* 各項實際發放結果旗標，如 coinsGranted/roleGranted/itemsGranted/buffGranted/themeGranted/titleGranted */ } }
+
+// 2. 冪等（同 tradeNo 已處理過，webhook 重送安全）
+{ "ok": true, "matched": true, "alreadyGranted": true, "perks": [ … ] }
+
+// 3. code 對不到 session：bot 已寫 unmatched_donations 待人工補發，webhook 不需重送
+{ "ok": true, "matched": false }
 ```
+
+> **`perks` 自 2026-05-29 起為「字串清單」**（供 website 成功頁直接逐行顯示，例如金幣 / 道具 / 身分組 / luck / 卡面 / 稱號），**不再是** `{ coins, roleId, … }` 物件。website 的 `tiers.ts` 與 `status` route 已採字串陣列。
+> 另回傳 `grants` 物件，標記各項回饋實際是否發放成功（website 顯示用不到，僅供除錯 / 對帳參考）。
 
 - 行為：
   - 以 `tradeNo` 查 `donation_records` 做**冪等**——已存在則回 `alreadyGranted:true` 不重複發放。
   - 以 `code` 找 pending `donation_sessions` 取 `userId` / `guildId`；**找不到 → bot 自行寫 `unmatched_donations`，回 `{ ok:true, matched:false }`**（website 不需也不能寫 DB）。
-  - 找到 → 依 `amountNtd` 對 `donation_tiers.json` 判定方案發放，**在同一筆動作**寫 `donation_records` 並把 `donation_sessions.status` 翻為 `completed`。
-- 錯誤碼：`401` Bearer 不符、`400` 參數錯誤、`503` bot 未就緒或 DB 未掛載（website 收到非 2xx 應記錄並重試）。
+  - 找到 → 依**實付** `amountNtd` 對 `donation.json` 判定方案。**低於最低門檻（< NT$50）仍回 `matched:true` 並寫 record，但 `tierId:null`、`perks` 為空、無方案回饋**。發放與寫 record／翻 `donation_sessions.status='completed'` 在同一筆動作完成。
+- 錯誤格式：一律 `{ "error": "<reason>" }`。錯誤碼：`400`（`missing tradeNo` / `invalid amountNtd` / `invalid platform`）、`401`（Bearer 不符）、`503`（bot 未就緒 / DB 未掛載 / 抖內功能停用）。website 收到非 2xx 應記錄並讓平台重送（webhook 回 `0|Error`）。
 
 ### 共用 MongoDB collection 擁有權
 
@@ -455,6 +469,22 @@ website 對共用 MongoDB 只持有**唯讀**帳號；所有寫入一律經由 b
 - 限定卡面：兩管道 id 不同，可各自解鎖。
 - 永久頂級贊助者身分組不因 Twitch 訂閱取消而受影響。
 
+### bibi-bot 其餘對外端點（非抖內，供日後 dashboard）
+
+除上述兩支抖內 API，bibi-bot 的 `BIBI_BOT_API_CONTRACT.md` 另定義了以下端點，未來 website dashboard 串接時參考：
+
+| 端點 | 驗證 | 用途 |
+|---|---|---|
+| `GET /health` | 無 | `{ ok, ready }`，`ready` = 是否已連上 Discord |
+| `GET /diagnostics` | `x-diagnostics-token`（若 bot 有設） | 各服務近期成功/失敗統計 |
+| `GET /api/v1/leaderboard/mining` | 無，需 `?guildId=` | 挖礦榜（`type=count\|value\|diamond`、`period`、`limit`） |
+| `GET /api/v1/leaderboard/titles` | 無，需 `?guildId=` | 稱號數排行 |
+| `GET /api/v1/leaderboard/weekly-summary` | 無，需 `?guildId=` | 週榜摘要（`top`，上限 25） |
+| `POST /api/twitch-chat-score` | 見 bot `flushChatScore.js` | Twitch 端回沖聊天積分 |
+
+> 排行榜端點未帶 `?guildId=` 一律回 `400 { "error": "missing guildId" }`。
+> 其餘 dashboard / 贊助後台端點（`/api/v1/auth/*`、`/api/v1/admin/*`、`/api/v1/me/*`、`/api/v1/admin/donation/*` 等）仍為 **Phase G 待辦、尚未實作**，串接前先確認 bibi-bot 已上線。
+
 ---
 
 ## 14. 開發時程
@@ -469,4 +499,4 @@ website 對共用 MongoDB 只持有**唯讀**帳號；所有寫入一律經由 b
 
 > 前置：bibi-bot 端 `POST /api/donation/session`、`POST /api/donation/grant`、`donation_tiers.json`、`donation_sessions` / `donation_records` / `unmatched_donations` collection 需先完成（見 `bibi-bot/docs/MINING_SYSTEM_PLAN.md` Phase 8）。Atlas 需另開一個唯讀角色給 website。
 
-_Last updated: 2026-05-28_
+_Last updated: 2026-05-29_
