@@ -1,8 +1,13 @@
 import type { NextRequest } from "next/server";
 import { tierForAmount } from "@/lib/donation/tiers";
+import {
+  getDonationSessionsCollection,
+  getDonationRecordsCollection,
+} from "@/lib/donation/mongo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 10;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -18,11 +23,43 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     return Response.json(stubStatus(id));
   }
 
-  // TODO(W5): 設定 MONGODB_URI_READONLY 後，這裡改成唯讀讀 donation_sessions.status
-  // / donation_records.code 做反查，並回 amountNtd / tierId / perks
-  // 目前 bot 已上線但 website 還沒接 DB → 持續回 pending，donor 看到「等待
-  // 付款通知中」逾時畫面，bot 那邊發放已經完成。
-  return Response.json({ status: "pending" });
+  // 試著用 mongo 唯讀查真實狀態；連不上 / 沒設環境變數 → 回 pending（不誤導）
+  const sessions = await getDonationSessionsCollection();
+  if (!sessions) {
+    return Response.json({ status: "pending" });
+  }
+
+  const session = await sessions.findOne({ sessionId: id }).catch(() => null);
+  if (!session) {
+    // session 不存在（可能 URL 錯、TTL 已清），donor 體感跟 pending 一樣即可
+    return Response.json({ status: "pending" });
+  }
+
+  if (session.status === "expired") {
+    return Response.json({ status: "expired" });
+  }
+  if (session.status !== "completed") {
+    return Response.json({ status: "pending" });
+  }
+
+  // status === "completed" → 反查 record 拿 perks 清單
+  if (!session.tradeNo) {
+    // race window：session 翻 completed 但 tradeNo 還沒寫進去
+    return Response.json({ status: "pending" });
+  }
+
+  const records = await getDonationRecordsCollection();
+  const record = records
+    ? await records.findOne({ tradeNo: session.tradeNo }).catch(() => null)
+    : null;
+
+  return Response.json({
+    status: "completed" as const,
+    tradeNo: session.tradeNo,
+    amountNtd: record?.amountNtd ?? session.amountNtd,
+    tierId: record?.tierId ?? null,
+    perks: record?.perks ?? [],
+  });
 }
 
 function stubStatus(id: string) {

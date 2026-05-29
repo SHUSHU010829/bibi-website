@@ -64,7 +64,8 @@ export default function SuccessPoller({
   if (state.status === "completed") {
     return (
       <div className="status-center">
-        <p className="status-headline">收到了，謝謝你 🙏</p>
+        <p className="status-headline">你讓逼逼機器人吃上一頓飯啦！</p>
+        <p className="status-sub">十分感謝你 🙏</p>
         <p className="status-sub">
           {typeof state.amountNtd === "number" && <>金額 NT${state.amountNtd}　</>}
           {state.tradeNo && <span className="status-tradeno">trade {state.tradeNo}</span>}
