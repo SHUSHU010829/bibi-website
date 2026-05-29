@@ -481,6 +481,52 @@
   color: var(--color-primary);
 }
 
+/* ── order summary on confirm step 2 ─────────────────────────────────────── */
+
+.order-summary {
+  background: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.order-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.order-row .order-key {
+  font-size: 13px;
+  color: var(--color-secondary);
+}
+
+.order-row .order-val {
+  font-size: 15px;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.order-row .order-val.accent {
+  font-family: var(--font-jetbrains), monospace;
+  font-weight: 600;
+  color: var(--color-feature);
+}
+
+.bot-notice {
+  border-left: 2px solid var(--color-feature);
+  padding-left: 12px;
+}
+.bot-notice strong {
+  color: var(--color-primary);
+}
+
 /* ── code-card on confirm step 2 ─────────────────────────────────────────── */
 
 .code-card {

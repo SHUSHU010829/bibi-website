@@ -103,6 +103,30 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
     const platformName = platform === "ecpay" ? "綠界" : "歐付寶";
     return (
       <>
+        <div className="section-label">本次贊助內容</div>
+        <div className="order-summary">
+          <div className="order-row">
+            <span className="order-key">方案</span>
+            <span className="order-val">
+              {selectedTier.emoji} {selectedTier.name}
+            </span>
+          </div>
+          <div className="order-row">
+            <span className="order-key">金額</span>
+            <span className="order-val">NT${amount.toLocaleString()}</span>
+          </div>
+          <div className="order-row">
+            <span className="order-key">可獲得金幣</span>
+            <span className="order-val accent">
+              {previewCoins.toLocaleString()} 金幣
+            </span>
+          </div>
+          <div className="order-row">
+            <span className="order-key">付款平台</span>
+            <span className="order-val">{platformName}</span>
+          </div>
+        </div>
+
         <div className="section-label">付款代碼</div>
         <div className="code-card">
           <span className="code-label">請複製此代碼，並在{platformName}的「贊助者留言」欄輸入</span>
@@ -123,6 +147,11 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
           </li>
           <li>完成付款後可關閉付款分頁，本頁會自動偵測結果</li>
         </ol>
+
+        <p className="notice bot-notice">
+          💬 付款完成後，你會在 Discord 收到 <strong>BOT 的發放通知</strong>。
+          若遲遲沒有收到通知，請聯繫 <strong>SHUSHU</strong> 協助處理。
+        </p>
 
         <p className="notice">
           代碼 30 分鐘內有效。若不慎打錯或忘記輸入，可請管理員人工補發。
