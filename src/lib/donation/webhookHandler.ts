@@ -75,13 +75,16 @@ export async function handleBroadcasterWebhook(
   const expectedMac = computeCheckMac(body, cfg.hashKey, cfg.hashIV);
   const allowInsecure = process.env.DONATION_WEBHOOK_ALLOW_INSECURE === "1";
   if (!safeEqual(incomingMac, expectedMac)) {
+    // 失敗時印出 payload top-level keys 與 RpHeader 內容，方便比對演算法
+    const debugKeys = Object.keys(body).sort().join(",");
+    const rpHeader = body.RpHeader ? JSON.stringify(body.RpHeader) : "(none)";
     if (allowInsecure) {
       console.warn(
-        `[${platform}-webhook] CheckMacValue mismatch (bypassed by DONATION_WEBHOOK_ALLOW_INSECURE) want=${expectedMac} got=${incomingMac}`,
+        `[${platform}-webhook] CheckMacValue mismatch (bypassed by DONATION_WEBHOOK_ALLOW_INSECURE) want=${expectedMac} got=${incomingMac} keys=${debugKeys} rpHeader=${rpHeader}`,
       );
     } else {
       console.error(
-        `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac}`,
+        `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac} keys=${debugKeys} rpHeader=${rpHeader}`,
       );
       return err();
     }
