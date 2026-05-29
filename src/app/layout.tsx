@@ -31,7 +31,7 @@ const siteUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "逼逼機器人 BIBIBOT — 在 Discord 裡，開一座小宇宙",
+    default: "逼逼機器人 BIBIBOT — 在 Discord 裡，迎接戲劇人生",
     template: "%s · 逼逼機器人 BIBIBOT",
   },
   description:
@@ -42,12 +42,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_TW",
     siteName: "逼逼機器人 BIBIBOT",
-    title: "逼逼機器人 BIBIBOT — 在 Discord 裡，開一座小宇宙",
+    title: "逼逼機器人 BIBIBOT — 在 Discord 裡，迎接戲劇人生",
     description: "挖礦、賭場、樂透、股市、等級——一支機器人，把你的肝變現。有點難戒，先說好。",
   },
   twitter: {
     card: "summary_large_image",
-    title: "逼逼機器人 BIBIBOT — 在 Discord 裡，開一座小宇宙",
+    title: "逼逼機器人 BIBIBOT — 在 Discord 裡，迎接戲劇人生",
     description: "挖礦、賭場、樂透、股市、等級——一支機器人，把你的肝變現。有點難戒，先說好。",
   },
   manifest: "/site.webmanifest",

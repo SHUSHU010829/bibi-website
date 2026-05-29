@@ -43,7 +43,7 @@ export default function Home() {
           <div className="hero-kicker reveal"><span className="blip" /> 逼逼機器人 · BIBIBOT</div>
           <h1 className="hero-title reveal" style={{ animationDelay: ".06s" }}>
             <span className="l">在 Discord 裡，</span>
-            <span className="l">開一座<span className="uni">小宇宙</span></span>
+            <span className="l">迎接<span className="uni">戲劇人生</span></span>
           </h1>
           <p className="hero-sub reveal" style={{ animationDelay: ".12s" }}>
             挖礦、賭場、樂透、股市、抽卡——<b>一支機器人</b>把經濟系統和一堆小遊戲全部串起來。

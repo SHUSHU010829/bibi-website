@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export const alt = "逼逼機器人 BIBIBOT — 在 Discord 裡，開一座小宇宙";
+export const alt = "逼逼機器人 BIBIBOT — 在 Discord 裡，迎接戲劇人生";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -77,8 +77,8 @@ export default async function Image() {
             在 Discord 裡，
           </div>
           <div style={{ display: "flex", fontSize: 92, lineHeight: 1.04, letterSpacing: -2 }}>
-            開一座
-            <span style={{ color: ACCENT }}>小宇宙</span>
+            迎接
+            <span style={{ color: ACCENT }}>戲劇人生</span>
           </div>
           <div
             style={{
