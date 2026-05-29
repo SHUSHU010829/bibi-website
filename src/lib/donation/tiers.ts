@@ -27,7 +27,7 @@ export const DONATION_TIERS: DonationTier[] = [
     perks: [
       "500 金幣起（依金額遞增）",
       "幸運藥水 × 3",
-      "贊助者身分組（7 天）",
+      "贈舒人身分組（7 天）",
     ],
   },
   {
@@ -42,7 +42,7 @@ export const DONATION_TIERS: DonationTier[] = [
     perks: [
       "2,000 金幣起（依金額遞增）",
       "CD 縮短券 × 5",
-      "贊助者身分組（30 天）",
+      "贈舒人身分組（30 天）",
       "挖礦 luck +5%（30 天）",
     ],
   },
@@ -57,7 +57,7 @@ export const DONATION_TIERS: DonationTier[] = [
     coins: 6000,
     perks: [
       "6,000 金幣起（依金額遞增）",
-      "贊助者身分組（90 天）",
+      "贈舒人身分組（90 天）",
       "限定卡面（永久）",
       "自訂稱號 30 天",
       "挖礦 luck +8%（90 天）",
@@ -74,7 +74,7 @@ export const DONATION_TIERS: DonationTier[] = [
     coins: 15000,
     perks: [
       "15,000 金幣起（依金額遞增）",
-      "頂級贊助者身分組（永久）",
+      "滿腹詩舒身分組（永久）",
       "限定卡面（永久）",
       "自訂稱號 90 天",
       "挖礦 luck +12%（永久）",
