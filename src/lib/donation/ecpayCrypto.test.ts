@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import { uriEscapeDataString, computeCheckMac } from "./ecpayCrypto.ts";
+import {
+  uriEscapeDataString,
+  computeCheckMac,
+  computeAioCheckMac,
+} from "./ecpayCrypto.ts";
 
 /**
  * 獨立的參考實作：PHP `urlencode()` + 綠界 .NET 相容置換表。
@@ -82,4 +86,33 @@ test("回歸：含 ( ) ! 的留言不可再被誤編碼（防 CheckMacValue mism
   const platformMac = refCheckMac(plaintext, KEY, IV);
   const ourMac = computeCheckMac(plaintext, KEY, IV);
   assert.equal(ourMac, platformMac);
+});
+
+test("computeAioCheckMac 與 OPay 官方文件附錄 1 範例一致", () => {
+  // OPay 直播主收款付款結果通知用的就是這套全方位金流排序演算法。
+  // 參數與預期雜湊值直接取自官方文件 附錄 1. 檢查碼機制 的範例。
+  const params = {
+    TradeDesc: "促銷方案",
+    PaymentType: "aio",
+    MerchantTradeDate: "2013/03/12 15:30:23",
+    MerchantTradeNo: "allpay20130312153023",
+    MerchantID: "2000132",
+    ReturnURL: "https://www.allpay.com.tw/receive.php",
+    ItemName: "Apple iphone 7 手機殼",
+    TotalAmount: 1000,
+    ChoosePayment: "ALL",
+    EncryptType: 1,
+  };
+  assert.equal(
+    computeAioCheckMac(params, "5294y06JbISpM5x9", "v77hoKGq4kWxNNIS"),
+    "96FEF7B076F58DDF5717E236F70923A3DBF0DDC33FD42E82FDD8CECCC9D10787",
+  );
+});
+
+test("computeAioCheckMac 忽略 CheckMacValue 欄位本身", () => {
+  const base = { MerchantID: "2000132", TransCode: 1, Data: "abc" };
+  assert.equal(
+    computeAioCheckMac(base, KEY, IV),
+    computeAioCheckMac({ ...base, CheckMacValue: "SHOULD_BE_IGNORED" }, KEY, IV),
+  );
 });

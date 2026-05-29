@@ -1,4 +1,5 @@
 import {
+  computeAioCheckMac,
   computeCheckMac,
   decryptDataToString,
   safeEqual,
@@ -88,7 +89,13 @@ export async function handleBroadcasterWebhook(
   }
 
   // 2. CheckMacValue 驗證
-  const expectedMac = computeCheckMac(plaintext, cfg.hashKey, cfg.hashIV);
+  //   - OPay 直播主收款「付款結果通知」：簽外層參數（含密文 Data + RpHeader），
+  //     用全方位金流排序演算法（官方文件附錄 1）。
+  //   - ECPay 直播主版：簽解密後明文（線上已驗證可動，維持原樣）。
+  const expectedMac =
+    platform === "opay"
+      ? computeAioCheckMac(body, cfg.hashKey, cfg.hashIV)
+      : computeCheckMac(plaintext, cfg.hashKey, cfg.hashIV);
   const allowInsecure = process.env.DONATION_WEBHOOK_ALLOW_INSECURE === "1";
   if (!safeEqual(incomingMac, expectedMac)) {
     if (allowInsecure) {
@@ -136,8 +143,10 @@ export async function handleBroadcasterWebhook(
   }
 
   // 4. 抽 code、組 grant payload
-  const patronName = String(data.PatronName ?? "");
-  const patronNote = String(data.PatronNote ?? "");
+  //   OPay 的 PatronName/PatronNote 在 OrderInfo 裡（官方文件 p.9–10），
+  //   ECPay 則放在最外層 → 先讀 OrderInfo，再 fallback 到外層，兩家都涵蓋。
+  const patronName = String(order.PatronName ?? data.PatronName ?? "");
+  const patronNote = String(order.PatronNote ?? data.PatronNote ?? "");
   const code = extractCode(patronNote);
   const tradeNo = String(order.TradeNo ?? "");
   const amountNtd = Number(order.TradeAmt ?? 0);

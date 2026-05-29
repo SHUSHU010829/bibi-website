@@ -98,3 +98,46 @@ export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
+
+/**
+ * 全方位金流（AioCheckOut）風格的 CheckMacValue — OPay 直播主收款「付款結果通知」
+ * 用的就是這套（附錄 1. 檢查碼機制），與 ECPay 直播主版「簽解密明文」完全不同。
+ *
+ * 演算法（依官方文件）：
+ *   1. 取最外層所有參數（排除 CheckMacValue），依參數名 A→Z（不分大小寫）排序，
+ *      以 key=value 用 & 串接。物件型欄位（如 RpHeader）以其 JSON 字串為值，
+ *      字串 / 數字直接轉字串。
+ *   2. 最前面加 HashKey=、最後面加 &HashIV=
+ *   3. 整串 URL encode（與綠界共用的 .NET 相容 encode）
+ *   4. 轉小寫
+ *   5. SHA256
+ *   6. 轉大寫
+ *
+ * 注意：簽的是「外層欄位」，其中 Data 是「密文字串」（非解密後明文），
+ * 且含每次重送都變動的 RpHeader.Timestamp，所以同一筆交易每次重送檢查碼都不同。
+ */
+export function computeAioCheckMac(
+  params: Record<string, unknown>,
+  hashKey: string,
+  hashIV: string,
+): string {
+  const pairs = Object.keys(params)
+    .filter((k) => k !== "CheckMacValue")
+    .sort((a, b) => {
+      const la = a.toLowerCase();
+      const lb = b.toLowerCase();
+      return la < lb ? -1 : la > lb ? 1 : 0;
+    })
+    .map((k) => {
+      const v = params[k];
+      const s =
+        v !== null && typeof v === "object"
+          ? JSON.stringify(v)
+          : String(v ?? "");
+      return `${k}=${s}`;
+    });
+
+  const raw = `HashKey=${hashKey}&${pairs.join("&")}&HashIV=${hashIV}`;
+  const encoded = uriEscapeDataString(raw).toLowerCase();
+  return crypto.createHash("sha256").update(encoded).digest("hex").toUpperCase();
+}
