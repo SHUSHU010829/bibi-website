@@ -43,7 +43,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const guildId = process.env.PRIMARY_GUILD_ID;
+  // trim：env 值若夾帶前後空白（例如 PRIMARY_GUILD_ID 設定時誤含空格），會一路
+  // 污染到 bot session 與發放，導致以 {userId, guildId} 為鍵的回饋落到孤兒桶。
+  const guildId = process.env.PRIMARY_GUILD_ID?.trim();
   const botBase = process.env.BOT_API_BASE_URL?.replace(/\/+$/, "");
   const secret = process.env.DONATION_GRANT_SECRET;
 
@@ -71,7 +73,7 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${secret}`,
       },
       body: JSON.stringify({
-        userId: session.id,
+        userId: String(session.id).trim(),
         guildId,
         amountNtd,
         platform,
