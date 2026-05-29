@@ -52,9 +52,12 @@ export async function handleBroadcasterWebhook(
     return err();
   }
 
+  // 先讀原始字串再 parse，這樣 CheckMacValue 驗證失敗時能完整傾印 raw body
+  // 供離線重現平台的簽章演算法（OPay 格式與 ECPay 不同，需真實樣本定位）。
+  const rawBody = await req.text();
   let body: Record<string, unknown>;
   try {
-    body = (await req.json()) as Record<string, unknown>;
+    body = JSON.parse(rawBody) as Record<string, unknown>;
   } catch (e) {
     console.error(`[${platform}-webhook] body not JSON:`, (e as Error).message);
     return err();
@@ -95,6 +98,12 @@ export async function handleBroadcasterWebhook(
     } else {
       console.error(
         `[${platform}-webhook] CheckMacValue mismatch want=${expectedMac} got=${incomingMac} plaintext-prefix=${plaintext.slice(0, 80)}`,
+      );
+      // 樣本擷取：完整傾印 raw body（Data 為密文、不含 HashKey/IV，可安全記錄）
+      // 與完整解密明文，供離線重現正確簽章輸入與欄位 schema。複製 RAW_SAMPLE
+      // 標記之間的內容即為一筆可重現的完整樣本。
+      console.error(
+        `[${platform}-webhook] RAW_SAMPLE_BEGIN ${JSON.stringify({ rawBody, plaintext })} RAW_SAMPLE_END`,
       );
       return err();
     }
