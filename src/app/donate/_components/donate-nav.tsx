@@ -10,7 +10,8 @@ export default function DonateNav({ active }: { active?: string }) {
   return (
     <nav className="donate-nav">
       <Link href="/" className="donate-nav-brand">
-        BB
+        <span className="mark">BB</span>
+        <span className="bn">逼逼<em>機器人</em></span>
       </Link>
       {LINKS.map((l) => (
         <Link
