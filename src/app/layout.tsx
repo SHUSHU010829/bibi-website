@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
-import { RootProvider } from "fumadocs-ui/provider/next";
-import "fumadocs-ui/style.css";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -9,19 +7,25 @@ const fraunces = Fraunces({
   subsets: ["latin"],
   style: ["normal", "italic"],
   display: "swap",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: "400",
   display: "swap",
+  preload: false,
+  adjustFontFallback: true,
 });
 
 const siteUrl =
@@ -72,9 +76,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body suppressHydrationWarning>
-        <RootProvider>{children}</RootProvider>
-      </body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

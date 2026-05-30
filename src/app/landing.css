@@ -50,8 +50,7 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(10px);
-  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  background: color-mix(in oklab, var(--bg) 94%, transparent);
   border-bottom: 1px solid var(--line-2);
 }
 .lp .lp-nav .wrap {
@@ -408,8 +407,15 @@
 .lp .foot-links a:hover { color: var(--ink); }
 
 /* =================== ENTRANCE MOTION =================== */
-.lp[data-motion="on"] .reveal { animation: lp-revealUp .7s cubic-bezier(.2,.7,.2,1) both; }
-@keyframes lp-revealUp { from { transform: translateY(16px); } to { transform: none; } }
+.lp[data-motion="on"] .reveal { animation: lp-revealUp .45s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes lp-revealUp {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp[data-motion="on"] .reveal { animation: none; }
+  .lp[data-motion="on"] .hero-kicker .blip { animation: none; }
+}
 
 /* =================== RESPONSIVE =================== */
 @media (max-width: 860px) {
