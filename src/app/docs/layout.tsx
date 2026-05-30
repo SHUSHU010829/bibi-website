@@ -1,4 +1,6 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import { RootProvider } from 'fumadocs-ui/provider/next';
+import 'fumadocs-ui/style.css';
 import { source } from '@/lib/source';
 import { baseOptions } from '@/app/layout.config';
 import type { ReactNode } from 'react';
@@ -13,8 +15,10 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <DocsLayout tree={source.pageTree} {...baseOptions}>
-      {children}
-    </DocsLayout>
+    <RootProvider>
+      <DocsLayout tree={source.pageTree} {...baseOptions}>
+        {children}
+      </DocsLayout>
+    </RootProvider>
   );
 }
