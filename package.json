@@ -2,6 +2,9 @@
   "name": "bibi-website",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "postinstall": "fumadocs-mdx",
     "dev": "next dev",
@@ -11,7 +14,9 @@
     "test": "node --test --experimental-strip-types \"src/**/*.test.ts\""
   },
   "optionalDependencies": {
-    "@tailwindcss/oxide-darwin-arm64": "4.3.0"
+    "@tailwindcss/oxide-darwin-arm64": "4.3.0",
+    "@tailwindcss/oxide-linux-x64-gnu": "4.3.0",
+    "@tailwindcss/oxide-linux-x64-musl": "4.3.0"
   },
   "dependencies": {
     "@types/mdx": "^2.0.13",
