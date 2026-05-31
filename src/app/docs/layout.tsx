@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <RootProvider>
+    <RootProvider theme={{ enabled: false }}>
       <DocsLayout tree={source.pageTree} {...baseOptions}>
         {children}
       </DocsLayout>
