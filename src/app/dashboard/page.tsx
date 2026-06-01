@@ -5,11 +5,18 @@ import {
   getLevelSummary,
   getMiningSummary,
   getDonationHistory,
+  getCoinHistory,
   getPrimaryGuildId,
+  COIN_SOURCE_LABELS,
+  COIN_CATEGORIES,
+  COIN_HISTORY_MAX_PAGE,
   type CoinSummary,
   type LevelSummary,
   type MiningSummary,
   type DonationHistoryItem,
+  type CoinHistoryPage,
+  type CoinHistoryPeriod,
+  type CoinHistoryDirection,
 } from "@/lib/dashboard/profile";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
 
@@ -140,18 +147,40 @@ function TopNav({
   );
 }
 
+type DashTab = "overview" | "transactions";
+
 function PageHead({
   title,
   stamps,
+  activeTab,
 }: {
   title: string;
   stamps?: { v: string; k: string }[];
+  activeTab?: DashTab;
 }) {
+  const tabs: { id: DashTab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "transactions", label: "金流紀錄" },
+  ];
   return (
     <header className="d-page-head">
       <div className="d-page-head-left">
         <h1>{title}</h1>
-        <span className="d-crumb">/ dashboard</span>
+        {activeTab ? (
+          <div className="d-tabs">
+            {tabs.map((t) => (
+              <Link
+                key={t.id}
+                href={t.id === "overview" ? "/dashboard" : `/dashboard?tab=${t.id}`}
+                className={"d-tab" + (activeTab === t.id ? " active" : "")}
+              >
+                {t.label}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <span className="d-crumb">/ dashboard</span>
+        )}
       </div>
       <div className="d-page-head-right">
         {stamps?.map((s) => (
@@ -165,8 +194,36 @@ function PageHead({
   );
 }
 
-export default async function DashboardPage() {
+const PERIOD_LABELS: Record<CoinHistoryPeriod, string> = {
+  today: "今日",
+  week: "本週",
+  month: "本月",
+  all: "全部時間",
+};
+const DIRECTION_LABELS: Record<CoinHistoryDirection, string> = {
+  all: "全部",
+  in: "📥 入帳",
+  out: "📤 出帳",
+};
+
+function asPeriod(v: string | undefined): CoinHistoryPeriod {
+  return v === "today" || v === "week" || v === "all" ? v : "month";
+}
+function asDirection(v: string | undefined): CoinHistoryDirection {
+  return v === "in" || v === "out" ? v : "all";
+}
+function asCategory(v: string | undefined): string {
+  return v && COIN_CATEGORIES.some((c) => c.id === v) ? v : "all";
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await readSession();
+  const params = await searchParams;
+  const tab: DashTab = params.tab === "transactions" ? "transactions" : "overview";
   const now = new Date();
   const stamps = [
     {
@@ -195,7 +252,7 @@ export default async function DashboardPage() {
                 先用 <em>Discord</em> 登入
               </h2>
               <p>
-                儀表板會顯示你在伺服器的金幣、等級、挖礦／釣魚紀錄與贊助歷史。
+                儀表板會顯示你在伺服器的金幣、等級、挖礦／釣魚紀錄、金流紀錄與贊助歷史。
                 目前只開放查看，所有操作仍請在 Discord 內以斜線指令進行。
               </p>
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- route handler, not a page */}
@@ -216,16 +273,6 @@ export default async function DashboardPage() {
   }
 
   const guildId = getPrimaryGuildId();
-
-  const [coin, level, mining, donations] = guildId
-    ? await Promise.all([
-        getCoinSummary(session.id, guildId),
-        getLevelSummary(session.id, guildId),
-        getMiningSummary(session.id, guildId),
-        getDonationHistory(session.id, guildId, 10),
-      ])
-    : [null, null, null, []];
-
   const displayName = session.globalName ?? session.username;
 
   return (
@@ -238,7 +285,7 @@ export default async function DashboardPage() {
             id: session.id,
           }}
         />
-        <PageHead title="儀表板" stamps={stamps} />
+        <PageHead title="儀表板" stamps={stamps} activeTab={tab} />
 
         <div className="d-greeting">
           <div className="d-greeting-text">
@@ -249,27 +296,18 @@ export default async function DashboardPage() {
         </div>
 
         {!guildId && <GuildNotConfigured />}
-        {guildId && coin === null && <DataUnavailable />}
 
-        {guildId && coin && level && mining && (
-          <>
-            <HeroRow coin={coin} level={level} mining={mining} />
-            <StatRow level={level} />
-            <ActivityRow mining={mining} />
-            <CollectionRow mining={mining} />
-          </>
-        )}
-
-        <SectionTitle title="贊助紀錄" en="DONATIONS" />
-        {donations.length === 0 ? (
-          <div className="d-empty">
-            還沒有任何贊助紀錄。
-            <Link href="/donate" className="d-empty-link">
-              前往贊助頁面 →
-            </Link>
-          </div>
+        {tab === "overview" ? (
+          <OverviewTab session={session} guildId={guildId} />
         ) : (
-          <DonationTable items={donations} />
+          <TransactionsTab
+            session={session}
+            guildId={guildId}
+            period={asPeriod(asStr(params.period))}
+            direction={asDirection(asStr(params.direction))}
+            category={asCategory(asStr(params.category))}
+            page={Number.parseInt(asStr(params.page) ?? "0", 10) || 0}
+          />
         )}
 
         <p className="d-notice">
@@ -299,6 +337,287 @@ export default async function DashboardPage() {
         </footer>
       </div>
     </div>
+  );
+}
+
+function asStr(v: string | string[] | undefined): string | undefined {
+  if (Array.isArray(v)) return v[0];
+  return v;
+}
+
+async function OverviewTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  const [coin, level, mining, donations] = guildId
+    ? await Promise.all([
+        getCoinSummary(session.id, guildId),
+        getLevelSummary(session.id, guildId),
+        getMiningSummary(session.id, guildId),
+        getDonationHistory(session.id, guildId, 10),
+      ])
+    : [null, null, null, []];
+
+  return (
+    <>
+      {guildId && coin === null && <DataUnavailable />}
+
+      {guildId && coin && level && mining && (
+        <>
+          <HeroRow coin={coin} level={level} mining={mining} />
+          <StatRow level={level} />
+          <ActivityRow mining={mining} />
+          <CollectionRow mining={mining} />
+        </>
+      )}
+
+      <SectionTitle title="贊助紀錄" en="DONATIONS" />
+      {donations.length === 0 ? (
+        <div className="d-empty">
+          還沒有任何贊助紀錄。
+          <Link href="/donate" className="d-empty-link">
+            前往贊助頁面 →
+          </Link>
+        </div>
+      ) : (
+        <DonationTable items={donations} />
+      )}
+    </>
+  );
+}
+
+async function TransactionsTab({
+  session,
+  guildId,
+  period,
+  direction,
+  category,
+  page,
+}: {
+  session: { id: string };
+  guildId: string | null;
+  period: CoinHistoryPeriod;
+  direction: CoinHistoryDirection;
+  category: string;
+  page: number;
+}) {
+  if (!guildId) return null;
+  const result = await getCoinHistory(session.id, guildId, {
+    period,
+    direction,
+    category,
+    page,
+  });
+  if (!result) return <DataUnavailable />;
+  return (
+    <TransactionsView
+      result={result}
+      period={period}
+      direction={direction}
+      category={category}
+    />
+  );
+}
+
+function buildTxQuery(
+  overrides: {
+    period?: CoinHistoryPeriod;
+    direction?: CoinHistoryDirection;
+    category?: string;
+    page?: number;
+  },
+  base: {
+    period: CoinHistoryPeriod;
+    direction: CoinHistoryDirection;
+    category: string;
+  },
+): string {
+  const period = overrides.period ?? base.period;
+  const direction = overrides.direction ?? base.direction;
+  const category = overrides.category ?? base.category;
+  const page = overrides.page ?? 0;
+  const sp = new URLSearchParams();
+  sp.set("tab", "transactions");
+  if (period !== "month") sp.set("period", period);
+  if (direction !== "all") sp.set("direction", direction);
+  if (category !== "all") sp.set("category", category);
+  if (page > 0) sp.set("page", String(page));
+  return `/dashboard?${sp.toString()}`;
+}
+
+function fmtTxTime(d: Date): string {
+  return new Date(d).toLocaleString("zh-TW", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function TransactionsView({
+  result,
+  period,
+  direction,
+  category,
+}: {
+  result: CoinHistoryPage;
+  period: CoinHistoryPeriod;
+  direction: CoinHistoryDirection;
+  category: string;
+}) {
+  const base = { period, direction, category };
+  const net = result.inflow + result.outflow;
+  const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize));
+  const hasPrev = result.page > 0;
+  const hasNext =
+    result.page + 1 < totalPages && result.page + 1 < COIN_HISTORY_MAX_PAGE;
+
+  return (
+    <>
+      <div className="d-tx-summary">
+        <div className="d-tx-summary-card d-card-feature">
+          <span className="d-c-sub">NET</span>
+          <span className="d-num-xl">
+            {net >= 0 ? "+" : ""}
+            {fmt(net)}
+          </span>
+          <span className="d-feature-meta">
+            符合條件 {fmt(result.total)} 筆
+          </span>
+        </div>
+        <div className="d-tx-summary-card">
+          <span className="d-c-sub">INFLOW</span>
+          <span className="d-num-md d-tx-pos">+{fmt(result.inflow)}</span>
+        </div>
+        <div className="d-tx-summary-card">
+          <span className="d-c-sub">OUTFLOW</span>
+          <span className="d-num-md d-tx-neg">{fmt(result.outflow)}</span>
+        </div>
+      </div>
+
+      <div className="d-tx-filters">
+        <div className="d-tx-filter-group">
+          <span className="d-tx-filter-lab">期間</span>
+          <div className="d-pill-row">
+            {(["today", "week", "month", "all"] as CoinHistoryPeriod[]).map(
+              (p) => (
+                <Link
+                  key={p}
+                  href={buildTxQuery({ period: p, page: 0 }, base)}
+                  className={"d-pill" + (period === p ? " active" : "")}
+                >
+                  {PERIOD_LABELS[p]}
+                </Link>
+              ),
+            )}
+          </div>
+        </div>
+        <div className="d-tx-filter-group">
+          <span className="d-tx-filter-lab">方向</span>
+          <div className="d-pill-row">
+            {(["all", "in", "out"] as CoinHistoryDirection[]).map((d) => (
+              <Link
+                key={d}
+                href={buildTxQuery({ direction: d, page: 0 }, base)}
+                className={"d-pill" + (direction === d ? " active" : "")}
+              >
+                {DIRECTION_LABELS[d]}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="d-tx-filter-group d-tx-filter-cats">
+          <span className="d-tx-filter-lab">來源</span>
+          <div className="d-pill-row d-pill-row-wrap">
+            {COIN_CATEGORIES.map((c) => (
+              <Link
+                key={c.id}
+                href={buildTxQuery({ category: c.id, page: 0 }, base)}
+                className={"d-pill" + (category === c.id ? " active" : "")}
+              >
+                {c.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {result.rows.length === 0 ? (
+        <div className="d-empty">
+          這個條件下沒有任何金流紀錄。
+          <br />
+          試著放寬期間或切換方向/來源篩選。
+        </div>
+      ) : (
+        <div className="d-table-wrap">
+          <table className="d-tbl">
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>來源</th>
+                <th className="num">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.rows.map((r, i) => {
+                const label =
+                  COIN_SOURCE_LABELS[r.source] ?? `❓ ${r.source}`;
+                const positive = r.amount > 0;
+                return (
+                  <tr key={`${r.createdAt.getTime()}-${i}`}>
+                    <td>{fmtTxTime(r.createdAt)}</td>
+                    <td>{label}</td>
+                    <td
+                      className={
+                        "num " + (positive ? "d-tx-pos" : "d-tx-neg")
+                      }
+                    >
+                      {positive ? "+" : ""}
+                      {fmt(r.amount)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {(hasPrev || hasNext) && (
+        <div className="d-pager">
+          {hasPrev ? (
+            <Link
+              className="d-btn"
+              href={buildTxQuery({ page: result.page - 1 }, base)}
+            >
+              ← 較新
+            </Link>
+          ) : (
+            <span className="d-btn d-btn-disabled">← 較新</span>
+          )}
+          <span className="d-pager-page">
+            第 {result.page + 1} / {Math.min(totalPages, COIN_HISTORY_MAX_PAGE)} 頁
+          </span>
+          {hasNext ? (
+            <Link
+              className="d-btn"
+              href={buildTxQuery({ page: result.page + 1 }, base)}
+            >
+              較舊 →
+            </Link>
+          ) : (
+            <span className="d-btn d-btn-disabled">較舊 →</span>
+          )}
+        </div>
+      )}
+
+      <p className="d-notice" style={{ marginTop: 14 }}>
+        紀錄保留 90 天。要換條件就重新點上面的篩選 pill；想看完整 90 天就把期間切到「全部時間」。
+      </p>
+    </>
   );
 }
 
