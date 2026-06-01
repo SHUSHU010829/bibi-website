@@ -613,12 +613,18 @@
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .d-tbl {
   width: 100%;
+  min-width: max-content; /* 讓窄螢幕保留欄寬，由 wrap 橫向卷 */
   border-collapse: collapse;
   font-size: 13px;
+}
+.d-tbl th,
+.d-tbl td {
+  white-space: nowrap; /* 杜絕 CJK 字符直排 */
 }
 .d-tbl th {
   text-align: left;
@@ -895,6 +901,84 @@
   pointer-events: none;
 }
 
+/* ── BuffsCard（Overview 內聯小區塊）────────────────────────────────────── */
+
+.d-buffs-card .d-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.d-buffs-mults {
+  display: flex;
+  gap: 28px;
+  align-items: baseline;
+}
+.d-buffs-mult {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.d-buffs-mult-lab {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+.d-buffs-mult-val {
+  font-family: var(--mono);
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.d-buffs-empty {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.65;
+}
+.d-buffs-empty code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--paper-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+.d-buffs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.d-buffs-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 14px;
+  padding: 10px 0;
+  align-items: baseline;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 13px;
+}
+.d-buffs-row:last-child {
+  border-bottom: 0;
+}
+.d-buffs-row-name {
+  color: var(--ink-2);
+  min-width: 0;
+}
+.d-buffs-row-mult {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.d-buffs-row-exp {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
 /* ── Quests ─────────────────────────────────────────────────────────────── */
 
 .d-quests {
@@ -1094,5 +1178,37 @@
   .d-page-head-right {
     gap: 14px;
     flex-wrap: wrap;
+  }
+  .d-tbl th,
+  .d-tbl td {
+    padding: 10px 14px;
+    font-size: 12.5px;
+  }
+  .d-tbl th {
+    font-size: 10.5px;
+  }
+  .d-card-body {
+    padding: 0 20px 20px;
+  }
+  .d-c-head {
+    padding: 18px 20px 10px;
+  }
+  .d-row-list .d-list-row {
+    padding: 12px 20px;
+  }
+  .d-buffs-mults {
+    gap: 18px;
+  }
+  .d-buffs-mult-val {
+    font-size: 24px;
+  }
+  .d-tab {
+    font-size: 17px;
+  }
+  .d-page-head h1 {
+    font-size: 26px;
+  }
+  .d-account-label {
+    display: none;
   }
 }

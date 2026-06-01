@@ -8,8 +8,6 @@ import {
   getCoinHistory,
   getTaxHistory,
   getInviteStats,
-  getDuelHistory,
-  getLeaderboard,
   getLotteryDigest,
   getActiveBuffs,
   getBackpack,
@@ -20,7 +18,6 @@ import {
   COIN_SOURCE_LABELS,
   COIN_CATEGORIES,
   COIN_HISTORY_MAX_PAGE,
-  LEADERBOARD_CATEGORIES,
   LOTTERY_TYPE_LABELS,
   type CoinSummary,
   type LevelSummary,
@@ -32,9 +29,6 @@ import {
   type TaxHistoryPeriod,
   type TaxHistorySummary,
   type InviteStats,
-  type DuelHistorySummary,
-  type LeaderboardKey,
-  type LeaderboardResult,
   type LotteryDrawSummary,
   type ActiveBuff,
   type BackpackSummary,
@@ -191,43 +185,32 @@ type DashTab =
   | "transactions"
   | "tax"
   | "invites"
-  | "duels"
-  | "leaderboard"
   | "lottery"
   | "backpack"
-  | "equipment"
-  | "buffs"
   | "quests"
   | "badges";
 
 const DASH_TABS: { id: DashTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "backpack", label: "背包" },
-  { id: "equipment", label: "裝備" },
-  { id: "buffs", label: "加成" },
   { id: "quests", label: "任務" },
   { id: "badges", label: "稱號" },
   { id: "transactions", label: "金流" },
   { id: "tax", label: "稅務" },
   { id: "invites", label: "邀請" },
-  { id: "duels", label: "決鬥" },
-  { id: "leaderboard", label: "排行榜" },
   { id: "lottery", label: "樂透" },
 ];
 
 function PageHead({
-  title,
   stamps,
   activeTab,
 }: {
-  title: string;
   stamps?: { v: string; k: string }[];
   activeTab?: DashTab;
 }) {
   return (
     <header className="d-page-head">
       <div className="d-page-head-left">
-        <h1>{title}</h1>
         {activeTab ? (
           <div className="d-tabs">
             {DASH_TABS.map((t) => (
@@ -310,7 +293,7 @@ export default async function DashboardPage({
       <div className="d-app">
         <div className="d-app-frame">
           <TopNav />
-          <PageHead title="儀表板" stamps={stamps} />
+          <PageHead stamps={stamps} />
           <div className="d-login">
             <div className="d-login-inner">
               <h2>
@@ -350,7 +333,7 @@ export default async function DashboardPage({
             id: session.id,
           }}
         />
-        <PageHead title="儀表板" stamps={stamps} activeTab={tab} />
+        <PageHead stamps={stamps} activeTab={tab} />
 
         <div className="d-greeting">
           <div className="d-greeting-text">
@@ -385,27 +368,11 @@ export default async function DashboardPage({
         {tab === "invites" && (
           <InvitesTab session={session} guildId={guildId} />
         )}
-        {tab === "duels" && (
-          <DuelsTab session={session} guildId={guildId} />
-        )}
-        {tab === "leaderboard" && (
-          <LeaderboardTab
-            session={session}
-            guildId={guildId}
-            category={asLbCategory(asStr(params.category))}
-          />
-        )}
         {tab === "lottery" && (
           <LotteryTab session={session} guildId={guildId} />
         )}
         {tab === "backpack" && (
           <BackpackTab session={session} guildId={guildId} />
-        )}
-        {tab === "equipment" && (
-          <EquipmentTab session={session} guildId={guildId} />
-        )}
-        {tab === "buffs" && (
-          <BuffsTab session={session} guildId={guildId} />
         )}
         {tab === "quests" && (
           <QuestsTab session={session} guildId={guildId} />
@@ -456,14 +423,15 @@ async function OverviewTab({
   session: { id: string };
   guildId: string | null;
 }) {
-  const [coin, level, mining, donations] = guildId
+  const [coin, level, mining, donations, buffs] = guildId
     ? await Promise.all([
         getCoinSummary(session.id, guildId),
         getLevelSummary(session.id, guildId),
         getMiningSummary(session.id, guildId),
         getDonationHistory(session.id, guildId, 10),
+        getActiveBuffs(session.id, guildId),
       ])
-    : [null, null, null, []];
+    : [null, null, null, [], null];
 
   return (
     <>
@@ -473,6 +441,7 @@ async function OverviewTab({
         <>
           <HeroRow coin={coin} level={level} mining={mining} />
           <StatRow level={level} />
+          {buffs && <BuffsCard buffs={buffs} />}
           <ActivityRow mining={mining} />
           <CollectionRow mining={mining} />
         </>
@@ -725,16 +694,10 @@ function TransactionsView({
   );
 }
 
-// ── 稅務 / 邀請 / 決鬥 / 排行榜 / 樂透 ────────────────────────────────────────
+// ── 稅務 / 邀請 / 樂透 ────────────────────────────────────────────────────
 
 function asTaxPeriod(v: string | undefined): TaxHistoryPeriod {
   return v === "month" || v === "year" ? v : "all";
-}
-
-function asLbCategory(v: string | undefined): LeaderboardKey {
-  return LEADERBOARD_CATEGORIES.some((c) => c.key === v)
-    ? (v as LeaderboardKey)
-    : "level";
 }
 
 async function TaxTab({
@@ -936,216 +899,6 @@ function InvitesView({ stats }: { stats: InviteStats }) {
   );
 }
 
-async function DuelsTab({
-  session,
-  guildId,
-}: {
-  session: { id: string };
-  guildId: string | null;
-}) {
-  if (!guildId) return null;
-  const result = await getDuelHistory(session.id, guildId, 10);
-  if (!result) return <DataUnavailable />;
-  return <DuelsView result={result} />;
-}
-
-function DuelsView({ result }: { result: DuelHistorySummary }) {
-  return (
-    <>
-      <div className="d-grid-3">
-        <div className="d-card d-card-feature">
-          <CardHead title="勝率" sub="WIN RATE" />
-          <div className="d-card-body">
-            <div className="d-num-xl">
-              {(result.winRate * 100).toFixed(0)}
-              <span className="d-num-unit">%</span>
-            </div>
-            <div className="d-feature-meta">
-              {fmt(result.wins)} 勝 {fmt(result.losses)} 負
-            </div>
-          </div>
-        </div>
-        <div className="d-card">
-          <CardHead title="總場數" sub="TOTAL" />
-          <div className="d-card-body">
-            <div className="d-num-md">{fmt(result.total)}</div>
-            <div className="d-kbd">場</div>
-          </div>
-        </div>
-        <div className="d-card">
-          <CardHead title="最近一場" sub="LAST" />
-          <div className="d-card-body">
-            <div className="d-num-md">
-              {result.rows[0]
-                ? result.rows[0].isWin
-                  ? "🏆 勝"
-                  : "💀 負"
-                : "—"}
-            </div>
-            <div className="d-kbd">
-              {result.rows[0] ? fmtTxTime(result.rows[0].completedAt) : "—"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {result.rows.length === 0 ? (
-        <div className="d-empty">
-          還沒有完成過任何決鬥，到 Discord 用 <code>/決鬥</code> 開戰。
-        </div>
-      ) : (
-        <div className="d-table-wrap">
-          <table className="d-tbl">
-            <thead>
-              <tr>
-                <th>時間</th>
-                <th>結果</th>
-                <th>對手</th>
-                <th>賭注</th>
-                <th className="num">收支</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.rows.map((r, i) => (
-                <tr key={`${r.completedAt.getTime()}-${i}`}>
-                  <td>{fmtTxTime(r.completedAt)}</td>
-                  <td>{r.isWin ? "🏆 勝" : "💀 負"}</td>
-                  <td className="mono">
-                    <code className="d-uid-code">{r.opponentId}</code>
-                  </td>
-                  <td>{fmt(r.bet)}</td>
-                  <td
-                    className={
-                      "num " + (r.net > 0 ? "d-tx-pos" : "d-tx-neg")
-                    }
-                  >
-                    {r.net > 0 ? "+" : ""}
-                    {fmt(r.net)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
-  );
-}
-
-async function LeaderboardTab({
-  session,
-  guildId,
-  category,
-}: {
-  session: { id: string };
-  guildId: string | null;
-  category: LeaderboardKey;
-}) {
-  if (!guildId) return null;
-  const result = await getLeaderboard(
-    guildId,
-    category,
-    "all",
-    session.id,
-    10,
-  );
-  if (!result) return <DataUnavailable />;
-  return (
-    <LeaderboardView result={result} category={category} viewerId={session.id} />
-  );
-}
-
-function LeaderboardView({
-  result,
-  category,
-  viewerId,
-}: {
-  result: LeaderboardResult;
-  category: LeaderboardKey;
-  viewerId: string;
-}) {
-  const def = LEADERBOARD_CATEGORIES.find((c) => c.key === category)!;
-  return (
-    <>
-      <div className="d-tx-filters">
-        <div className="d-tx-filter-group">
-          <span className="d-tx-filter-lab">類別</span>
-          <div className="d-pill-row d-pill-row-wrap">
-            {LEADERBOARD_CATEGORIES.map((c) => {
-              const sp = new URLSearchParams({ tab: "leaderboard" });
-              if (c.key !== "level") sp.set("category", c.key);
-              return (
-                <Link
-                  key={c.key}
-                  href={`/dashboard?${sp.toString()}`}
-                  className={"d-pill" + (category === c.key ? " active" : "")}
-                >
-                  {c.emoji} {c.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {result.myRank !== null && (
-        <div className="d-empty d-my-rank">
-          你目前排在 <strong>#{result.myRank}</strong> ・{" "}
-          {fmt(result.myValue ?? 0)} {def.unit}
-          {def.key === "level" && (
-            <>
-              {" "}
-              · 共 {fmt(result.total)} 位玩家上榜
-            </>
-          )}
-        </div>
-      )}
-
-      {result.rows.length === 0 ? (
-        <div className="d-empty">這個類別還沒有任何上榜紀錄。</div>
-      ) : (
-        <div className="d-table-wrap">
-          <table className="d-tbl">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>玩家</th>
-                <th className="num">
-                  {def.label} ({def.unit})
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.rows.map((r, i) => {
-                const isMe = r.userId === viewerId;
-                return (
-                  <tr
-                    key={r.userId}
-                    className={isMe ? "d-tr-me" : undefined}
-                  >
-                    <td className="mono">#{i + 1}</td>
-                    <td>
-                      <code className="d-uid-code">{r.userId}</code>
-                      {r.sub ? <span className="d-row-sub"> · {r.sub}</span> : null}
-                      {isMe ? (
-                        <span className="d-tag-me">你</span>
-                      ) : null}
-                    </td>
-                    <td className="num">{fmt(r.value)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <p className="d-notice">
-        現階段排行榜只支援「全部時間」聚合；按時間切片（today/week/month）需要等對應的彙整 collection 對齊，會在後續批次補上。
-      </p>
-    </>
-  );
-}
 
 async function LotteryTab({
   session,
@@ -1274,9 +1027,18 @@ async function BackpackTab({
   guildId: string | null;
 }) {
   if (!guildId) return null;
-  const bag = await getBackpack(session.id, guildId);
-  if (!bag) return <DataUnavailable />;
-  return <BackpackView bag={bag} />;
+  const [bag, eq] = await Promise.all([
+    getBackpack(session.id, guildId),
+    getEquipment(session.id, guildId),
+  ]);
+  if (!bag || !eq) return <DataUnavailable />;
+  return (
+    <>
+      <SectionTitle title="裝備" en="EQUIPMENT" />
+      <EquipmentView eq={eq} />
+      <BackpackView bag={bag} />
+    </>
+  );
 }
 
 function BackpackView({ bag }: { bag: BackpackSummary }) {
@@ -1409,19 +1171,6 @@ function BackpackView({ bag }: { bag: BackpackSummary }) {
   );
 }
 
-async function EquipmentTab({
-  session,
-  guildId,
-}: {
-  session: { id: string };
-  guildId: string | null;
-}) {
-  if (!guildId) return null;
-  const eq = await getEquipment(session.id, guildId);
-  if (!eq) return <DataUnavailable />;
-  return <EquipmentView eq={eq} />;
-}
-
 function EquipmentView({ eq }: { eq: EquipmentSummary }) {
   const pickaxe = PICKAXES[eq.pickaxe] ?? PICKAXES.wood;
   const rod = RODS[eq.fishingRod] ?? RODS.bamboo;
@@ -1512,103 +1261,6 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
           </div>
         </div>
       </div>
-
-      <p className="d-notice">
-        合成更高階裝備請在 Discord 用 <code>/裝備</code> 或 <code>/合成</code>{" "}
-        指令；網站只顯示目前持有與屬性。
-      </p>
-    </>
-  );
-}
-
-async function BuffsTab({
-  session,
-  guildId,
-}: {
-  session: { id: string };
-  guildId: string | null;
-}) {
-  if (!guildId) return null;
-  const buffs = await getActiveBuffs(session.id, guildId);
-  if (buffs === null) return <DataUnavailable />;
-  return <BuffsView buffs={buffs} />;
-}
-
-function BuffsView({ buffs }: { buffs: ActiveBuff[] }) {
-  const xpBuffs = buffs.filter((b) => b.type === "xp_boost");
-  const coinBuffs = buffs.filter((b) => b.type === "coin_boost");
-
-  return (
-    <>
-      <div className="d-grid-2-eq">
-        <div className="d-card d-card-feature">
-          <CardHead title="最佳 XP 加成" sub="XP BOOST" />
-          <div className="d-card-body">
-            <div className="d-num-xl">
-              ×{maxMult(xpBuffs).toFixed(2)}
-            </div>
-            <span className="d-feature-meta">
-              共 {fmt(xpBuffs.length)} 個生效中
-            </span>
-          </div>
-        </div>
-        <div className="d-card">
-          <CardHead title="最佳金幣加成" sub="COIN BOOST" />
-          <div className="d-card-body">
-            <div className="d-num-xl">
-              ×{maxMult(coinBuffs).toFixed(2)}
-            </div>
-            <div className="d-kbd">{fmt(coinBuffs.length)} 個生效中</div>
-          </div>
-        </div>
-      </div>
-
-      <SectionTitle title="目前生效 buff" en="ACTIVE BUFFS" />
-      {buffs.length === 0 ? (
-        <div className="d-empty">
-          目前沒有任何生效中的 buff。到 Discord 用 <code>/商店</code>{" "}
-          買藥水即可獲得加成。
-        </div>
-      ) : (
-        <div className="d-table-wrap">
-          <table className="d-tbl">
-            <thead>
-              <tr>
-                <th>來源</th>
-                <th>類型</th>
-                <th>倍率</th>
-                <th>結束時間</th>
-              </tr>
-            </thead>
-            <tbody>
-              {buffs.map((b, i) => {
-                const def = b.source ? SHOP_ITEMS[b.source] : null;
-                return (
-                  <tr key={`${b.source ?? "x"}-${b.expiresAt.getTime()}-${i}`}>
-                    <td>
-                      {def?.emoji ?? "🧪"} {def?.name ?? b.source ?? "—"}
-                    </td>
-                    <td>
-                      {b.type === "xp_boost"
-                        ? "XP 加成"
-                        : b.type === "coin_boost"
-                          ? "金幣加成"
-                          : b.type}
-                    </td>
-                    <td className="mono">×{b.multiplier.toFixed(2)}</td>
-                    <td>{fmtTxTime(b.expiresAt)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <p className="d-notice">
-        加成只列 XP / 金幣 buff 兩類。挖礦幸運／釣魚／食物 buff 等可在 Discord 用{" "}
-        <code>/加成</code> 查看完整版（含限時活動與食物 buff）。
-      </p>
     </>
   );
 }
@@ -1619,6 +1271,59 @@ function maxMult(buffs: ActiveBuff[]): number {
     if (b.multiplier > m) m = b.multiplier;
   }
   return m;
+}
+
+function BuffsCard({ buffs }: { buffs: ActiveBuff[] }) {
+  const xpBuffs = buffs.filter((b) => b.type === "xp_boost");
+  const coinBuffs = buffs.filter((b) => b.type === "coin_boost");
+  const xpMax = maxMult(xpBuffs);
+  const coinMax = maxMult(coinBuffs);
+
+  return (
+    <div className="d-card d-buffs-card">
+      <CardHead title="生效中加成" sub="ACTIVE BUFFS" />
+      <div className="d-card-body">
+        <div className="d-buffs-mults">
+          <div className="d-buffs-mult">
+            <span className="d-buffs-mult-lab">XP</span>
+            <span className="d-buffs-mult-val">×{xpMax.toFixed(2)}</span>
+          </div>
+          <div className="d-buffs-mult">
+            <span className="d-buffs-mult-lab">金幣</span>
+            <span className="d-buffs-mult-val">×{coinMax.toFixed(2)}</span>
+          </div>
+        </div>
+        {buffs.length === 0 ? (
+          <div className="d-buffs-empty">
+            沒有生效中的藥水 buff。完整加成（挖礦、釣魚、食物）請用 Discord{" "}
+            <code>/加成</code>。
+          </div>
+        ) : (
+          <ul className="d-buffs-list">
+            {buffs.map((b, i) => {
+              const def = b.source ? SHOP_ITEMS[b.source] : null;
+              return (
+                <li
+                  key={`${b.source ?? "x"}-${b.expiresAt.getTime()}-${i}`}
+                  className="d-buffs-row"
+                >
+                  <span className="d-buffs-row-name">
+                    {def?.emoji ?? "🧪"} {def?.name ?? b.source ?? "—"}
+                  </span>
+                  <span className="d-buffs-row-mult mono">
+                    ×{b.multiplier.toFixed(2)}
+                  </span>
+                  <span className="d-buffs-row-exp">
+                    {fmtTxTime(b.expiresAt)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
 }
 
 async function QuestsTab({
