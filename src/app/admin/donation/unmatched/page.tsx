@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { checkAdmin } from "@/lib/admin/permissions";
 import { fetchUnmatched } from "@/lib/admin/donation";
+import { fmtDateTime } from "@/lib/format/time";
 import { DonationHead } from "../_components/SubNav";
 import { ResolveForm } from "./ResolveForm";
 
@@ -16,13 +17,7 @@ function fmt(n: number): string {
 }
 
 function fmtTime(s: string): string {
-  return new Date(s).toLocaleString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return fmtDateTime(s);
 }
 
 function asStr(v: string | string[] | undefined): string | undefined {

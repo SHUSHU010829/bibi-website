@@ -6,6 +6,7 @@ import {
   type MiningValueRow,
   type TitleRow,
 } from "@/lib/leaderboard/api";
+import { fmtDateTime } from "@/lib/format/time";
 import { LeaderboardHead } from "../_components/SubNav";
 import { LbRowItem, fmt } from "../_components/LbRow";
 
@@ -13,13 +14,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 300;
 
 function fmtReset(epoch: number): string {
-  return new Date(epoch * 1000).toLocaleString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return fmtDateTime(epoch * 1000);
 }
 
 export default async function WeeklySummaryPage() {

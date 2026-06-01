@@ -2,6 +2,7 @@ import Link from "next/link";
 import { checkAdmin } from "@/lib/admin/permissions";
 import { fetchPatrons } from "@/lib/admin/donation";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
+import { fmtDate as fmtDateOnly } from "@/lib/format/time";
 import { DonationHead } from "../_components/SubNav";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,7 @@ function fmt(n: number): string {
 }
 
 function fmtDate(s: string): string {
-  return new Date(s).toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  return fmtDateOnly(s);
 }
 
 function asStr(v: string | string[] | undefined): string | undefined {

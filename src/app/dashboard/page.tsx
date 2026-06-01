@@ -2,6 +2,11 @@ import Link from "next/link";
 import { readSession, avatarUrl } from "@/lib/donation/session";
 import { isCurrentUserAdmin } from "@/lib/admin/permissions";
 import {
+  fmtDateTime,
+  fmtShortDateTime,
+  fmtTime as fmtTimeOfDay,
+} from "@/lib/format/time";
+import {
   getCoinSummary,
   getLevelSummary,
   getMiningSummary,
@@ -102,13 +107,7 @@ function fmt(n: number): string {
 }
 
 function fmtDate(d: Date): string {
-  return new Date(d).toLocaleString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return fmtDateTime(d);
 }
 
 function DiscordMark({ className }: { className?: string }) {
@@ -158,6 +157,9 @@ function TopNav({
               height={32}
             />
             <span className="d-account-name">{identity.name}</span>
+            <Link href="/leaderboard" className="d-btn d-btn-ghost">
+              排行榜
+            </Link>
             {isAdmin && (
               <Link href="/admin" className="d-btn d-btn-ghost">
                 Admin
@@ -174,14 +176,19 @@ function TopNav({
             </form>
           </>
         ) : (
-          <a
-            href={INVITE_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="d-btn d-btn-discord"
-          >
-            <DiscordMark className="dc" /> 加入 Discord
-          </a>
+          <>
+            <Link href="/leaderboard" className="d-btn d-btn-ghost">
+              排行榜
+            </Link>
+            <a
+              href={INVITE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="d-btn d-btn-discord"
+            >
+              <DiscordMark className="dc" /> 加入 Discord
+            </a>
+          </>
         )}
       </div>
     </nav>
@@ -283,15 +290,15 @@ export default async function DashboardPage({
   const now = new Date();
   const stamps = [
     {
-      v: now.toLocaleTimeString("zh-TW", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
+      v: fmtTimeOfDay(now),
       k: "Time",
     },
     {
-      v: now.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      v: now.toLocaleDateString("en-US", {
+        timeZone: "Asia/Taipei",
+        month: "short",
+        day: "numeric",
+      }),
       k: "Today",
     },
   ];
@@ -533,12 +540,7 @@ function buildTxQuery(
 }
 
 function fmtTxTime(d: Date): string {
-  return new Date(d).toLocaleString("zh-TW", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return fmtShortDateTime(d);
 }
 
 function TransactionsView({
