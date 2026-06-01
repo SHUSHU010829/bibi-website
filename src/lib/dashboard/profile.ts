@@ -338,7 +338,12 @@ export interface CoinHistoryPage {
 
 // 與 bot 端 query 同步：日期欄是 ISO date string（YYYY-MM-DD），時區固定
 // Asia/Taipei；不能用 createdAt 換算，否則跨日邊界會跟 bot 對不上。
-function getTaipeiNowParts(): { todayISO: string; weekStartISO: string; monthStartISO: string } {
+function getTaipeiNowParts(): {
+  todayISO: string;
+  weekStartISO: string;
+  monthStartISO: string;
+  yearStartISO: string;
+} {
   // 直接抓 Asia/Taipei 當下的 YYYY-MM-DD，避免依賴額外套件。
   const fmtDate = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Taipei",
@@ -357,7 +362,8 @@ function getTaipeiNowParts(): { todayISO: string; weekStartISO: string; monthSta
   const monthStartISO = `${y.toString().padStart(4, "0")}-${m
     .toString()
     .padStart(2, "0")}-01`;
-  return { todayISO, weekStartISO, monthStartISO };
+  const yearStartISO = `${y.toString().padStart(4, "0")}-01-01`;
+  return { todayISO, weekStartISO, monthStartISO, yearStartISO };
 }
 
 function buildHistoryMatch(opts: {
@@ -388,6 +394,451 @@ function buildHistoryMatch(opts: {
 
 export const COIN_HISTORY_PAGE_SIZE = 10;
 export const COIN_HISTORY_MAX_PAGE = 20;
+
+// ── 稅務紀錄（複用 CoinTransactions，source = wealth_tax）──────────────────────
+
+export type TaxHistoryPeriod = "month" | "year" | "all";
+
+export interface TaxHistoryRow {
+  amount: number;
+  before: number | null;
+  effectiveRate: number | null;
+  createdAt: Date;
+  date: string;
+}
+
+export interface TaxHistorySummary {
+  rows: TaxHistoryRow[];
+  totalTaxed: number;
+  count: number;
+  avgRate: number | null;
+}
+
+export async function getTaxHistory(
+  userId: string,
+  guildId: string,
+  period: TaxHistoryPeriod,
+): Promise<TaxHistorySummary | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const col = db.collection("CoinTransactions");
+  const match: Record<string, unknown> = {
+    userId,
+    guildId,
+    source: "wealth_tax",
+  };
+  const parts = getTaipeiNowParts();
+  if (period === "month") match.date = { $gte: parts.monthStartISO };
+  else if (period === "year") match.date = { $gte: parts.yearStartISO };
+
+  const docs = await col.find(match).sort({ createdAt: -1 }).limit(60).toArray();
+  let totalTaxed = 0;
+  let rateSum = 0;
+  let rateCount = 0;
+  for (const d of docs) {
+    totalTaxed += Math.abs(Number(d.amount ?? 0));
+    const meta = (d.meta as Record<string, unknown>) ?? {};
+    const rate = meta.effectiveRate;
+    if (typeof rate === "number" && Number.isFinite(rate)) {
+      rateSum += rate;
+      rateCount += 1;
+    }
+  }
+  return {
+    rows: docs.map((d) => {
+      const meta = (d.meta as Record<string, unknown>) ?? {};
+      const before = typeof meta.before === "number" ? meta.before : null;
+      const rate = typeof meta.effectiveRate === "number" ? meta.effectiveRate : null;
+      return {
+        amount: Number(d.amount ?? 0),
+        before,
+        effectiveRate: rate,
+        createdAt:
+          d.createdAt instanceof Date ? d.createdAt : new Date(d.createdAt),
+        date: String(d.date ?? ""),
+      };
+    }),
+    totalTaxed,
+    count: docs.length,
+    avgRate: rateCount > 0 ? rateSum / rateCount : null,
+  };
+}
+
+// ── 邀請統計（InviteRecords）─────────────────────────────────────────────────
+
+export interface InviteStats {
+  active: number;
+  left: number;
+  clawedBack: number;
+  totalReward: number;
+  totalClawback: number;
+}
+
+export async function getInviteStats(
+  userId: string,
+  guildId: string,
+): Promise<InviteStats | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const col = db.collection("InviteRecords");
+  const agg = await col
+    .aggregate([
+      { $match: { guildId, inviterId: userId } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalReward: { $sum: { $ifNull: ["$rewardGranted", 0] } },
+          totalClawback: { $sum: { $ifNull: ["$clawedBackAmount", 0] } },
+        },
+      },
+    ])
+    .toArray();
+
+  const out: InviteStats = {
+    active: 0,
+    left: 0,
+    clawedBack: 0,
+    totalReward: 0,
+    totalClawback: 0,
+  };
+  for (const r of agg) {
+    out.totalReward += Number(r.totalReward ?? 0);
+    out.totalClawback += Number(r.totalClawback ?? 0);
+    const count = Number(r.count ?? 0);
+    if (r._id === "active") out.active = count;
+    else if (r._id === "left") out.left = count;
+    else if (r._id === "clawed_back") out.clawedBack = count;
+  }
+  return out;
+}
+
+// ── 決鬥紀錄（DuelGames）────────────────────────────────────────────────────
+
+export interface DuelHistoryRow {
+  isWin: boolean;
+  opponentId: string;
+  bet: number;
+  pot: number;
+  net: number; // 從 viewer 角度，正負金幣
+  completedAt: Date;
+}
+
+export interface DuelHistorySummary {
+  rows: DuelHistoryRow[];
+  wins: number;
+  losses: number;
+  total: number;
+  winRate: number;
+}
+
+export async function getDuelHistory(
+  userId: string,
+  guildId: string,
+  limit = 10,
+): Promise<DuelHistorySummary | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const col = db.collection("DuelGames");
+  const filter = {
+    guild_id: guildId,
+    status: "completed",
+    $or: [{ challenger_id: userId }, { opponent_id: userId }],
+  };
+  const [docs, wins, total] = await Promise.all([
+    col.find(filter).sort({ completed_at: -1 }).limit(limit).toArray(),
+    col.countDocuments({ guild_id: guildId, status: "completed", winner_id: userId }),
+    col.countDocuments(filter),
+  ]);
+
+  return {
+    rows: docs.map((d) => {
+      const isChallenger = d.challenger_id === userId;
+      const opponentId = isChallenger ? d.opponent_id : d.challenger_id;
+      const isWin = d.winner_id === userId;
+      const bet = Number(d.bet ?? 0);
+      const pot = Number(d.pot ?? bet * 2);
+      const completed =
+        d.completed_at instanceof Date
+          ? d.completed_at
+          : new Date(d.completed_at ?? d.updated_at ?? Date.now());
+      return {
+        isWin,
+        opponentId: String(opponentId ?? ""),
+        bet,
+        pot,
+        net: isWin ? pot - bet : -bet,
+        completedAt: completed,
+      };
+    }),
+    wins,
+    losses: total - wins,
+    total,
+    winRate: total > 0 ? wins / total : 0,
+  };
+}
+
+// ── 排行榜（精簡版：等級／金幣／發言／語音／挖礦次數）─────────────────────────
+//
+// 與 bot src/features/leaderboard/ 同義，但限縮為直接 sort + count 就能算出的類
+// 別；mining_value 之類需要拉 orePrices、賭場輸贏要排程化 aggregate 的暫不接，
+// 等定義同步完再補。
+
+export type LeaderboardKey =
+  | "level"
+  | "coin"
+  | "messages"
+  | "voice"
+  | "mining";
+
+export type LeaderboardPeriod = "today" | "week" | "month" | "all";
+
+export interface LeaderboardCategoryDef {
+  key: LeaderboardKey;
+  label: string;
+  emoji: string;
+  unit: string;
+  periods: LeaderboardPeriod[];
+  defaultPeriod: LeaderboardPeriod;
+}
+
+export const LEADERBOARD_CATEGORIES: LeaderboardCategoryDef[] = [
+  {
+    key: "level",
+    label: "等級",
+    emoji: "🏆",
+    unit: "XP",
+    periods: ["all"],
+    defaultPeriod: "all",
+  },
+  {
+    key: "coin",
+    label: "金幣",
+    emoji: "🪙",
+    unit: "幣",
+    periods: ["all"],
+    defaultPeriod: "all",
+  },
+  {
+    key: "messages",
+    label: "訊息",
+    emoji: "💬",
+    unit: "則",
+    periods: ["all"],
+    defaultPeriod: "all",
+  },
+  {
+    key: "voice",
+    label: "語音時長",
+    emoji: "🎤",
+    unit: "分",
+    periods: ["all"],
+    defaultPeriod: "all",
+  },
+  {
+    key: "mining",
+    label: "挖礦累計",
+    emoji: "⛏️",
+    unit: "次",
+    periods: ["all"],
+    defaultPeriod: "all",
+  },
+];
+
+export interface LeaderboardRow {
+  userId: string;
+  value: number;
+  // 顯示用附加資訊（如等級榜的 Lv.N）
+  sub?: string;
+}
+
+export interface LeaderboardResult {
+  category: LeaderboardKey;
+  period: LeaderboardPeriod;
+  rows: LeaderboardRow[];
+  total: number;
+  myRank: number | null;
+  myValue: number | null;
+}
+
+export async function getLeaderboard(
+  guildId: string,
+  category: LeaderboardKey,
+  period: LeaderboardPeriod,
+  viewerId: string | null,
+  limit = 10,
+): Promise<LeaderboardResult | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+
+  // 各類別映射：collection / field / 子顯示
+  const map: Record<
+    LeaderboardKey,
+    {
+      collection: string;
+      sortField: string;
+      subRender?: (doc: Record<string, unknown>) => string | undefined;
+    }
+  > = {
+    level: {
+      collection: "UserLevels",
+      sortField: "totalXp",
+      subRender: (doc) => {
+        const totalXp = Number(doc.totalXp ?? 0);
+        const { level } = getLevelProgress(totalXp);
+        return `Lv.${level}`;
+      },
+    },
+    coin: {
+      collection: "UserCoins",
+      sortField: "totalCoins",
+    },
+    messages: {
+      collection: "UserLevels",
+      sortField: "totalMessages",
+    },
+    voice: {
+      collection: "UserLevels",
+      sortField: "totalVoiceMinutes",
+    },
+    mining: {
+      collection: "MiningProfiles",
+      sortField: "mine_count_total",
+    },
+  };
+  const def = map[category];
+  const col = db.collection(def.collection);
+  const baseFilter = { guildId };
+  const sort = { [def.sortField]: -1 } as Record<string, 1 | -1>;
+
+  const [docs, total] = await Promise.all([
+    col.find(baseFilter).sort(sort).limit(limit).toArray(),
+    col.countDocuments({
+      ...baseFilter,
+      [def.sortField]: { $gt: 0 },
+    }),
+  ]);
+
+  const rows: LeaderboardRow[] = docs.map((d) => ({
+    userId: String(d.userId ?? ""),
+    value: Number((d as Record<string, unknown>)[def.sortField] ?? 0),
+    sub: def.subRender ? def.subRender(d as Record<string, unknown>) : undefined,
+  }));
+
+  let myRank: number | null = null;
+  let myValue: number | null = null;
+  if (viewerId && !rows.some((r) => r.userId === viewerId)) {
+    const me = await col.findOne({ userId: viewerId, guildId });
+    if (me) {
+      const v = Number((me as Record<string, unknown>)[def.sortField] ?? 0);
+      myValue = v;
+      myRank = v > 0
+        ? (await col.countDocuments({
+            ...baseFilter,
+            [def.sortField]: { $gt: v },
+          })) + 1
+        : null;
+    }
+  } else if (viewerId) {
+    const idx = rows.findIndex((r) => r.userId === viewerId);
+    if (idx >= 0) {
+      myRank = idx + 1;
+      myValue = rows[idx].value;
+    }
+  }
+  // 對齊：period 預留為未來時間區間支援，現階段一律 all
+  void period;
+
+  return {
+    category,
+    period,
+    rows,
+    total,
+    myRank,
+    myValue,
+  };
+}
+
+// ── 樂透（LotteryDraws / LotteryTickets — 精簡：當期 + 近期已開）─────────────
+
+export interface LotteryDrawSummary {
+  drawId: string;
+  lotteryType: string;
+  drawNumber: number;
+  pool: number;
+  totalTickets: number;
+  scheduledAt: Date;
+  status: "open" | "settled" | "void" | string;
+  winningNumbers?: number[];
+  myTickets?: number;
+}
+
+export async function getLotteryDigest(
+  guildId: string,
+  userId: string,
+): Promise<{ open: LotteryDrawSummary[]; recent: LotteryDrawSummary[] } | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const drawsCol = db.collection("LotteryDraws");
+  const ticketsCol = db.collection("LotteryTickets");
+
+  const [openDocs, recentDocs] = await Promise.all([
+    drawsCol.find({ status: "open" }).sort({ scheduledAt: 1 }).limit(6).toArray(),
+    drawsCol
+      .find({ status: "settled" })
+      .sort({ scheduledAt: -1 })
+      .limit(6)
+      .toArray(),
+  ]);
+
+  // 為當期撈自己持票數
+  const myTicketCounts = new Map<string, number>();
+  await Promise.all(
+    openDocs.map(async (d) => {
+      const drawId = String(d.drawId);
+      const count = await ticketsCol.countDocuments({
+        drawId,
+        userId,
+        guildId,
+      });
+      myTicketCounts.set(drawId, count);
+    }),
+  );
+
+  const map = (d: Record<string, unknown>): LotteryDrawSummary => ({
+    drawId: String(d.drawId ?? ""),
+    lotteryType: String(d.lotteryType ?? ""),
+    drawNumber: Number(d.drawNumber ?? 0),
+    pool: Number(d.pool ?? 0),
+    totalTickets: Number(d.totalTickets ?? 0),
+    scheduledAt:
+      d.scheduledAt instanceof Date
+        ? d.scheduledAt
+        : new Date(String(d.scheduledAt ?? Date.now())),
+    status: String(d.status ?? ""),
+    winningNumbers: Array.isArray(d.winningNumbers)
+      ? (d.winningNumbers as unknown[]).map((n) => Number(n))
+      : undefined,
+  });
+
+  return {
+    open: openDocs.map((d) => {
+      const summary = map(d);
+      summary.myTickets = myTicketCounts.get(summary.drawId) ?? 0;
+      return summary;
+    }),
+    recent: recentDocs.map(map),
+  };
+}
+
+// 對齊 bot src/features/lottery/lotteryConfig 或常見命名
+export const LOTTERY_TYPE_LABELS: Record<string, { label: string; emoji: string }> =
+  {
+    daily: { label: "每日樂透", emoji: "🎟️" },
+    weekly: { label: "週末大樂透", emoji: "🎰" },
+    super: { label: "超級樂透", emoji: "💫" },
+    mini: { label: "迷你樂透", emoji: "🪙" },
+  };
 
 export async function getCoinHistory(
   userId: string,

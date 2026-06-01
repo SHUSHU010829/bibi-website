@@ -263,12 +263,13 @@
 
 .d-tabs {
   display: flex;
-  gap: 22px;
+  gap: 20px;
   align-items: baseline;
+  flex-wrap: wrap;
 }
 .d-tab {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: -0.01em;
   color: var(--ink-4);
   font-weight: 400;
@@ -892,6 +893,48 @@
 .d-btn-disabled {
   opacity: 0.4;
   pointer-events: none;
+}
+
+/* ── Misc shared bits (leaderboard / lottery / duels) ───────────────────── */
+
+.d-uid-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+.d-row-sub {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+.d-tag-me {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-transform: uppercase;
+}
+.d-tr-me td {
+  background: color-mix(in oklab, var(--accent) 9%, transparent) !important;
+}
+.d-my-rank {
+  text-align: left;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.d-my-rank strong {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */

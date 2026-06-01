@@ -6,10 +6,17 @@ import {
   getMiningSummary,
   getDonationHistory,
   getCoinHistory,
+  getTaxHistory,
+  getInviteStats,
+  getDuelHistory,
+  getLeaderboard,
+  getLotteryDigest,
   getPrimaryGuildId,
   COIN_SOURCE_LABELS,
   COIN_CATEGORIES,
   COIN_HISTORY_MAX_PAGE,
+  LEADERBOARD_CATEGORIES,
+  LOTTERY_TYPE_LABELS,
   type CoinSummary,
   type LevelSummary,
   type MiningSummary,
@@ -17,6 +24,13 @@ import {
   type CoinHistoryPage,
   type CoinHistoryPeriod,
   type CoinHistoryDirection,
+  type TaxHistoryPeriod,
+  type TaxHistorySummary,
+  type InviteStats,
+  type DuelHistorySummary,
+  type LeaderboardKey,
+  type LeaderboardResult,
+  type LotteryDrawSummary,
 } from "@/lib/dashboard/profile";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
 
@@ -147,7 +161,24 @@ function TopNav({
   );
 }
 
-type DashTab = "overview" | "transactions";
+type DashTab =
+  | "overview"
+  | "transactions"
+  | "tax"
+  | "invites"
+  | "duels"
+  | "leaderboard"
+  | "lottery";
+
+const DASH_TABS: { id: DashTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "transactions", label: "金流" },
+  { id: "tax", label: "稅務" },
+  { id: "invites", label: "邀請" },
+  { id: "duels", label: "決鬥" },
+  { id: "leaderboard", label: "排行榜" },
+  { id: "lottery", label: "樂透" },
+];
 
 function PageHead({
   title,
@@ -158,17 +189,13 @@ function PageHead({
   stamps?: { v: string; k: string }[];
   activeTab?: DashTab;
 }) {
-  const tabs: { id: DashTab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "transactions", label: "金流紀錄" },
-  ];
   return (
     <header className="d-page-head">
       <div className="d-page-head-left">
         <h1>{title}</h1>
         {activeTab ? (
           <div className="d-tabs">
-            {tabs.map((t) => (
+            {DASH_TABS.map((t) => (
               <Link
                 key={t.id}
                 href={t.id === "overview" ? "/dashboard" : `/dashboard?tab=${t.id}`}
@@ -223,7 +250,10 @@ export default async function DashboardPage({
 }) {
   const session = await readSession();
   const params = await searchParams;
-  const tab: DashTab = params.tab === "transactions" ? "transactions" : "overview";
+  const rawTab = asStr(params.tab);
+  const tab: DashTab = DASH_TABS.some((t) => t.id === rawTab)
+    ? (rawTab as DashTab)
+    : "overview";
   const now = new Date();
   const stamps = [
     {
@@ -297,9 +327,10 @@ export default async function DashboardPage({
 
         {!guildId && <GuildNotConfigured />}
 
-        {tab === "overview" ? (
+        {tab === "overview" && (
           <OverviewTab session={session} guildId={guildId} />
-        ) : (
+        )}
+        {tab === "transactions" && (
           <TransactionsTab
             session={session}
             guildId={guildId}
@@ -308,6 +339,29 @@ export default async function DashboardPage({
             category={asCategory(asStr(params.category))}
             page={Number.parseInt(asStr(params.page) ?? "0", 10) || 0}
           />
+        )}
+        {tab === "tax" && (
+          <TaxTab
+            session={session}
+            guildId={guildId}
+            period={asTaxPeriod(asStr(params.period))}
+          />
+        )}
+        {tab === "invites" && (
+          <InvitesTab session={session} guildId={guildId} />
+        )}
+        {tab === "duels" && (
+          <DuelsTab session={session} guildId={guildId} />
+        )}
+        {tab === "leaderboard" && (
+          <LeaderboardTab
+            session={session}
+            guildId={guildId}
+            category={asLbCategory(asStr(params.category))}
+          />
+        )}
+        {tab === "lottery" && (
+          <LotteryTab session={session} guildId={guildId} />
         )}
 
         <p className="d-notice">
@@ -616,6 +670,545 @@ function TransactionsView({
 
       <p className="d-notice" style={{ marginTop: 14 }}>
         紀錄保留 90 天。要換條件就重新點上面的篩選 pill；想看完整 90 天就把期間切到「全部時間」。
+      </p>
+    </>
+  );
+}
+
+// ── 稅務 / 邀請 / 決鬥 / 排行榜 / 樂透 ────────────────────────────────────────
+
+function asTaxPeriod(v: string | undefined): TaxHistoryPeriod {
+  return v === "month" || v === "year" ? v : "all";
+}
+
+function asLbCategory(v: string | undefined): LeaderboardKey {
+  return LEADERBOARD_CATEGORIES.some((c) => c.key === v)
+    ? (v as LeaderboardKey)
+    : "level";
+}
+
+async function TaxTab({
+  session,
+  guildId,
+  period,
+}: {
+  session: { id: string };
+  guildId: string | null;
+  period: TaxHistoryPeriod;
+}) {
+  if (!guildId) return null;
+  const result = await getTaxHistory(session.id, guildId, period);
+  if (!result) return <DataUnavailable />;
+  return <TaxView result={result} period={period} />;
+}
+
+function TaxView({
+  result,
+  period,
+}: {
+  result: TaxHistorySummary;
+  period: TaxHistoryPeriod;
+}) {
+  const periodPills: { id: TaxHistoryPeriod; label: string }[] = [
+    { id: "month", label: "本月" },
+    { id: "year", label: "今年" },
+    { id: "all", label: "全部時間" },
+  ];
+  const avgRatePct = result.avgRate !== null ? (result.avgRate * 100).toFixed(2) : null;
+
+  return (
+    <>
+      <div className="d-tx-summary">
+        <div className="d-tx-summary-card d-card-feature">
+          <span className="d-c-sub">TOTAL TAXED</span>
+          <span className="d-num-xl">{fmt(result.totalTaxed)}</span>
+          <span className="d-feature-meta">共 {fmt(result.count)} 次扣繳</span>
+        </div>
+        <div className="d-tx-summary-card">
+          <span className="d-c-sub">AVG RATE</span>
+          <span className="d-num-md d-tx-neg">
+            {avgRatePct !== null ? `${avgRatePct}%` : "—"}
+          </span>
+        </div>
+        <div className="d-tx-summary-card">
+          <span className="d-c-sub">LATEST</span>
+          <span className="d-num-md">
+            {result.rows[0] ? fmt(Math.abs(result.rows[0].amount)) : "—"}
+          </span>
+        </div>
+      </div>
+
+      <div className="d-tx-filters">
+        <div className="d-tx-filter-group">
+          <span className="d-tx-filter-lab">期間</span>
+          <div className="d-pill-row">
+            {periodPills.map((p) => {
+              const sp = new URLSearchParams({ tab: "tax" });
+              if (p.id !== "all") sp.set("period", p.id);
+              return (
+                <Link
+                  key={p.id}
+                  href={`/dashboard?${sp.toString()}`}
+                  className={"d-pill" + (period === p.id ? " active" : "")}
+                >
+                  {p.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {result.rows.length === 0 ? (
+        <div className="d-empty">
+          這個期間沒有任何財富稅紀錄，恭喜你逃過一劫 🎉
+        </div>
+      ) : (
+        <div className="d-table-wrap">
+          <table className="d-tbl">
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>稅前餘額 → 稅後</th>
+                <th>稅率</th>
+                <th className="num">扣繳</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.rows.map((r, i) => (
+                <tr key={`${r.createdAt.getTime()}-${i}`}>
+                  <td>{fmtTxTime(r.createdAt)}</td>
+                  <td>
+                    {r.before !== null
+                      ? `${fmt(r.before)} → ${fmt(r.before - Math.abs(r.amount))}`
+                      : "—"}
+                  </td>
+                  <td>
+                    {r.effectiveRate !== null
+                      ? `${(r.effectiveRate * 100).toFixed(2)}%`
+                      : "—"}
+                  </td>
+                  <td className="num d-tx-neg">
+                    -{fmt(Math.abs(r.amount))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="d-notice">
+        財富稅每週一結算，餘額越高邊際稅率越高。
+      </p>
+    </>
+  );
+}
+
+async function InvitesTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const stats = await getInviteStats(session.id, guildId);
+  if (!stats) return <DataUnavailable />;
+  return <InvitesView stats={stats} />;
+}
+
+function InvitesView({ stats }: { stats: InviteStats }) {
+  const net = stats.totalReward - stats.totalClawback;
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="有效邀請" sub="ACTIVE" />
+          <div className="d-card-body">
+            <div className="d-num-xl">{fmt(stats.active)}</div>
+            <div className="d-kbd">人</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="已退坑" sub="LEFT" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(stats.left)}</div>
+            <div className="d-kbd">人</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="已扣回" sub="CLAWED BACK" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(stats.clawedBack)}</div>
+            <div className="d-kbd">人</div>
+          </div>
+        </div>
+      </div>
+      <div className="d-grid-3">
+        <div className="d-card">
+          <CardHead title="累積獲得" sub="REWARD" />
+          <div className="d-card-body">
+            <div className="d-num-md d-tx-pos">
+              +{fmt(stats.totalReward)}
+            </div>
+            <div className="d-kbd">幣</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="累積扣回" sub="CLAWBACK" />
+          <div className="d-card-body">
+            <div className="d-num-md d-tx-neg">
+              -{fmt(stats.totalClawback)}
+            </div>
+            <div className="d-kbd">幣</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="淨收益" sub="NET" />
+          <div className="d-card-body">
+            <div
+              className={
+                "d-num-md " + (net >= 0 ? "d-tx-pos" : "d-tx-neg")
+              }
+            >
+              {net >= 0 ? "+" : ""}
+              {fmt(net)}
+            </div>
+            <div className="d-kbd">幣</div>
+          </div>
+        </div>
+      </div>
+      <p className="d-notice">
+        邀請統計每筆按獎勵公式計算；新成員若在期限內退坑會自動扣回對應金幣。
+      </p>
+    </>
+  );
+}
+
+async function DuelsTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const result = await getDuelHistory(session.id, guildId, 10);
+  if (!result) return <DataUnavailable />;
+  return <DuelsView result={result} />;
+}
+
+function DuelsView({ result }: { result: DuelHistorySummary }) {
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="勝率" sub="WIN RATE" />
+          <div className="d-card-body">
+            <div className="d-num-xl">
+              {(result.winRate * 100).toFixed(0)}
+              <span className="d-num-unit">%</span>
+            </div>
+            <div className="d-feature-meta">
+              {fmt(result.wins)} 勝 {fmt(result.losses)} 負
+            </div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="總場數" sub="TOTAL" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(result.total)}</div>
+            <div className="d-kbd">場</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="最近一場" sub="LAST" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {result.rows[0]
+                ? result.rows[0].isWin
+                  ? "🏆 勝"
+                  : "💀 負"
+                : "—"}
+            </div>
+            <div className="d-kbd">
+              {result.rows[0] ? fmtTxTime(result.rows[0].completedAt) : "—"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {result.rows.length === 0 ? (
+        <div className="d-empty">
+          還沒有完成過任何決鬥，到 Discord 用 <code>/決鬥</code> 開戰。
+        </div>
+      ) : (
+        <div className="d-table-wrap">
+          <table className="d-tbl">
+            <thead>
+              <tr>
+                <th>時間</th>
+                <th>結果</th>
+                <th>對手</th>
+                <th>賭注</th>
+                <th className="num">收支</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.rows.map((r, i) => (
+                <tr key={`${r.completedAt.getTime()}-${i}`}>
+                  <td>{fmtTxTime(r.completedAt)}</td>
+                  <td>{r.isWin ? "🏆 勝" : "💀 負"}</td>
+                  <td className="mono">
+                    <code className="d-uid-code">{r.opponentId}</code>
+                  </td>
+                  <td>{fmt(r.bet)}</td>
+                  <td
+                    className={
+                      "num " + (r.net > 0 ? "d-tx-pos" : "d-tx-neg")
+                    }
+                  >
+                    {r.net > 0 ? "+" : ""}
+                    {fmt(r.net)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+async function LeaderboardTab({
+  session,
+  guildId,
+  category,
+}: {
+  session: { id: string };
+  guildId: string | null;
+  category: LeaderboardKey;
+}) {
+  if (!guildId) return null;
+  const result = await getLeaderboard(
+    guildId,
+    category,
+    "all",
+    session.id,
+    10,
+  );
+  if (!result) return <DataUnavailable />;
+  return (
+    <LeaderboardView result={result} category={category} viewerId={session.id} />
+  );
+}
+
+function LeaderboardView({
+  result,
+  category,
+  viewerId,
+}: {
+  result: LeaderboardResult;
+  category: LeaderboardKey;
+  viewerId: string;
+}) {
+  const def = LEADERBOARD_CATEGORIES.find((c) => c.key === category)!;
+  return (
+    <>
+      <div className="d-tx-filters">
+        <div className="d-tx-filter-group">
+          <span className="d-tx-filter-lab">類別</span>
+          <div className="d-pill-row d-pill-row-wrap">
+            {LEADERBOARD_CATEGORIES.map((c) => {
+              const sp = new URLSearchParams({ tab: "leaderboard" });
+              if (c.key !== "level") sp.set("category", c.key);
+              return (
+                <Link
+                  key={c.key}
+                  href={`/dashboard?${sp.toString()}`}
+                  className={"d-pill" + (category === c.key ? " active" : "")}
+                >
+                  {c.emoji} {c.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {result.myRank !== null && (
+        <div className="d-empty d-my-rank">
+          你目前排在 <strong>#{result.myRank}</strong> ・{" "}
+          {fmt(result.myValue ?? 0)} {def.unit}
+          {def.key === "level" && (
+            <>
+              {" "}
+              · 共 {fmt(result.total)} 位玩家上榜
+            </>
+          )}
+        </div>
+      )}
+
+      {result.rows.length === 0 ? (
+        <div className="d-empty">這個類別還沒有任何上榜紀錄。</div>
+      ) : (
+        <div className="d-table-wrap">
+          <table className="d-tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>玩家</th>
+                <th className="num">
+                  {def.label} ({def.unit})
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.rows.map((r, i) => {
+                const isMe = r.userId === viewerId;
+                return (
+                  <tr
+                    key={r.userId}
+                    className={isMe ? "d-tr-me" : undefined}
+                  >
+                    <td className="mono">#{i + 1}</td>
+                    <td>
+                      <code className="d-uid-code">{r.userId}</code>
+                      {r.sub ? <span className="d-row-sub"> · {r.sub}</span> : null}
+                      {isMe ? (
+                        <span className="d-tag-me">你</span>
+                      ) : null}
+                    </td>
+                    <td className="num">{fmt(r.value)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="d-notice">
+        現階段排行榜只支援「全部時間」聚合；按時間切片（today/week/month）需要等對應的彙整 collection 對齊，會在後續批次補上。
+      </p>
+    </>
+  );
+}
+
+async function LotteryTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const data = await getLotteryDigest(guildId, session.id);
+  if (!data) return <DataUnavailable />;
+  return <LotteryView open={data.open} recent={data.recent} />;
+}
+
+function LotteryView({
+  open,
+  recent,
+}: {
+  open: LotteryDrawSummary[];
+  recent: LotteryDrawSummary[];
+}) {
+  return (
+    <>
+      <SectionTitle title="當期開放" en="OPEN DRAWS" />
+      {open.length === 0 ? (
+        <div className="d-empty">目前沒有開放中的樂透。</div>
+      ) : (
+        <div className="d-grid-3">
+          {open.map((d) => {
+            const cfg =
+              LOTTERY_TYPE_LABELS[d.lotteryType] ?? {
+                label: d.lotteryType,
+                emoji: "🎟️",
+              };
+            return (
+              <div key={d.drawId} className="d-card">
+                <CardHead
+                  title={`${cfg.emoji} ${cfg.label}`}
+                  sub={`第 ${d.drawNumber} 期`}
+                />
+                <div className="d-card-body">
+                  <div className="d-num-md">{fmt(d.pool)}</div>
+                  <div className="d-kbd">彩池</div>
+                  <div
+                    className="d-row between"
+                    style={{ marginTop: 10, fontSize: 12 }}
+                  >
+                    <span className="d-kicker">
+                      總票 {fmt(d.totalTickets)}
+                    </span>
+                    <span className="d-kicker mono">
+                      你 {fmt(d.myTickets ?? 0)} 張
+                    </span>
+                  </div>
+                  <div
+                    className="d-kicker"
+                    style={{ marginTop: 8 }}
+                  >
+                    開獎 {fmtTxTime(d.scheduledAt)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <SectionTitle title="近期開獎" en="RECENT RESULTS" />
+      {recent.length === 0 ? (
+        <div className="d-empty">沒有任何已開獎紀錄。</div>
+      ) : (
+        <div className="d-table-wrap">
+          <table className="d-tbl">
+            <thead>
+              <tr>
+                <th>玩法</th>
+                <th>期數</th>
+                <th>中獎號碼</th>
+                <th className="num">彩池</th>
+                <th>開獎時間</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((d) => {
+                const cfg =
+                  LOTTERY_TYPE_LABELS[d.lotteryType] ?? {
+                    label: d.lotteryType,
+                    emoji: "🎟️",
+                  };
+                return (
+                  <tr key={d.drawId}>
+                    <td>
+                      {cfg.emoji} {cfg.label}
+                    </td>
+                    <td className="mono">#{d.drawNumber}</td>
+                    <td className="mono">
+                      {d.winningNumbers && d.winningNumbers.length > 0
+                        ? d.winningNumbers.join(" · ")
+                        : "—"}
+                    </td>
+                    <td className="num">{fmt(d.pool)}</td>
+                    <td>{fmtTxTime(d.scheduledAt)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="d-notice">
+        樂透開獎時間與彩池由 bot 自動結算。詳細玩法與訂閱請用 Discord 的{" "}
+        <code>/樂透</code> 指令。
       </p>
     </>
   );
