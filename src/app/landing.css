@@ -83,6 +83,20 @@
   position: relative;
 }
 .lp .nav-mid a:hover { color: var(--ink); }
+.lp .nav-mid .arr {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-4);
+  transition: transform .18s, color .18s;
+  display: inline-block;
+}
+.lp .nav-mid a:hover .arr { color: var(--accent); transform: translate(2px, -2px); }
+.lp .shushu-link {
+  color: inherit;
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+  transition: color .15s, border-color .15s;
+}
+.lp .shushu-link:hover { color: var(--accent); border-color: var(--accent); }
 
 .lp .nav-right { display: flex; align-items: center; gap: 14px; }
 
@@ -353,6 +367,46 @@
 }
 .lp .feat:hover .pv-lv .badge { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .lp .pv-lv .bar { flex: 1; }
+
+/* fishing preview */
+.lp .pv-fish { padding: 0; }
+.lp .pv-fish-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.lp .pv-fish-svg .wave {
+  fill: color-mix(in oklab, var(--accent) 12%, transparent);
+  transition: transform .8s cubic-bezier(.2,.7,.2,1);
+}
+.lp .pv-fish-svg .wave-2 {
+  fill: color-mix(in oklab, var(--accent) 20%, transparent);
+}
+.lp .feat:hover .pv-fish-svg .wave-1 { transform: translateX(-4px); }
+.lp .feat:hover .pv-fish-svg .wave-2 { transform: translateX(6px); }
+.lp .pv-fish-svg .line {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  transition: y2 .5s ease;
+}
+.lp .pv-fish-svg .float {
+  fill: var(--accent);
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1), cy .5s ease;
+}
+.lp .feat:hover .pv-fish-svg .float { transform: translate(0, -6px); }
+.lp .pv-fish-svg .fishy {
+  fill: var(--ink-3);
+  opacity: 0;
+  transform: translate(220px, 60px);
+  transition: transform 1.1s cubic-bezier(.4,.1,.4,1), opacity .3s;
+}
+.lp .feat:hover .pv-fish-svg .fishy {
+  opacity: 1;
+  transform: translate(60px, 48px);
+}
 
 /* =================== DONATE =================== */
 .lp .donate { padding-top: 64px; padding-bottom: 70px; }

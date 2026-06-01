@@ -45,6 +45,17 @@
 }
 .donate-nav-mid a:hover { color: var(--color-primary); }
 .donate-nav-mid a.active { color: var(--color-primary); }
+.donate-nav-mid .arr {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  color: var(--color-secondary);
+  transition: transform 0.18s, color 0.18s;
+  display: inline-block;
+}
+.donate-nav-mid a:hover .arr {
+  color: var(--color-feature);
+  transform: translate(2px, -2px);
+}
 
 .donate-nav-right {
   display: flex;

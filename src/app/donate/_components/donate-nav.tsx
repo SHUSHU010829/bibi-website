@@ -2,12 +2,19 @@ import Link from "next/link";
 
 const INVITE_URL = "https://discord.gg/shushu010829";
 
+type NavLink = {
+  label: string;
+  href: string;
+  external?: boolean;
+  arrow?: boolean;
+};
+
 // 與首頁 lp-nav 同步的連結組
-const LINKS = [
+const LINKS: NavLink[] = [
   { label: "能玩什麼", href: "/#features" },
   { label: "抖內支持", href: "/#donate" },
-  { label: "完整文件", href: "/docs" },
-  { label: "儀表板", href: "/dashboard" },
+  { label: "查看文件", href: "/docs", external: true, arrow: true },
+  { label: "DashBoard", href: "/dashboard", external: true, arrow: true },
 ];
 
 function DiscordMark({ className }: { className?: string }) {
@@ -27,15 +34,33 @@ export default function DonateNav({ active }: { active?: string }) {
           <span className="bn">逼逼<em>機器人</em></span>
         </Link>
         <div className="donate-nav-mid">
-          {LINKS.map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              className={active === l.href ? "active" : undefined}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) =>
+            l.external ? (
+              <a
+                key={l.label}
+                href={l.href}
+                target="_blank"
+                rel="noreferrer"
+                className={active === l.href ? "active" : undefined}
+              >
+                {l.label}
+                {l.arrow && (
+                  <span className="arr" aria-hidden>
+                    {" "}
+                    ↗
+                  </span>
+                )}
+              </a>
+            ) : (
+              <Link
+                key={l.label}
+                href={l.href}
+                className={active === l.href ? "active" : undefined}
+              >
+                {l.label}
+              </Link>
+            ),
+          )}
         </div>
         <div className="donate-nav-right">
           <a

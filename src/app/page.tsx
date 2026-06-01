@@ -26,8 +26,12 @@ export default function Home() {
           <div className="nav-mid">
             <a href="#features">能玩什麼</a>
             <a href="#donate">抖內支持</a>
-            <Link href="/docs">完整文件</Link>
-            <Link href="/dashboard">儀表板</Link>
+            <a href="/docs" target="_blank" rel="noreferrer">
+              查看文件 <span className="arr" aria-hidden>↗</span>
+            </a>
+            <a href="/dashboard" target="_blank" rel="noreferrer">
+              DashBoard <span className="arr" aria-hidden>↗</span>
+            </a>
           </div>
           <div className="nav-right">
             <a className="btn solid" href={INVITE_URL} target="_blank" rel="noreferrer">
@@ -94,11 +98,22 @@ export default function Home() {
       {/* =================== FOOTER =================== */}
       <footer className="lp-foot">
         <div className="wrap">
-          <div className="copy">© SHUSHU · <b>逼逼機器人 BIBIBOT</b></div>
+          <div className="copy">
+            ©{" "}
+            <a
+              className="shushu-link"
+              href="https://www.shushu.tw/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              SHUSHU
+            </a>{" "}
+            · <b>逼逼機器人 BIBIBOT</b>
+          </div>
           <div className="foot-links">
-            <Link href="/docs">完整文件</Link>
+            <a href="/docs" target="_blank" rel="noreferrer">查看文件</a>
             <a href="#donate">抖內</a>
-            <Link href="/dashboard">儀表板</Link>
+            <a href="/dashboard" target="_blank" rel="noreferrer">DashBoard</a>
             <a href={INVITE_URL} target="_blank" rel="noreferrer">Discord</a>
           </div>
         </div>
