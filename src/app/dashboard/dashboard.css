@@ -1,0 +1,168 @@
+/* ── /dashboard 額外樣式（與 donate.css 共用 .donate-shell / panel / nav） ── */
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.dash-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: 18px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-card .label {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+.dash-card .stat {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.dash-card .sub {
+  font-size: 13px;
+  color: var(--color-secondary);
+  line-height: 1.6;
+}
+
+.dash-card.feature {
+  background: var(--color-feature);
+  color: var(--color-ink);
+}
+.dash-card.feature .label,
+.dash-card.feature .sub {
+  color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+}
+.dash-card.feature .stat {
+  color: var(--color-ink);
+}
+
+.dash-progress {
+  height: 8px;
+  background: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.dash-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--color-ink);
+  border-radius: 999px;
+}
+.dash-card:not(.feature) .dash-progress {
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+.dash-card:not(.feature) .dash-progress > span {
+  background: var(--color-feature);
+}
+
+.dash-kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+}
+.dash-kv-row .k {
+  color: var(--color-secondary);
+}
+.dash-kv-row .v {
+  font-family: var(--font-jetbrains), monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+}
+
+.dash-empty {
+  background: var(--color-card);
+  border: 1px dashed var(--color-hairline);
+  border-radius: 18px;
+  padding: 28px 24px;
+  text-align: center;
+  color: var(--color-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.dash-table th,
+.dash-table td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+.dash-table th {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+  font-weight: 400;
+}
+.dash-table td.num {
+  font-family: var(--font-jetbrains), monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.dash-table tr:last-child td { border-bottom: none; }
+
+.dash-login {
+  background: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: 18px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+  max-width: 520px;
+}
+.dash-login h2 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--color-primary);
+}
+.dash-login p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-secondary);
+  line-height: 1.7;
+}
+
+.dash-readonly-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: color-mix(in oklab, var(--color-feature) 18%, transparent);
+  color: var(--color-feature);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
