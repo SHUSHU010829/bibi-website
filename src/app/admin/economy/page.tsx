@@ -6,6 +6,7 @@ import {
   type UserSummary,
 } from "@/lib/admin/economy";
 import { AdminApiError } from "@/lib/admin/fetcher";
+import { fmtShortDateTime } from "@/lib/format/time";
 import { AdjustForm } from "./AdjustForm";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +16,7 @@ function fmt(n: number): string {
 }
 
 function fmtTime(s: string): string {
-  return new Date(s).toLocaleString("zh-TW", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return fmtShortDateTime(s);
 }
 
 function asStr(v: string | string[] | undefined): string | undefined {

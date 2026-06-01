@@ -75,6 +75,9 @@ export default async function AdminLayout({
                 Admin{identity.isOwner ? " · Owner" : ""}
               </span>
               <span className="d-account-name">{displayName}</span>
+              <Link href="/leaderboard" className="d-btn d-btn-ghost">
+                排行榜
+              </Link>
               <Link href="/dashboard" className="d-btn d-btn-ghost">
                 ← 回 Dashboard
               </Link>

@@ -275,7 +275,9 @@ export async function getBackpack(
       ((doc as Record<string, unknown>).backpack as Record<string, number>) ?? {},
     fishBag:
       ((doc as Record<string, unknown>).fish_bag as Record<string, number>) ?? {},
-    backpackSlots: Number((doc as Record<string, unknown>).backpack_slots ?? 100),
+    backpackSlots:
+      100 +
+      Number((doc as Record<string, unknown>).backpack_bonus_slots ?? 0),
     legendaryFragments: Number((doc as Record<string, unknown>).legendary_fragments ?? 0),
   };
 }
