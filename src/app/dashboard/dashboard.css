@@ -1319,3 +1319,26 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── /admin/cron ─────────────────────────────────────────────────────────── */
+.dash-root .d-run-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dash-root .d-run-failed {
+  border-left: 3px solid #e57373;
+}
+.dash-root .d-pre {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  margin-top: 8px;
+  color: var(--ink-2);
+}

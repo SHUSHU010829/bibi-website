@@ -32,8 +32,8 @@ export default function AdminHomePage() {
         <AdminCard
           href="/admin/cron"
           title="Cron 監控"
-          desc="所有排程任務狀態、手動觸發"
-          status="待開發"
+          desc="排程狀態、歷史紀錄、Owner 手動觸發"
+          status="可用"
         />
       </div>
 
