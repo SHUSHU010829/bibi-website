@@ -24,6 +24,15 @@ type AdminMeResponse = {
   displayName: string | null;
 };
 
+/**
+ * 輕量版：只要知道「現在登入的人是不是 admin」就好。
+ * 用於在一般頁面的 nav 顯示 admin 連結等場景；失敗 / 不是 admin 都回 false。
+ */
+export async function isCurrentUserAdmin(): Promise<boolean> {
+  const result = await checkAdmin().catch(() => null);
+  return result?.status === "ok";
+}
+
 export async function checkAdmin(): Promise<AdminCheckResult> {
   const session = await readSession();
   if (!session) return { status: "unauthenticated" };
