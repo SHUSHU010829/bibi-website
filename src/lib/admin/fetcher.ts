@@ -33,8 +33,12 @@ function getAdminSecret(): string | null {
   return process.env.DASHBOARD_ADMIN_SECRET || null;
 }
 
+function getAdminGuildId(): string | null {
+  return process.env.PRIMARY_GUILD_ID?.trim() || null;
+}
+
 export function adminApiConfigured(): boolean {
-  return Boolean(getBotBase() && getAdminSecret());
+  return Boolean(getBotBase() && getAdminSecret() && getAdminGuildId());
 }
 
 export async function adminFetch<T = unknown>(
@@ -44,9 +48,10 @@ export async function adminFetch<T = unknown>(
 ): Promise<T> {
   const botBase = getBotBase();
   const secret = getAdminSecret();
-  if (!botBase || !secret) {
+  const guildId = getAdminGuildId();
+  if (!botBase || !secret || !guildId) {
     throw new AdminApiError(
-      "BOT_API_BASE_URL / DASHBOARD_ADMIN_SECRET 未設定",
+      "BOT_API_BASE_URL / DASHBOARD_ADMIN_SECRET / PRIMARY_GUILD_ID 未設定",
       503,
     );
   }
@@ -61,6 +66,7 @@ export async function adminFetch<T = unknown>(
   const headers: Record<string, string> = {
     Authorization: `Bearer ${secret}`,
     "X-Admin-User-Id": userId,
+    "X-Admin-Guild-Id": guildId,
   };
   if (opts.body !== undefined) headers["Content-Type"] = "application/json";
 
