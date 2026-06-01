@@ -411,6 +411,7 @@ export default async function DashboardPage({
           </div>
           <div className="d-foot-links">
             <Link href="/">首頁</Link>
+            <Link href="/leaderboard">排行榜</Link>
             <a href="/docs" target="_blank" rel="noreferrer">查看文件</a>
             <Link href="/donate">抖內</Link>
             <a href={INVITE_URL} target="_blank" rel="noreferrer">Discord</a>
