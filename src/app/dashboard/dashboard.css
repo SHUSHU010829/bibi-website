@@ -1212,3 +1212,60 @@
     display: none;
   }
 }
+
+/* ── /admin/donation 補發表單 ────────────────────────────────────────────── */
+.dash-root .d-resolve-form {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-sm);
+  background: var(--paper-2);
+}
+.dash-root .d-resolve-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dash-root .d-resolve-lab {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.dash-root .d-resolve-input {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.dash-root .d-resolve-input.mono {
+  font-family: var(--mono);
+}
+.dash-root .d-resolve-input:focus {
+  outline: none;
+  border-color: var(--accent-2);
+}
+.dash-root .d-resolve-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.dash-root .d-resolve-status {
+  font-size: 13px;
+}
+.dash-root .d-unmatched-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .dash-root .d-resolve-row {
+    grid-template-columns: 1fr;
+  }
+}
