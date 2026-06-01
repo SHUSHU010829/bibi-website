@@ -21,19 +21,19 @@ export default function AdminHomePage() {
           href="/admin/donation"
           title="贊助管理"
           desc="records / unmatched / patrons / stats"
-          status="待開發"
+          status="可用"
         />
         <AdminCard
           href="/admin/economy"
           title="經濟管理"
-          desc="調整使用者 coin / 等級，寫稽核"
-          status="待開發"
+          desc="搜尋玩家 → 調整 coin / XP，寫稽核"
+          status="可用"
         />
         <AdminCard
           href="/admin/cron"
           title="Cron 監控"
-          desc="所有排程任務狀態、手動觸發"
-          status="待開發"
+          desc="排程狀態、歷史紀錄、Owner 手動觸發"
+          status="可用"
         />
       </div>
 

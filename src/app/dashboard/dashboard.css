@@ -1269,3 +1269,76 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── /admin/economy ──────────────────────────────────────────────────────── */
+.dash-root .d-search-form {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+}
+.dash-root .d-search-form .d-resolve-input {
+  flex: 1;
+}
+.dash-root .d-search-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.dash-root .d-search-hit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 120ms;
+}
+.dash-root .d-search-hit:hover {
+  border-color: var(--accent-2);
+}
+.dash-root .d-search-avatar {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-root .d-search-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dash-root .d-search-name {
+  font-weight: 600;
+}
+.dash-root .d-search-id {
+  font-size: 11px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── /admin/cron ─────────────────────────────────────────────────────────── */
+.dash-root .d-run-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dash-root .d-run-failed {
+  border-left: 3px solid #e57373;
+}
+.dash-root .d-pre {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  margin-top: 8px;
+  color: var(--ink-2);
+}

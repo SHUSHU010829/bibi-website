@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { readSession, avatarUrl } from "@/lib/donation/session";
+import { isCurrentUserAdmin } from "@/lib/admin/permissions";
 import {
   getCoinSummary,
   getLevelSummary,
@@ -125,12 +126,14 @@ function DiscordMark({ className }: { className?: string }) {
 
 function TopNav({
   identity,
+  isAdmin,
 }: {
   identity?: {
     avatar: string;
     name: string;
     id: string;
   };
+  isAdmin?: boolean;
 }) {
   return (
     <nav className="d-topnav">
@@ -155,6 +158,11 @@ function TopNav({
               height={32}
             />
             <span className="d-account-name">{identity.name}</span>
+            {isAdmin && (
+              <Link href="/admin" className="d-btn d-btn-ghost">
+                Admin
+              </Link>
+            )}
             <form
               action="/api/auth/discord/logout"
               method="post"
@@ -322,11 +330,13 @@ export default async function DashboardPage({
 
   const guildId = getPrimaryGuildId();
   const displayName = session.globalName ?? session.username;
+  const isAdmin = await isCurrentUserAdmin();
 
   return (
     <div className="d-app">
       <div className="d-app-frame">
         <TopNav
+          isAdmin={isAdmin}
           identity={{
             avatar: avatarUrl(session),
             name: displayName,
