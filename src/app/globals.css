@@ -60,6 +60,14 @@
   --color-fd-ring:               rgba(180, 168, 150, 0.55);
 }
 
+/* ── Base reset ──────────────────────────────────────────────────────────────
+   Removes the default browser body margin that previously caused a white
+   border around dark-themed pages until fumadocs' CSS got loaded.            */
+
+html, body { margin: 0; padding: 0; }
+html { background: var(--color-shell); }
+body { background: var(--color-shell); color: var(--color-primary); }
+
 /* ── Page-specific classes ───────────────────────────────────────────────────*/
 
 .discord-link {
