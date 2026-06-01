@@ -1342,3 +1342,183 @@
   margin-top: 8px;
   color: var(--ink-2);
 }
+
+/* ── /leaderboard 公開排行榜 ───────────────────────────────────────────── */
+.dash-root .d-lb-list {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dash-root .d-lb-row {
+  display: grid;
+  grid-template-columns: 48px 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+}
+.dash-root .d-lb-row-top {
+  border-color: var(--accent-2);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 6%, var(--paper)) 0%,
+    var(--paper) 100%
+  );
+}
+.dash-root .d-lb-rank {
+  font-family: var(--mono);
+  font-size: 18px;
+  text-align: center;
+  color: var(--ink-3);
+}
+.dash-root .d-lb-row-top .d-lb-rank {
+  font-size: 24px;
+  color: var(--accent);
+}
+.dash-root .d-lb-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-root .d-lb-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper-3);
+  color: var(--ink-3);
+  font-weight: 700;
+}
+.dash-root .d-lb-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.dash-root .d-lb-name-display {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-root .d-lb-name-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.dash-root .d-lb-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+.dash-root .d-lb-value-num {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+.dash-root .d-lb-row-top .d-lb-value-num {
+  font-size: 22px;
+  color: var(--accent-2);
+}
+.dash-root .d-lb-value-unit {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+@media (max-width: 540px) {
+  .dash-root .d-lb-row {
+    grid-template-columns: 36px 32px 1fr auto;
+    padding: 8px 10px;
+  }
+  .dash-root .d-lb-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* ── /u/[userId] 公開卡片 ────────────────────────────────────────────── */
+.dash-root .d-profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  margin: 14px 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.dash-root .d-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-2);
+}
+.dash-root .d-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dash-root .d-profile-name {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.1;
+}
+.dash-root .d-profile-username {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.dash-root .d-profile-title {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+.dash-root .d-profile-level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.dash-root .d-profile-titles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+@media (max-width: 640px) {
+  .dash-root .d-profile-hero {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    padding: 16px;
+  }
+  .dash-root .d-profile-level {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+  }
+  .dash-root .d-profile-name {
+    font-size: 24px;
+  }
+  .dash-root .d-profile-avatar {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+/* anonymous 行 — 名字無連結，淡色 */
+.dash-root .d-lb-name-anon {
+  color: var(--ink-3);
+}
+.dash-root a.d-lb-name {
+  text-decoration: none;
+}
+.dash-root a.d-lb-name:hover .d-lb-name-display {
+  color: var(--accent);
+}
