@@ -4,8 +4,9 @@ import { getPrimaryGuildId } from "@/lib/dashboard/profile";
 export type LeaderboardRow = {
   userId: string;
   displayName: string | null;
-  username?: string;
+  username?: string | null;
   avatar: string | null;
+  anonymous?: boolean;
 };
 
 export type MiningCountRow = LeaderboardRow & { total: number; count: number };

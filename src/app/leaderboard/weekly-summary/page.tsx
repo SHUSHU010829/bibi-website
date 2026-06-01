@@ -69,8 +69,10 @@ export default async function WeeklySummaryPage() {
               <LbRowItem
                 key={r.userId}
                 rank={i + 1}
+                userId={r.userId}
                 displayName={r.displayName}
                 avatar={r.avatar}
+                anonymous={r.anonymous}
                 value={fmt(r.total)}
                 unit="顆"
                 sub={`${r.count} 次挖礦`}
@@ -87,8 +89,10 @@ export default async function WeeklySummaryPage() {
               <LbRowItem
                 key={r.userId}
                 rank={i + 1}
+                userId={r.userId}
                 displayName={r.displayName}
                 avatar={r.avatar}
+                anonymous={r.anonymous}
                 value={fmt(r.value)}
                 unit="幣"
               />
@@ -104,8 +108,10 @@ export default async function WeeklySummaryPage() {
               <LbRowItem
                 key={r.userId}
                 rank={i + 1}
+                userId={r.userId}
                 displayName={r.displayName}
                 avatar={r.avatar}
+                anonymous={r.anonymous}
                 value={fmt(r.titleCount)}
                 unit="個稱號"
               />

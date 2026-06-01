@@ -57,8 +57,10 @@ export default async function LeaderboardTitlesPage() {
             <LbRowItem
               key={r.userId}
               rank={i + 1}
+              userId={r.userId}
               displayName={r.displayName}
               avatar={r.avatar}
+              anonymous={r.anonymous}
               value={fmt(r.titleCount)}
               unit="個稱號"
             />

@@ -1439,3 +1439,86 @@
     height: 32px;
   }
 }
+
+/* ── /u/[userId] 公開卡片 ────────────────────────────────────────────── */
+.dash-root .d-profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  margin: 14px 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.dash-root .d-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-2);
+}
+.dash-root .d-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dash-root .d-profile-name {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.1;
+}
+.dash-root .d-profile-username {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.dash-root .d-profile-title {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent);
+}
+.dash-root .d-profile-level {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.dash-root .d-profile-titles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+@media (max-width: 640px) {
+  .dash-root .d-profile-hero {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    padding: 16px;
+  }
+  .dash-root .d-profile-level {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+  }
+  .dash-root .d-profile-name {
+    font-size: 24px;
+  }
+  .dash-root .d-profile-avatar {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+/* anonymous 行 — 名字無連結，淡色 */
+.dash-root .d-lb-name-anon {
+  color: var(--ink-3);
+}
+.dash-root a.d-lb-name {
+  text-decoration: none;
+}
+.dash-root a.d-lb-name:hover .d-lb-name-display {
+  color: var(--accent);
+}

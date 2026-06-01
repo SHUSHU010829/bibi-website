@@ -107,8 +107,10 @@ export default async function LeaderboardMiningPage({
             <LbRowItem
               key={r.userId}
               rank={i + 1}
+              userId={r.userId}
               displayName={r.displayName}
               avatar={r.avatar}
+              anonymous={r.anonymous}
               value={fmt(valueOf(type, r))}
               unit={unitOf(type)}
               sub={subOf(type, r)}
