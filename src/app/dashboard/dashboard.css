@@ -116,46 +116,16 @@
   flex-shrink: 0;
 }
 .d-logo .bn {
-  font-family: var(--serif);
-  font-size: 18px;
-  letter-spacing: -0.01em;
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.16em;
   color: var(--ink);
+  text-transform: uppercase;
 }
 .d-logo .bn em {
-  font-style: italic;
+  font-style: normal;
   color: var(--accent);
-}
-
-.d-nav-links {
-  display: flex;
-  gap: 26px;
-}
-.d-nav-link {
-  background: transparent;
-  border: 0;
-  color: var(--ink-3);
-  font-size: 14px;
-  padding: 4px 0;
-  transition: color 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.d-nav-link:hover {
-  color: var(--ink-2);
-}
-.d-nav-link.active {
-  color: var(--ink);
-}
-.d-nav-link .arr {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink-4);
-  transition: transform 0.18s, color 0.18s;
-}
-.d-nav-link:hover .arr {
-  color: var(--accent);
-  transform: translate(2px, -2px);
+  font-weight: 500;
 }
 
 .d-account {
@@ -289,20 +259,6 @@
   color: var(--ink-3);
   letter-spacing: 0.04em;
 }
-.d-readonly {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: color-mix(in oklab, var(--accent) 14%, transparent);
-  color: var(--accent);
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 /* ── Greeting strip ────────────────────────────────────────────────────── */
 
 .d-greeting {
@@ -836,14 +792,6 @@
   }
   .d-brand-row {
     gap: 18px;
-    width: 100%;
-    justify-content: space-between;
-  }
-  .d-nav-links {
-    flex-wrap: wrap;
-    gap: 14px 18px;
-    order: 3;
-    width: 100%;
   }
   .d-account {
     margin-left: auto;

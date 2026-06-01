@@ -98,31 +98,9 @@ function TopNav({
         <Link href="/" className="d-logo" aria-label="逼逼機器人 — 回首頁">
           <span className="mark">BB</span>
           <span className="bn">
-            逼逼<em>機器人</em>
+            DASH<em>BOARD</em>
           </span>
         </Link>
-        <div className="d-nav-links">
-          <span className="d-nav-link active">DashBoard</span>
-          <a
-            href="/"
-            target="_blank"
-            rel="noreferrer"
-            className="d-nav-link"
-          >
-            首頁 <span className="arr">↗</span>
-          </a>
-          <a
-            href="/docs"
-            target="_blank"
-            rel="noreferrer"
-            className="d-nav-link"
-          >
-            查看文件 <span className="arr">↗</span>
-          </a>
-          <Link href="/donate" className="d-nav-link">
-            抖內支持
-          </Link>
-        </div>
       </div>
       <div className="d-account">
         {identity ? (
@@ -182,7 +160,6 @@ function PageHead({
             <span className="k">{s.k}</span>
           </div>
         ))}
-        <span className="d-readonly">READ-ONLY</span>
       </div>
     </header>
   );
@@ -214,7 +191,6 @@ export default async function DashboardPage() {
           <PageHead title="儀表板" stamps={stamps} />
           <div className="d-login">
             <div className="d-login-inner">
-              <span className="d-readonly">READ-ONLY</span>
               <h2>
                 先用 <em>Discord</em> 登入
               </h2>
