@@ -8,6 +8,12 @@
 // 上層決定如何降級。
 
 import { getDonationDb, getDonationRecordsCollection } from "@/lib/donation/mongo";
+import {
+  DAILY_QUESTS,
+  WEEKLY_QUESTS,
+  BADGES,
+  type BadgeDef,
+} from "./botDefs";
 
 export interface CoinSummary {
   totalCoins: number;
@@ -189,6 +195,264 @@ export async function getDonationHistory(
 export function getPrimaryGuildId(): string | null {
   const id = process.env.PRIMARY_GUILD_ID?.trim();
   return id && id.length > 0 ? id : null;
+}
+
+// ── 加成 / 背包 / 裝備 / 任務 / 徽章 ──────────────────────────────────────
+
+export interface ActiveBuff {
+  type: string; // xp_boost / coin_boost
+  multiplier: number;
+  expiresAt: Date;
+  source: string | null;
+}
+
+export interface BackpackSummary {
+  /** MiningProfiles.backpack：道具 id → 數量 */
+  items: Record<string, number>;
+  /** MiningProfiles.lifetime_ore（累計挖到） */
+  lifetimeOre: Record<string, number>;
+  /** 礦袋現有 = lifetime_ore - 已賣？bot 端把目前持有放在 backpack。這裡讀 backpack。 */
+  oreBag: Record<string, number>;
+  fishBag: Record<string, number>;
+  backpackSlots: number;
+  legendaryFragments: number;
+}
+
+export async function getActiveBuffs(
+  userId: string,
+  guildId: string,
+): Promise<ActiveBuff[] | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const doc = await db
+    .collection("UserCoins")
+    .findOne({ userId, guildId }, { projection: { activeBuffs: 1 } });
+  if (!doc) return [];
+  const buffs = (doc.activeBuffs as unknown[] | undefined) ?? [];
+  const now = Date.now();
+  return buffs
+    .map((b) => b as Record<string, unknown>)
+    .filter((b) => {
+      const expIso = b.expiresAt;
+      const exp = expIso instanceof Date ? expIso.getTime() : new Date(String(expIso ?? 0)).getTime();
+      return exp > now;
+    })
+    .map<ActiveBuff>((b) => ({
+      type: String(b.type ?? ""),
+      multiplier: Number(b.multiplier ?? 1),
+      expiresAt:
+        b.expiresAt instanceof Date
+          ? b.expiresAt
+          : new Date(String(b.expiresAt ?? Date.now())),
+      source: b.source ? String(b.source) : null,
+    }));
+}
+
+export async function getBackpack(
+  userId: string,
+  guildId: string,
+): Promise<BackpackSummary | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const doc = await db
+    .collection("MiningProfiles")
+    .findOne({ userId, guildId });
+  if (!doc) {
+    return {
+      items: {},
+      lifetimeOre: {},
+      oreBag: {},
+      fishBag: {},
+      backpackSlots: 100,
+      legendaryFragments: 0,
+    };
+  }
+  return {
+    items: ((doc as Record<string, unknown>).items as Record<string, number>) ?? {},
+    lifetimeOre:
+      ((doc as Record<string, unknown>).lifetime_ore as Record<string, number>) ?? {},
+    oreBag:
+      ((doc as Record<string, unknown>).backpack as Record<string, number>) ?? {},
+    fishBag:
+      ((doc as Record<string, unknown>).fish_bag as Record<string, number>) ?? {},
+    backpackSlots: Number((doc as Record<string, unknown>).backpack_slots ?? 100),
+    legendaryFragments: Number((doc as Record<string, unknown>).legendary_fragments ?? 0),
+  };
+}
+
+export interface EquipmentSummary {
+  pickaxe: string;
+  pickaxeDurability: number | null;
+  fishingRod: string;
+  fishingRodDurability: number | null;
+  weapon: string;
+  weaponDurability: number | null;
+  stamina: number | null;
+}
+
+export async function getEquipment(
+  userId: string,
+  guildId: string,
+): Promise<EquipmentSummary | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const doc = await db
+    .collection("MiningProfiles")
+    .findOne({ userId, guildId });
+  if (!doc) {
+    return {
+      pickaxe: "wood",
+      pickaxeDurability: null,
+      fishingRod: "bamboo",
+      fishingRodDurability: null,
+      weapon: "fist",
+      weaponDurability: null,
+      stamina: null,
+    };
+  }
+  const d = doc as Record<string, unknown>;
+  return {
+    pickaxe: String(d.pickaxe ?? "wood"),
+    pickaxeDurability:
+      d.pickaxe_durability != null ? Number(d.pickaxe_durability) : null,
+    fishingRod: String(d.fishing_rod ?? "bamboo"),
+    fishingRodDurability:
+      d.fishing_rod_durability != null ? Number(d.fishing_rod_durability) : null,
+    weapon: String(d.weapon ?? "fist"),
+    weaponDurability: d.weapon_durability != null ? Number(d.weapon_durability) : null,
+    stamina: d.stamina != null ? Number(d.stamina) : null,
+  };
+}
+
+// ── 任務 ──────────────────────────────────────────────────────────────────
+
+export interface QuestStateRow {
+  questId: string;
+  progress: number;
+  target: number;
+  completed: boolean;
+  claimed: boolean;
+  state: "pending" | "in_progress" | "ready" | "claimed";
+}
+
+export interface QuestStatus {
+  daily: QuestStateRow[];
+  weekly: QuestStateRow[];
+}
+
+function periodKeyForToday(): string {
+  return getTaipeiNowParts().todayISO;
+}
+
+function periodKeyForWeek(): string {
+  // ISO week kkkk-Www；不引入 luxon，這裡用本地計算
+  const todayISO = getTaipeiNowParts().todayISO;
+  const [y, m, d] = todayISO.split("-").map((s) => parseInt(s, 10));
+  // 用 ISO week (週一為一週開始)
+  const date = new Date(Date.UTC(y, m - 1, d));
+  // shift to nearest Thursday: current date + 4 - current day number
+  // ISO weekday: Mon=1 ... Sun=7
+  const dayNum = (date.getUTCDay() + 6) % 7; // 0..6 with Mon=0
+  date.setUTCDate(date.getUTCDate() - dayNum + 3); // Thursday of this week
+  const yearOfWeek = date.getUTCFullYear();
+  const firstThursday = new Date(Date.UTC(yearOfWeek, 0, 4));
+  const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
+  const weekNumber =
+    1 +
+    Math.round(
+      (date.getTime() - firstThursday.getTime()) / (7 * 24 * 60 * 60 * 1000),
+    );
+  return `${yearOfWeek}-W${String(weekNumber).padStart(2, "0")}`;
+}
+
+export async function getQuestStatus(
+  userId: string,
+  guildId: string,
+): Promise<QuestStatus | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const col = db.collection("QuestProgress");
+  const dailyPeriod = periodKeyForToday();
+  const weeklyPeriod = periodKeyForWeek();
+
+  const ids = [
+    ...DAILY_QUESTS.map((q) => ({ questId: q.id, period: dailyPeriod })),
+    ...WEEKLY_QUESTS.map((q) => ({ questId: q.id, period: weeklyPeriod })),
+  ];
+  const docs = await col
+    .find({
+      userId,
+      guildId,
+      $or: ids,
+    })
+    .toArray();
+  const byKey = new Map<string, Record<string, unknown>>();
+  for (const d of docs) {
+    byKey.set(`${(d as Record<string, unknown>).questId}|${(d as Record<string, unknown>).period}`, d as Record<string, unknown>);
+  }
+
+  const enrich = (def: typeof DAILY_QUESTS[number], period: string): QuestStateRow => {
+    const doc = byKey.get(`${def.id}|${period}`);
+    const progress = Number(doc?.progress ?? 0);
+    const target = def.target;
+    const completed = Boolean(doc?.completed) || progress >= target;
+    const claimed = Boolean(doc?.claimed);
+    let state: QuestStateRow["state"] = "pending";
+    if (claimed) state = "claimed";
+    else if (completed) state = "ready";
+    else if (progress > 0) state = "in_progress";
+    return {
+      questId: def.id,
+      progress: Math.min(progress, target),
+      target,
+      completed,
+      claimed,
+      state,
+    };
+  };
+
+  return {
+    daily: DAILY_QUESTS.map((q) => enrich(q, dailyPeriod)),
+    weekly: WEEKLY_QUESTS.map((q) => enrich(q, weeklyPeriod)),
+  };
+}
+
+// ── 徽章（與 /稱號 用同一份定義）─────────────────────────────────────────────
+
+export interface BadgeProgressRow {
+  def: BadgeDef;
+  current: number;
+  unlocked: boolean;
+  progress: number; // 0..1
+}
+
+export function evaluateBadges(level: LevelSummary): BadgeProgressRow[] {
+  const fieldValue = (field: BadgeDef["field"]): number => {
+    switch (field) {
+      case "level":
+        return level.level;
+      case "longestStreak":
+        return level.longestStreak;
+      case "totalMessages":
+        return level.totalMessages;
+      case "totalVoiceMinutes":
+        return level.totalVoiceMinutes;
+      case "totalReactionsReceived":
+        // dashboard 目前還沒在 LevelSummary 暴露這個欄位 → 視為 0
+        return 0;
+    }
+  };
+  return BADGES.map((def) => {
+    const current = fieldValue(def.field);
+    const unlocked = current >= def.threshold;
+    return {
+      def,
+      current,
+      unlocked,
+      progress: Math.min(1, def.threshold > 0 ? current / def.threshold : 0),
+    };
+  });
 }
 
 // ── CoinTransactions（金流紀錄）─────────────────────────────────────────────

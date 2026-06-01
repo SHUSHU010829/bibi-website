@@ -895,6 +895,106 @@
   pointer-events: none;
 }
 
+/* ── Quests ─────────────────────────────────────────────────────────────── */
+
+.d-quests {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+.d-quest {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.d-quest-ready {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklab, var(--accent) 14%, transparent);
+}
+.d-quest-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+.d-quest-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.d-quest-state {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin-left: 10px;
+  text-transform: uppercase;
+}
+.d-quest-ready .d-quest-state {
+  color: var(--accent);
+}
+.d-quest-reward {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.d-quest-desc {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+/* ── Badges ────────────────────────────────────────────────────────────── */
+
+.d-badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.d-badge {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.d-badge-off {
+  opacity: 0.42;
+}
+.d-badge-on {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+}
+.d-badge-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+.d-badge-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.d-badge-prog {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.d-badge-on .d-badge-prog {
+  color: var(--accent);
+}
+
 /* ── Misc shared bits (leaderboard / lottery / duels) ───────────────────── */
 
 .d-uid-code {

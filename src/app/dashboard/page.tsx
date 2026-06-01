@@ -11,6 +11,11 @@ import {
   getDuelHistory,
   getLeaderboard,
   getLotteryDigest,
+  getActiveBuffs,
+  getBackpack,
+  getEquipment,
+  getQuestStatus,
+  evaluateBadges,
   getPrimaryGuildId,
   COIN_SOURCE_LABELS,
   COIN_CATEGORIES,
@@ -31,7 +36,27 @@ import {
   type LeaderboardKey,
   type LeaderboardResult,
   type LotteryDrawSummary,
+  type ActiveBuff,
+  type BackpackSummary,
+  type EquipmentSummary,
+  type QuestStatus,
+  type QuestStateRow,
+  type BadgeProgressRow,
 } from "@/lib/dashboard/profile";
+import {
+  ORES,
+  FISH,
+  PICKAXES,
+  RODS,
+  WEAPONS,
+  SHOP_ITEMS,
+  DAILY_QUESTS,
+  WEEKLY_QUESTS,
+  BADGE_CATEGORIES,
+  DUNGEON_BASE_ATK,
+  type BadgeCategory,
+  type QuestDef,
+} from "@/lib/dashboard/botDefs";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
 
 export const dynamic = "force-dynamic";
@@ -168,10 +193,20 @@ type DashTab =
   | "invites"
   | "duels"
   | "leaderboard"
-  | "lottery";
+  | "lottery"
+  | "backpack"
+  | "equipment"
+  | "buffs"
+  | "quests"
+  | "badges";
 
 const DASH_TABS: { id: DashTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "backpack", label: "背包" },
+  { id: "equipment", label: "裝備" },
+  { id: "buffs", label: "加成" },
+  { id: "quests", label: "任務" },
+  { id: "badges", label: "稱號" },
   { id: "transactions", label: "金流" },
   { id: "tax", label: "稅務" },
   { id: "invites", label: "邀請" },
@@ -362,6 +397,21 @@ export default async function DashboardPage({
         )}
         {tab === "lottery" && (
           <LotteryTab session={session} guildId={guildId} />
+        )}
+        {tab === "backpack" && (
+          <BackpackTab session={session} guildId={guildId} />
+        )}
+        {tab === "equipment" && (
+          <EquipmentTab session={session} guildId={guildId} />
+        )}
+        {tab === "buffs" && (
+          <BuffsTab session={session} guildId={guildId} />
+        )}
+        {tab === "quests" && (
+          <QuestsTab session={session} guildId={guildId} />
+        )}
+        {tab === "badges" && (
+          <BadgesTab session={session} guildId={guildId} />
         )}
 
         <p className="d-notice">
@@ -1209,6 +1259,564 @@ function LotteryView({
       <p className="d-notice">
         樂透開獎時間與彩池由 bot 自動結算。詳細玩法與訂閱請用 Discord 的{" "}
         <code>/樂透</code> 指令。
+      </p>
+    </>
+  );
+}
+
+// ── 背包 / 裝備 / 加成 / 任務 / 稱號 ─────────────────────────────────────────
+
+async function BackpackTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const bag = await getBackpack(session.id, guildId);
+  if (!bag) return <DataUnavailable />;
+  return <BackpackView bag={bag} />;
+}
+
+function BackpackView({ bag }: { bag: BackpackSummary }) {
+  const oreEntries = Object.entries(ORES);
+  const fishEntries = Object.entries(FISH);
+  const usedSlots = Object.values(bag.oreBag).reduce(
+    (sum, n) => sum + (Number(n) || 0),
+    0,
+  );
+
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="背包容量" sub="SLOTS" />
+          <div className="d-card-body">
+            <div className="d-num-xl">
+              {fmt(usedSlots)}
+              <span className="d-num-unit"> / {fmt(bag.backpackSlots)}</span>
+            </div>
+            <div className="d-bar" style={{ marginTop: 14 }}>
+              <span
+                style={{
+                  width: `${Math.min(100, (usedSlots / bag.backpackSlots) * 100)}%`,
+                }}
+              />
+            </div>
+            <span className="d-feature-meta" style={{ marginTop: 6 }}>
+              礦石總格
+            </span>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="魚袋（持有中）" sub="FISH BAG" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {fmt(
+                Object.values(bag.fishBag).reduce(
+                  (s, n) => s + (Number(n) || 0),
+                  0,
+                ),
+              )}
+            </div>
+            <div className="d-kbd">尾</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="傳說素材碎片" sub="LEGENDARY" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(bag.legendaryFragments)}</div>
+            <div className="d-kbd">片</div>
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="礦袋（持有中）" en="ORE BAG" />
+      <div className="d-grid-2-eq">
+        <div className="d-card">
+          <CardHead title="目前持有" sub="CARRYING" />
+          <div className="d-row-list">
+            {oreEntries.map(([id, info]) => (
+              <div key={id} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">{info.emoji}</span>
+                  {info.name}
+                </span>
+                <span className="d-list-val">{fmt(bag.oreBag[id] ?? 0)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="累計挖到" sub="LIFETIME" />
+          <div className="d-row-list">
+            {oreEntries.map(([id, info]) => (
+              <div key={id} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">{info.emoji}</span>
+                  {info.name}
+                </span>
+                <span className="d-list-val">
+                  {fmt(bag.lifetimeOre[id] ?? 0)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="魚袋（持有中）" en="FISH BAG" />
+      <div className="d-card">
+        <div className="d-row-list">
+          {fishEntries.map(([id, info]) => (
+            <div key={id} className="d-list-row">
+              <span className="d-list-key">
+                <span className="d-emoji">{info.emoji}</span>
+                {info.name}
+              </span>
+              <span className="d-list-val">{fmt(bag.fishBag[id] ?? 0)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <SectionTitle title="道具" en="ITEMS" />
+      {Object.keys(bag.items).length === 0 ? (
+        <div className="d-empty">背包裡沒有任何道具。</div>
+      ) : (
+        <div className="d-card">
+          <div className="d-row-list">
+            {Object.entries(bag.items).map(([id, qty]) => {
+              const def = SHOP_ITEMS[id];
+              return (
+                <div key={id} className="d-list-row">
+                  <span className="d-list-key">
+                    <span className="d-emoji">{def?.emoji ?? "🎁"}</span>
+                    {def?.name ?? id}
+                    {def?.category ? (
+                      <span className="d-row-sub"> · {def.category}</span>
+                    ) : null}
+                  </span>
+                  <span className="d-list-val">{fmt(qty)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+async function EquipmentTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const eq = await getEquipment(session.id, guildId);
+  if (!eq) return <DataUnavailable />;
+  return <EquipmentView eq={eq} />;
+}
+
+function EquipmentView({ eq }: { eq: EquipmentSummary }) {
+  const pickaxe = PICKAXES[eq.pickaxe] ?? PICKAXES.wood;
+  const rod = RODS[eq.fishingRod] ?? RODS.bamboo;
+  const weapon = WEAPONS[eq.weapon] ?? WEAPONS.fist;
+  const totalAtk = DUNGEON_BASE_ATK + weapon.atk;
+
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="鎬子" sub="PICKAXE" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {pickaxe.emoji} {pickaxe.name}
+            </div>
+            <div className="d-feature-meta" style={{ marginTop: 10 }}>
+              幸運 +{Math.round(pickaxe.luckBonus * 100)}% · 數量 +
+              {pickaxe.qtyBonus}
+            </div>
+            <div className="d-feature-meta">
+              CD 縮短 {Math.round(pickaxe.cdReductionMs / 60000)} 分
+            </div>
+            <div className="d-feature-meta">
+              耐久：
+              {pickaxe.durability === null
+                ? "永久"
+                : eq.pickaxeDurability !== null
+                  ? `${fmt(eq.pickaxeDurability)} / ${fmt(pickaxe.durability)}`
+                  : `— / ${fmt(pickaxe.durability)}`}
+            </div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="釣竿" sub="ROD" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {rod.emoji} {rod.name}
+            </div>
+            <div className="d-kbd" style={{ marginTop: 10 }}>
+              成功率 +{Math.round(rod.successBonus * 100)}% · 稀有 +{rod.rareBonus}
+            </div>
+            <div className="d-kbd">
+              CD 縮短 {Math.round(rod.cdReductionMs / 60000)} 分
+            </div>
+            <div className="d-kbd">
+              耐久：
+              {rod.durability === null
+                ? "永久"
+                : eq.fishingRodDurability !== null
+                  ? `${fmt(eq.fishingRodDurability)} / ${fmt(rod.durability)}`
+                  : `— / ${fmt(rod.durability)}`}
+            </div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="武器" sub="WEAPON" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {weapon.emoji} {weapon.name}
+            </div>
+            <div className="d-kbd" style={{ marginTop: 10 }}>
+              戰鬥力 {fmt(totalAtk)}（基礎 {fmt(DUNGEON_BASE_ATK)} + 武器{" "}
+              {fmt(weapon.atk)}）
+            </div>
+            <div className="d-kbd">
+              暴擊 {Math.round(weapon.critRate * 100)}%
+            </div>
+            <div className="d-kbd">
+              耐久：
+              {weapon.durability === null
+                ? "永久"
+                : eq.weaponDurability !== null
+                  ? `${fmt(eq.weaponDurability)} / ${fmt(weapon.durability)}`
+                  : `— / ${fmt(weapon.durability)}`}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="d-grid-3">
+        <div className="d-card">
+          <CardHead title="體力（地下城）" sub="STAMINA" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {eq.stamina === null ? "—" : fmt(eq.stamina)}
+            </div>
+            <div className="d-kbd">點</div>
+          </div>
+        </div>
+      </div>
+
+      <p className="d-notice">
+        合成更高階裝備請在 Discord 用 <code>/裝備</code> 或 <code>/合成</code>{" "}
+        指令；網站只顯示目前持有與屬性。
+      </p>
+    </>
+  );
+}
+
+async function BuffsTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const buffs = await getActiveBuffs(session.id, guildId);
+  if (buffs === null) return <DataUnavailable />;
+  return <BuffsView buffs={buffs} />;
+}
+
+function BuffsView({ buffs }: { buffs: ActiveBuff[] }) {
+  const xpBuffs = buffs.filter((b) => b.type === "xp_boost");
+  const coinBuffs = buffs.filter((b) => b.type === "coin_boost");
+
+  return (
+    <>
+      <div className="d-grid-2-eq">
+        <div className="d-card d-card-feature">
+          <CardHead title="最佳 XP 加成" sub="XP BOOST" />
+          <div className="d-card-body">
+            <div className="d-num-xl">
+              ×{maxMult(xpBuffs).toFixed(2)}
+            </div>
+            <span className="d-feature-meta">
+              共 {fmt(xpBuffs.length)} 個生效中
+            </span>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="最佳金幣加成" sub="COIN BOOST" />
+          <div className="d-card-body">
+            <div className="d-num-xl">
+              ×{maxMult(coinBuffs).toFixed(2)}
+            </div>
+            <div className="d-kbd">{fmt(coinBuffs.length)} 個生效中</div>
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="目前生效 buff" en="ACTIVE BUFFS" />
+      {buffs.length === 0 ? (
+        <div className="d-empty">
+          目前沒有任何生效中的 buff。到 Discord 用 <code>/商店</code>{" "}
+          買藥水即可獲得加成。
+        </div>
+      ) : (
+        <div className="d-table-wrap">
+          <table className="d-tbl">
+            <thead>
+              <tr>
+                <th>來源</th>
+                <th>類型</th>
+                <th>倍率</th>
+                <th>結束時間</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buffs.map((b, i) => {
+                const def = b.source ? SHOP_ITEMS[b.source] : null;
+                return (
+                  <tr key={`${b.source ?? "x"}-${b.expiresAt.getTime()}-${i}`}>
+                    <td>
+                      {def?.emoji ?? "🧪"} {def?.name ?? b.source ?? "—"}
+                    </td>
+                    <td>
+                      {b.type === "xp_boost"
+                        ? "XP 加成"
+                        : b.type === "coin_boost"
+                          ? "金幣加成"
+                          : b.type}
+                    </td>
+                    <td className="mono">×{b.multiplier.toFixed(2)}</td>
+                    <td>{fmtTxTime(b.expiresAt)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="d-notice">
+        加成只列 XP / 金幣 buff 兩類。挖礦幸運／釣魚／食物 buff 等可在 Discord 用{" "}
+        <code>/加成</code> 查看完整版（含限時活動與食物 buff）。
+      </p>
+    </>
+  );
+}
+
+function maxMult(buffs: ActiveBuff[]): number {
+  let m = 1;
+  for (const b of buffs) {
+    if (b.multiplier > m) m = b.multiplier;
+  }
+  return m;
+}
+
+async function QuestsTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const status = await getQuestStatus(session.id, guildId);
+  if (!status) return <DataUnavailable />;
+  return <QuestsView status={status} />;
+}
+
+function QuestsView({ status }: { status: QuestStatus }) {
+  const ready = [...status.daily, ...status.weekly].filter(
+    (q) => q.state === "ready",
+  ).length;
+  return (
+    <>
+      {ready > 0 && (
+        <div className="d-empty d-my-rank" style={{ textAlign: "left" }}>
+          有 <strong>{ready}</strong> 個任務剛完成、等待自動入帳。如未到帳，請到
+          Discord 按「領錢」按鈕補領。
+        </div>
+      )}
+
+      <SectionTitle title="🌞 每日任務" en="DAILY" />
+      <QuestList defs={DAILY_QUESTS} rows={status.daily} />
+
+      <SectionTitle title="📅 週常任務" en="WEEKLY" />
+      <QuestList defs={WEEKLY_QUESTS} rows={status.weekly} />
+
+      <p className="d-notice">
+        任務完成會自動入帳；如未到帳，請到 Discord 按 <code>/逼幣任務</code>{" "}
+        裡的「領錢」補領。
+      </p>
+    </>
+  );
+}
+
+function QuestList({
+  defs,
+  rows,
+}: {
+  defs: QuestDef[];
+  rows: QuestStateRow[];
+}) {
+  const byId = new Map(rows.map((r) => [r.questId, r]));
+  return (
+    <div className="d-quests">
+      {defs.map((def) => {
+        const r = byId.get(def.id) ?? {
+          questId: def.id,
+          progress: 0,
+          target: def.target,
+          completed: false,
+          claimed: false,
+          state: "pending" as const,
+        };
+        const pct = Math.min(
+          100,
+          Math.round((r.progress / Math.max(1, r.target)) * 100),
+        );
+        const stateLabel =
+          r.state === "claimed"
+            ? "已領取"
+            : r.state === "ready"
+              ? "待入帳"
+              : r.state === "in_progress"
+                ? "進行中"
+                : "未開始";
+        return (
+          <div
+            key={def.id}
+            className={"d-quest" + (r.state === "ready" ? " d-quest-ready" : "")}
+          >
+            <div className="d-quest-head">
+              <div>
+                <span className="d-quest-name">{def.name}</span>
+                <span className="d-quest-state">{stateLabel}</span>
+              </div>
+              <span className="d-quest-reward">+{fmt(def.reward)} 幣</span>
+            </div>
+            <div className="d-quest-desc">{def.description}</div>
+            <div className="d-row between" style={{ marginTop: 8 }}>
+              <span className="d-kicker mono">
+                {fmt(r.progress)} / {fmt(r.target)}
+              </span>
+              <span className="d-kicker mono">{pct}%</span>
+            </div>
+            <div className="d-bar d-bar-accent">
+              <span style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+async function BadgesTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const level = await getLevelSummary(session.id, guildId);
+  if (!level) return <DataUnavailable />;
+  const rows = evaluateBadges(level);
+  return <BadgesView rows={rows} />;
+}
+
+function BadgesView({ rows }: { rows: BadgeProgressRow[] }) {
+  const unlocked = rows.filter((r) => r.unlocked).length;
+  const total = rows.length;
+  const byCat = new Map<BadgeCategory, BadgeProgressRow[]>();
+  for (const r of rows) {
+    const arr = byCat.get(r.def.category) ?? [];
+    arr.push(r);
+    byCat.set(r.def.category, arr);
+  }
+
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="已解鎖" sub="UNLOCKED" />
+          <div className="d-card-body">
+            <div className="d-num-xl">
+              {fmt(unlocked)}
+              <span className="d-num-unit"> / {fmt(total)}</span>
+            </div>
+            <div className="d-bar" style={{ marginTop: 14 }}>
+              <span style={{ width: `${(unlocked / total) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="進度" sub="PROGRESS" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {Math.round((unlocked / total) * 100)}%
+            </div>
+            <div className="d-kbd">完成度</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="下一個目標" sub="NEXT" />
+          <div className="d-card-body">
+            {(() => {
+              const next = rows
+                .filter((r) => !r.unlocked)
+                .sort((a, b) => b.progress - a.progress)[0];
+              return next ? (
+                <>
+                  <div className="d-num-md">
+                    {next.def.emoji} {next.def.name}
+                  </div>
+                  <div className="d-kbd">{next.def.description}</div>
+                </>
+              ) : (
+                <div className="d-num-md">🎉 全部解鎖</div>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
+
+      {Array.from(byCat.entries()).map(([cat, items]) => (
+        <div key={cat}>
+          <SectionTitle title={BADGE_CATEGORIES[cat]} en={cat.toUpperCase()} />
+          <div className="d-badges">
+            {items.map((it) => (
+              <div
+                key={it.def.id}
+                className={
+                  "d-badge" + (it.unlocked ? " d-badge-on" : " d-badge-off")
+                }
+                title={it.def.description}
+              >
+                <span className="d-badge-emoji">{it.def.emoji}</span>
+                <span className="d-badge-name">{it.def.name}</span>
+                <span className="d-badge-prog">
+                  {fmt(it.current)} / {fmt(it.def.threshold)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <p className="d-notice">
+        徽章顯示僅供瀏覽，要把某個徽章設為等級卡稱號請到 Discord 用{" "}
+        <code>/稱號</code>。
       </p>
     </>
   );
