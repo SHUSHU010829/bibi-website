@@ -1,0 +1,8 @@
+{
+  "title": "玩家交易",
+  "pages": [
+    "index",
+    "marketplace",
+    "exchange"
+  ]
+}
