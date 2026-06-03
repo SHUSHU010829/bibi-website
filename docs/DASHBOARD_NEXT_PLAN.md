@@ -3,7 +3,7 @@
 > 接續 `bibi-bot/docs/DASHBOARD_PLAN.md`（W0–W6+）與 `bibi-bot/docs/PLAN_INTEGRATED.md`（Phase G）。
 > 本文件聚焦 **bibi-website 的 dashboard 下一階段**，定義 Admin 後台、公開社交面、Member UX 升級三條路線。
 >
-> 最後更新：2026-06-01
+> 最後更新：2026-06-03（補 bot 端 Phase C / D / G / A 已上線狀態）
 
 ---
 
@@ -20,6 +20,10 @@
 | Phase F 市價波動 | 行情公告 + `/行情` 指令 | ✅ |
 | Phase S4 釣魚 | `/fish`、`/cook`、buff 整合 | ✅ |
 | Phase S5 限時活動 | eventEngine + 排程公告 | ✅ |
+| Phase C BOSS 共鬥 | 頻道 BOSS 戰、傷害分配、稱號 | ✅ |
+| Phase D 農場 / 種植 | `/farm` plant/harvest/fertilize/expand | ✅ |
+| Phase G 贊助後台 | records / unmatched / patrons / stats | ✅ |
+| Phase A 公會系統 | `/公會` 13 指令、共享 buff、週任務、排行（2026-06-03） | ✅ |
 
 ### 未完成
 
@@ -27,9 +31,10 @@
 |---|---|---|
 | W2–W3 Admin 後台核心 | 經濟管理 / 推播開關 / 投票管理 | ❌ |
 | W4 Admin 後台延伸 | 商店 / 交易日誌 / 稽核 / Cron 監控 | ❌ |
-| Phase G 贊助後台 | records / unmatched / patrons / stats | ❌ |
 | W6+ 進階 | realtime、charts、行動版 polish、深色模式 | ❌ |
 | 公開排行榜 UI | bot API 已就緒（`/api/v1/leaderboard/*`），UI 未做 | ❌ |
+| 公會公開頁 | bot 已上線（Phase A），website 可加入公會列表 / 排行 / 個人所屬公會徽章 | ❌ |
+| Phase S3 技能樹 | bot 端尚未實作 | ❌ |
 
 **重點觀察**：
 
