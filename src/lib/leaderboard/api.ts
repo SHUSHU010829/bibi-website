@@ -26,6 +26,19 @@ export type MiningResponse = {
 
 export type TitleResponse = { ok: true; rows: TitleRow[] };
 
+export type GuildClubRow = {
+  guildClubId: string;
+  name: string;
+  level: number;
+  treasury: number;
+  treasuryCurrent: number;
+  memberCount: number;
+  maxMembers: number;
+  createdAt: string | null;
+};
+
+export type GuildClubResponse = { ok: true; rows: GuildClubRow[] };
+
 export type WeeklySummaryResponse = {
   ok: true;
   mining: MiningCountRow[];
@@ -93,6 +106,15 @@ export async function fetchWeeklySummary(
   return fetchLeaderboard<WeeklySummaryResponse>(
     "/api/v1/leaderboard/weekly-summary",
     { top },
+  );
+}
+
+export async function fetchGuildClubLeaderboard(
+  limit = 25,
+): Promise<GuildClubResponse | { unconfigured: true } | { error: string }> {
+  return fetchLeaderboard<GuildClubResponse>(
+    "/api/v1/guild_clubs/leaderboard",
+    { limit },
   );
 }
 
