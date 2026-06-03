@@ -3,6 +3,7 @@
   "pages": [
     "index",
     "crafting",
-    "dungeon"
+    "dungeon",
+    "boss"
   ]
 }
