@@ -520,11 +520,6 @@ export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[]
     { id: "casino", label: "🎰 賭場", sources: ["bet", "payout"] },
     { id: "shop", label: "🛒 商店", sources: ["shop_buy"] },
     {
-      id: "auction",
-      label: "🔨 拍賣行",
-      sources: ["auction_bid", "auction_payout", "auction_refund"],
-    },
-    {
       id: "market",
       label: "🏪 市集",
       sources: [
@@ -533,6 +528,9 @@ export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[]
         "market_bid",
         "market_payout",
         "market_refund",
+        "auction_bid",
+        "auction_payout",
+        "auction_refund",
       ],
     },
     {
