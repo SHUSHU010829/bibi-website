@@ -156,6 +156,7 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: "weekly_mine", period: "weekly", name: "週礦工", description: "本週挖礦 ≥ 20 次", reward: 1500, target: 20 },
   { id: "weekly_dungeon", period: "weekly", name: "週地城", description: "本週地下城探索 ≥ 30 次", reward: 2000, target: 30 },
   { id: "weekly_diamond", period: "weekly", name: "週鑽石", description: "本週挖到鑽石 ≥ 1 顆", reward: 3000, target: 1 },
+  { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 5000, target: 50 },
 ];
 
 // ── 等級徽章 ─────────────────────────────────────────────────────────────────
