@@ -407,9 +407,20 @@ export async function getBackpack(
 ): Promise<BackpackSummary | null> {
   const db = await getDonationDb();
   if (!db) return null;
-  const doc = await db
-    .collection("MiningProfiles")
-    .findOne({ userId, guildId });
+  const [doc, invDocs] = await Promise.all([
+    db.collection("MiningProfiles").findOne({ userId, guildId }),
+    // UserInventory：商店道具（顏色、稱號、卡面、賭場代幣...）；mining 道具不在這裡，
+    // 而是直接寫到 MiningProfiles 的 *_count / *_uses 欄位上。
+    db
+      .collection("UserInventory")
+      .find({
+        userId,
+        guildId,
+        expired: { $ne: true },
+        $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+      })
+      .toArray(),
+  ]);
   if (!doc) {
     return {
       items: {},
@@ -434,8 +445,25 @@ export async function getBackpack(
     if (oreKeys.has(k)) oreBag[k] = v;
     else fertilizers[k] = v;
   }
+  // 道具：UserInventory 每筆一個實例（賭場代幣有 qty），按 itemId 聚合 →
+  // 補上 MiningProfiles 內以 count/uses 直接累加的挖礦道具。
+  const items: Record<string, number> = {};
+  for (const it of invDocs) {
+    const r = it as Record<string, unknown>;
+    const id = String(r.itemId ?? "");
+    if (!id) continue;
+    const qty = Number(r.qty ?? 1) || 1;
+    items[id] = (items[id] ?? 0) + qty;
+  }
+  const luckPotion = Number(d.luck_potion_uses ?? 0);
+  if (luckPotion > 0) items.mining_luck_potion = (items.mining_luck_potion ?? 0) + luckPotion;
+  const cdTickets = Number(d.cd_ticket_count ?? 0);
+  if (cdTickets > 0) items.mining_cd_ticket = (items.mining_cd_ticket ?? 0) + cdTickets;
+  const whetstones = Number(d.whetstone_inferior_count ?? 0);
+  if (whetstones > 0)
+    items.mining_whetstone_inferior = (items.mining_whetstone_inferior ?? 0) + whetstones;
   return {
-    items: (d.items as Record<string, number>) ?? {},
+    items,
     lifetimeOre: (d.lifetime_ore as Record<string, number>) ?? {},
     oreBag,
     fishBag: (d.fish_bag as Record<string, number>) ?? {},
@@ -456,6 +484,33 @@ export interface EquipmentSummary {
   weapon: string;
   weaponDurability: number | null;
   stamina: number | null;
+}
+
+// 與 bibi-bot src/config/dungeon.json 對齊。
+const STAMINA_BASE_MAX = 10;
+const STAMINA_REGEN_MS = 60 * 60 * 1000;
+
+// 鏡像 bibi-bot src/features/mining/dungeonService.js 的 resolveStamina：
+// DB 只保存戰鬥當下的數值與時間戳，瀏覽當下要把離線回復補上去。
+// 沒有 member/club 資料 → 用基礎上限；若 DB 值已 >= 基礎上限（玩家有 buff 撐高），
+// 不再增加也不下調，避免把超出基礎的值砍掉。
+function resolveStaminaForDisplay(
+  staminaRaw: unknown,
+  updatedAtRaw: unknown,
+): number | null {
+  if (staminaRaw == null) return null;
+  const stamina = Number(staminaRaw);
+  if (!Number.isFinite(stamina)) return null;
+  if (stamina >= STAMINA_BASE_MAX) return stamina;
+  const updatedAt =
+    updatedAtRaw instanceof Date
+      ? updatedAtRaw.getTime()
+      : Number(updatedAtRaw ?? 0);
+  if (!updatedAt) return stamina;
+  const now = Date.now();
+  const regened = Math.floor((now - updatedAt) / STAMINA_REGEN_MS);
+  if (regened <= 0) return stamina;
+  return Math.min(STAMINA_BASE_MAX, stamina + regened);
 }
 
 export async function getEquipment(
@@ -485,10 +540,10 @@ export async function getEquipment(
       d.pickaxe_durability != null ? Number(d.pickaxe_durability) : null,
     fishingRod: String(d.fishing_rod ?? "bamboo"),
     fishingRodDurability:
-      d.fishing_rod_durability != null ? Number(d.fishing_rod_durability) : null,
+      d.rod_durability != null ? Number(d.rod_durability) : null,
     weapon: String(d.weapon ?? "fist"),
     weaponDurability: d.weapon_durability != null ? Number(d.weapon_durability) : null,
-    stamina: d.stamina != null ? Number(d.stamina) : null,
+    stamina: resolveStaminaForDisplay(d.stamina, d.stamina_updated_at),
   };
 }
 
@@ -677,6 +732,28 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
   wealth_tax: "🏛️ 財富稅",
   donation: "💖 抖內",
   admin: "🛠️ 系統調整",
+  daily: "📆 每日簽到",
+  quest_reroll: "🔄 任務重抽",
+  quest_skip: "⏭️ 任務跳過",
+  transfer_fee: "💸 轉帳手續費",
+  deposit_interest: "🏦 存款利息",
+  deposit_penalty: "🏦 存款違約金",
+  dungeon: "🗡️ 地下城",
+  farm_harvest: "🌾 農場收成",
+  farm_plant: "🌾 種植",
+  farm_sell: "🌾 賣作物",
+  farm_raid: "🌾 農場掠奪",
+  farm_raid_trap: "🪤 農場陷阱",
+  farm_expand: "🌾 擴建農場",
+  boss_loot: "🐲 BOSS 掉落",
+  boss_killer: "🐲 BOSS 尾刀",
+  boss_kill_bonus: "🐲 BOSS 擊殺獎",
+  guild_create: "🏰 公會建立",
+  guild_donate: "🏰 公會捐款",
+  guild_create_refund: "🏰 公會建立返還",
+  guild_donate_refund: "🏰 公會捐款返還",
+  guild_disband_payout: "🏰 公會解散返還",
+  barter_fee: "🔀 物物交換手續費",
 };
 
 export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[] =
@@ -1515,14 +1592,14 @@ export async function getGuildClubMembership(
     GUILD_CLUB_LEVELS.find((l) => l.level === lv) ?? GUILD_CLUB_LEVELS[0];
   const nextLevel =
     GUILD_CLUB_LEVELS.find((l) => l.level === lv + 1) ?? null;
-  const [memberCount, contribDoc] = await Promise.all([
-    db
-      .collection("GuildClubMembers")
-      .countDocuments({ guild_club_id: m.guild_club_id }),
-    db
-      .collection("GuildClubContributions")
-      .findOne({ userId, guildId }),
-  ]);
+  const memberCount = await db
+    .collection("GuildClubMembers")
+    .countDocuments({ guild_club_id: m.guild_club_id });
+  // 與 bibi-bot guildClubView 同義：貢獻 = 公會捐款 + 倉庫存入市價，欄位放在
+  // GuildClubMembers 本身。GuildClubContributions 是另一個用來記 BOSS 週榜的
+  // collection，不能拿來當「總貢獻」顯示。
+  const myContribution =
+    Number(m.total_donated ?? 0) + Number(m.warehouse_donated_value ?? 0);
   return {
     clubId: String(c.guild_club_id ?? ""),
     name: String(c.name ?? ""),
@@ -1538,9 +1615,7 @@ export async function getGuildClubMembership(
     maxMembers: levelDef.maxMembers,
     buffs: levelDef.buffs,
     myRole: String(m.role ?? "member"),
-    myContribution: Number(
-      (contribDoc as Record<string, unknown> | null)?.contribution_total ?? 0,
-    ),
+    myContribution,
     joinedAt:
       m.joined_at instanceof Date
         ? m.joined_at
