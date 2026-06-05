@@ -135,29 +135,44 @@ export interface QuestDef {
 
 export const DAILY_QUESTS: QuestDef[] = [
   { id: "daily_morning", period: "daily", name: "早安打卡", description: "07:00–10:00 在指定頻道發言", reward: 150, target: 1 },
-  { id: "daily_messages", period: "daily", name: "文字活躍", description: "當日在伺服器傳送 ≥ 10 則訊息", reward: 200, target: 10 },
-  { id: "daily_voice_30", period: "daily", name: "語音初段", description: "當日在語音頻道待滿 30 分鐘", reward: 150, target: 30 },
-  { id: "daily_voice_60", period: "daily", name: "語音進階", description: "當日在語音頻道待滿 60 分鐘", reward: 100, target: 60 },
-  { id: "daily_gamble", period: "daily", name: "賭桌新手", description: "完成任意賭博遊戲一局", reward: 300, target: 1 },
-  { id: "daily_stock", period: "daily", name: "股市初探", description: "完成任意一筆股票交易", reward: 250, target: 1 },
-  { id: "daily_mine_3", period: "daily", name: "礦工打卡", description: "當日成功挖礦 ≥ 3 次", reward: 150, target: 3 },
+  { id: "daily_messages", period: "daily", name: "文字活躍", description: "當日在伺服器傳送 ≥ 20 則訊息", reward: 200, target: 20 },
+  { id: "daily_voice_30", period: "daily", name: "語音初段", description: "當日在語音頻道待滿 45 分鐘", reward: 150, target: 45 },
+  { id: "daily_voice_60", period: "daily", name: "語音進階", description: "當日在語音頻道待滿 90 分鐘", reward: 100, target: 90 },
+  { id: "daily_gamble", period: "daily", name: "賭桌新手", description: "完成任意賭博遊戲一局（不論輸贏）", reward: 300, target: 1 },
+  { id: "daily_stock", period: "daily", name: "股市初探", description: "完成任意一筆股票交易（買或賣）", reward: 250, target: 1 },
+  { id: "daily_mine_3", period: "daily", name: "礦工打卡", description: "當日成功挖礦 ≥ 5 次", reward: 150, target: 5 },
   { id: "daily_sell_ore", period: "daily", name: "礦石出清", description: "當日完成任意一次賣礦", reward: 100, target: 1 },
   { id: "daily_rare_ore", period: "daily", name: "幸運礦工", description: "當日挖到稀有礦石（鐵礦／黃金／鑽石）≥ 1 次", reward: 200, target: 1 },
   { id: "daily_work", period: "daily", name: "今日打工", description: "當日完成任意一次打工", reward: 100, target: 1 },
-  { id: "daily_dungeon_win", period: "daily", name: "地城獵人", description: "當日地下城戰鬥勝利 ≥ 2 次", reward: 250, target: 2 },
-  { id: "daily_dungeon_10", period: "daily", name: "地城常客", description: "當日完成地下城探索 ≥ 10 次", reward: 350, target: 10 },
+  { id: "daily_dungeon_win", period: "daily", name: "地城獵人", description: "當日地下城戰鬥勝利 ≥ 3 次", reward: 250, target: 3 },
+  { id: "daily_dungeon_10", period: "daily", name: "地城常客", description: "當日完成地下城探索 ≥ 15 次（不論勝負）", reward: 350, target: 15 },
+  { id: "daily_farm_harvest", period: "daily", name: "今日豐收", description: "當日從農場收成 ≥ 4 次", reward: 200, target: 4 },
+  { id: "daily_farm_plant", period: "daily", name: "晨間耕作", description: "當日種植任意作物 ≥ 1 次", reward: 100, target: 1 },
 ];
 
 export const WEEKLY_QUESTS: QuestDef[] = [
   { id: "weekly_attendance", period: "weekly", name: "週週出席", description: "本週簽到 ≥ 5 天", reward: 1200, target: 5 },
-  { id: "weekly_messages", period: "weekly", name: "週話癆", description: "本週累積訊息 ≥ 100 則", reward: 1500, target: 100 },
-  { id: "weekly_voice", period: "weekly", name: "週語音", description: "本週累積語音 ≥ 300 分鐘", reward: 1500, target: 300 },
-  { id: "weekly_gamble", period: "weekly", name: "週賭神", description: "本週完成 ≥ 10 局賭博", reward: 1500, target: 10 },
-  { id: "weekly_mine", period: "weekly", name: "週礦工", description: "本週挖礦 ≥ 20 次", reward: 1500, target: 20 },
-  { id: "weekly_dungeon", period: "weekly", name: "週地城", description: "本週地下城探索 ≥ 30 次", reward: 2000, target: 30 },
-  { id: "weekly_diamond", period: "weekly", name: "週鑽石", description: "本週挖到鑽石 ≥ 1 顆", reward: 3000, target: 1 },
-  { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 5000, target: 50 },
+  { id: "weekly_messages", period: "weekly", name: "活躍市民", description: "本週發送訊息 ≥ 120 則", reward: 1500, target: 120 },
+  { id: "weekly_popular", period: "weekly", name: "人氣王", description: "本週收到 ≥ 40 個表情符號反應", reward: 2000, target: 40 },
+  { id: "weekly_mine_20", period: "weekly", name: "週末礦工", description: "本週成功挖礦 ≥ 40 次", reward: 1000, target: 40 },
+  { id: "weekly_diamond", period: "weekly", name: "鑽石獵人", description: "本週挖到鑽石 ≥ 1 次", reward: 2500, target: 1 },
+  { id: "weekly_craft", period: "weekly", name: "鍛造師週記", description: "本週完成合成 ≥ 6 次", reward: 1200, target: 6 },
+  { id: "weekly_sell_value", period: "weekly", name: "礦石大亨", description: "本週賣礦累積收入 ≥ 3,000 金幣", reward: 1500, target: 3000 },
+  { id: "weekly_dungeon", period: "weekly", name: "週週下城", description: "本週完成地下城探索 ≥ 70 次", reward: 1500, target: 70 },
+  { id: "weekly_dungeon_win", period: "weekly", name: "深淵征服者", description: "本週地下城戰鬥勝利 ≥ 20 次", reward: 1800, target: 20 },
+  { id: "weekly_farm_harvest", period: "weekly", name: "週末市集", description: "本週累積收成 ≥ 25 次", reward: 1500, target: 25 },
+  { id: "weekly_farm_rose", period: "weekly", name: "黑玫瑰栽培家", description: "本週成功收成黑玫瑰 ≥ 1 次", reward: 2500, target: 1 },
+  { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 6000, target: 50 },
 ];
+
+// 任務指派制（鏡像 src/config/quests.json questSystem.assignment）
+export const QUEST_ASSIGNMENT = {
+  dailyPoolSize: 5,
+  weeklyPoolSize: 5,
+  rerollCost: { daily: 100, weekly: 200 },
+  skipCost: { daily: 30, weekly: 100 },
+  actionLimit: { daily: 4, weekly: 2 },
+} as const;
 
 // ── 等級徽章 ─────────────────────────────────────────────────────────────────
 
@@ -244,3 +259,149 @@ export const FOOD_STORAGE = {
   zeroAtMs:    604_800_000,   // 7d
   coalMultiplier: 1.5,
 } as const;
+
+// ── 農場 / 作物 / 肥料（鏡像 src/config/farming.json）────────────────────────
+
+export interface CropDef {
+  name: string;
+  emoji: string;
+  plantCost: number;
+  growMs: number;
+  rotMs: number;
+  payout: [number, number];
+  seedKey?: string;
+  seedOptional?: boolean;
+  sellPrice: number;
+}
+
+export const CROPS: Record<string, CropDef> = {
+  carrot:     { name: "紅蘿蔔", emoji: "🥕", plantCost: 20,  growMs: 7_200_000,  rotMs: 14_400_000, payout: [50, 80],     sellPrice: 30 },
+  corn:       { name: "玉米",   emoji: "🌽", plantCost: 60,  growMs: 21_600_000, rotMs: 21_600_000, payout: [150, 200],   sellPrice: 90 },
+  strawberry: { name: "草莓",   emoji: "🍓", plantCost: 150, growMs: 43_200_000, rotMs: 28_800_000, payout: [400, 500],   seedKey: "seed_strawberry", seedOptional: true, sellPrice: 250 },
+  black_rose: { name: "黑玫瑰", emoji: "🌹", plantCost: 500, growMs: 86_400_000, rotMs: 43_200_000, payout: [1200, 1500], seedKey: "seed_black_rose", sellPrice: 900 },
+};
+
+export const SEEDS: Record<string, { name: string; emoji: string; cropKey: string }> = {
+  seed_carrot:     { name: "紅蘿蔔種子", emoji: "🌱", cropKey: "carrot" },
+  seed_corn:       { name: "玉米種子",   emoji: "🌱", cropKey: "corn" },
+  seed_strawberry: { name: "草莓種子",   emoji: "🌱", cropKey: "strawberry" },
+  seed_black_rose: { name: "黑玫瑰種子", emoji: "🥀", cropKey: "black_rose" },
+};
+
+export const FERTILIZERS: Record<string, { name: string; emoji: string }> = {
+  coal:          { name: "煤炭灰",    emoji: "🪵" },
+  compost:       { name: "廚餘堆肥",  emoji: "🍂" },
+  monster_slime: { name: "怪物黏液",  emoji: "💧" },
+  moonlight_dew: { name: "月光露水",  emoji: "🌟" },
+};
+
+export const FARM_PLOT_TIERS = [
+  { count: 2, cost: 0 },
+  { count: 4, cost: 3_000 },
+  { count: 6, cost: 10_000 },
+  { count: 8, cost: 30_000 },
+] as const;
+
+export const FARM_MAX_PLOTS = 8;
+
+export type CropStatus = "empty" | "growing" | "ready" | "rotted" | "raided";
+
+export const CROP_STATUS_LABELS: Record<CropStatus, { label: string; tag: string }> = {
+  empty:   { label: "空地",   tag: "⬜" },
+  growing: { label: "成長中", tag: "🌿" },
+  ready:   { label: "可收成", tag: "✨" },
+  rotted:  { label: "腐爛",   tag: "🥀" },
+  raided:  { label: "被偷襲", tag: "💥" },
+};
+
+// ── 公會（鏡像 src/config/guild_club.json）──────────────────────────────────
+
+export interface GuildClubBuff {
+  type: string;
+  value: number;
+}
+
+export interface GuildClubLevelDef {
+  level: number;
+  threshold: number;
+  maxMembers: number;
+  buffs: GuildClubBuff[];
+}
+
+export const GUILD_CLUB_LEVELS: GuildClubLevelDef[] = [
+  { level: 1, threshold: 0,      maxMembers: 10, buffs: [] },
+  { level: 2, threshold: 10_000, maxMembers: 12, buffs: [
+    { type: "mining_qty_bonus", value: 1 },
+  ]},
+  { level: 3, threshold: 50_000, maxMembers: 15, buffs: [
+    { type: "mining_qty_bonus", value: 1 },
+    { type: "work_income_multiplier", value: 0.1 },
+  ]},
+  { level: 4, threshold: 150_000, maxMembers: 18, buffs: [
+    { type: "mining_qty_bonus", value: 1 },
+    { type: "work_income_multiplier", value: 0.1 },
+    { type: "dungeon_stamina_max", value: 1 },
+    { type: "boss_atk_pct", value: 0.05 },
+  ]},
+  { level: 5, threshold: 500_000, maxMembers: 20, buffs: [
+    { type: "mining_qty_bonus", value: 1 },
+    { type: "work_income_multiplier", value: 0.1 },
+    { type: "dungeon_stamina_max", value: 1 },
+    { type: "mining_luck_pct", value: 0.05 },
+    { type: "boss_atk_pct", value: 0.1 },
+    { type: "boss_attack_limit_bonus", value: 1 },
+  ]},
+];
+
+export function guildClubBuffLabel(buff: GuildClubBuff): string {
+  switch (buff.type) {
+    case "mining_qty_bonus":         return `⛏️ 挖礦數量 +${buff.value}`;
+    case "mining_luck_pct":          return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
+    case "work_income_multiplier":   return `💼 打工收入 +${Math.round(buff.value * 100)}%`;
+    case "dungeon_stamina_max":      return `🛡️ 地下城體力上限 +${buff.value}`;
+    case "boss_atk_pct":             return `💥 Boss ATK +${Math.round(buff.value * 100)}%`;
+    case "boss_attack_limit_bonus":  return `🔁 Boss 出手次數 +${buff.value}`;
+    default:                         return `${buff.type} +${buff.value}`;
+  }
+}
+
+export const GUILD_CLUB_ROLE_LABELS: Record<string, string> = {
+  leader:      "👑 會長",
+  vice_leader: "🛡️ 副會長",
+  member:      "成員",
+};
+
+// ── 食物 buff（active_food_buffs.type）──────────────────────────────────────
+
+export const FOOD_BUFF_TYPE_LABELS: Record<string, string> = {
+  work_income:   "💼 打工收入",
+  dungeon_atk:   "⚔️ 地下城 ATK",
+  mine_luck:     "🍀 挖礦幸運",
+  all_boost:     "✨ 全屬性",
+  fish_fortune:  "🎣 釣魚運",
+  farm_yield:    "🌾 收成倍率",
+};
+
+// ── 股票（鏡像 src/config/stocks.json stockSystem.pool）────────────────────
+
+export interface StockDef {
+  symbol: string;
+  name: string;
+  initialPrice: number;
+  type: string;
+  dividendYield: number;
+}
+
+export const STOCKS: Record<string, StockDef> = {
+  TSPP: { symbol: "TSPP", name: "嗶積電",   initialPrice: 500, type: "tech", dividendYield: 0.02 },
+  UPPI: { symbol: "UPPI", name: "統嗶超商", initialPrice: 300, type: "blue", dividendYield: 0.04 },
+  EGPP: { symbol: "EGPP", name: "嗶嗶海運", initialPrice: 120, type: "meme", dividendYield: 0 },
+  CTPP: { symbol: "CTPP", name: "嗶嗶金控", initialPrice: 800, type: "blue", dividendYield: 0.05 },
+  MTKP: { symbol: "MTKP", name: "嗶發科",   initialPrice: 200, type: "tech", dividendYield: 0.025 },
+};
+
+export const STOCK_TYPE_LABELS: Record<string, string> = {
+  tech: "🧪 科技",
+  blue: "🏛️ 藍籌",
+  meme: "🎢 迷因",
+};

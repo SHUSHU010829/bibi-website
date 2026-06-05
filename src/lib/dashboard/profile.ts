@@ -13,7 +13,12 @@ import {
   WEEKLY_QUESTS,
   BADGES,
   FOOD_STORAGE,
+  GUILD_CLUB_LEVELS,
+  QUEST_ASSIGNMENT,
   type BadgeDef,
+  type GuildClubLevelDef,
+  type GuildClubBuff,
+  type CropStatus,
 } from "./botDefs";
 
 export interface CoinSummary {
@@ -42,9 +47,13 @@ export interface MiningSummary {
   craftCountTotal: number;
   dungeonCount: number;
   workCountTotal: number;
+  farmHarvestTotal: number;
+  farmCountTotal: number;
   stamina: number | null;
   lifetimeOre: Record<string, number>;
   fishBag: Record<string, number>;
+  veggieBag: Record<string, number>;
+  seedBag: Record<string, number>;
 }
 
 export interface DonationHistoryItem {
@@ -101,9 +110,13 @@ const emptyMining = (): MiningSummary => ({
   craftCountTotal: 0,
   dungeonCount: 0,
   workCountTotal: 0,
+  farmHarvestTotal: 0,
+  farmCountTotal: 0,
   stamina: null,
   lifetimeOre: {},
   fishBag: {},
+  veggieBag: {},
+  seedBag: {},
 });
 
 export async function getCoinSummary(
@@ -165,9 +178,13 @@ export async function getMiningSummary(
     craftCountTotal: Number(miningDoc?.craft_count_total ?? 0),
     dungeonCount: Number(miningDoc?.dungeon_count ?? 0),
     workCountTotal: Number(workDoc?.work_count_total ?? 0),
+    farmHarvestTotal: Number(miningDoc?.farm_harvest_total ?? 0),
+    farmCountTotal: Number(miningDoc?.farm_count_total ?? 0),
     stamina: miningDoc?.stamina == null ? null : Number(miningDoc.stamina),
     lifetimeOre: (miningDoc?.lifetime_ore as Record<string, number>) ?? {},
     fishBag: (miningDoc?.fish_bag as Record<string, number>) ?? {},
+    veggieBag: (miningDoc?.veggie_bag as Record<string, number>) ?? {},
+    seedBag: (miningDoc?.seed_bag as Record<string, number>) ?? {},
   };
 }
 
@@ -345,6 +362,11 @@ export interface BackpackSummary {
   /** 礦袋現有 = lifetime_ore - 已賣？bot 端把目前持有放在 backpack。這裡讀 backpack。 */
   oreBag: Record<string, number>;
   fishBag: Record<string, number>;
+  veggieBag: Record<string, number>;
+  seedBag: Record<string, number>;
+  /** backpack 內肥料相關鍵：compost / monster_slime / moonlight_dew（coal 也算肥料但已列在 ore） */
+  fertilizers: Record<string, number>;
+  rareBait: number;
   backpackSlots: number;
   legendaryFragments: number;
 }
@@ -394,22 +416,35 @@ export async function getBackpack(
       lifetimeOre: {},
       oreBag: {},
       fishBag: {},
+      veggieBag: {},
+      seedBag: {},
+      fertilizers: {},
+      rareBait: 0,
       backpackSlots: 100,
       legendaryFragments: 0,
     };
   }
+  const d = doc as Record<string, unknown>;
+  const backpack = (d.backpack as Record<string, number>) ?? {};
+  // backpack 同時放礦石 + 肥料；拆給 UI 顯示更乾淨
+  const oreKeys = new Set(["stone", "coal", "iron", "gold", "diamond"]);
+  const oreBag: Record<string, number> = {};
+  const fertilizers: Record<string, number> = {};
+  for (const [k, v] of Object.entries(backpack)) {
+    if (oreKeys.has(k)) oreBag[k] = v;
+    else fertilizers[k] = v;
+  }
   return {
-    items: ((doc as Record<string, unknown>).items as Record<string, number>) ?? {},
-    lifetimeOre:
-      ((doc as Record<string, unknown>).lifetime_ore as Record<string, number>) ?? {},
-    oreBag:
-      ((doc as Record<string, unknown>).backpack as Record<string, number>) ?? {},
-    fishBag:
-      ((doc as Record<string, unknown>).fish_bag as Record<string, number>) ?? {},
-    backpackSlots:
-      100 +
-      Number((doc as Record<string, unknown>).backpack_bonus_slots ?? 0),
-    legendaryFragments: Number((doc as Record<string, unknown>).legendary_fragments ?? 0),
+    items: (d.items as Record<string, number>) ?? {},
+    lifetimeOre: (d.lifetime_ore as Record<string, number>) ?? {},
+    oreBag,
+    fishBag: (d.fish_bag as Record<string, number>) ?? {},
+    veggieBag: (d.veggie_bag as Record<string, number>) ?? {},
+    seedBag: (d.seed_bag as Record<string, number>) ?? {},
+    fertilizers,
+    rareBait: Number(d.rare_bait ?? 0),
+    backpackSlots: 100 + Number(d.backpack_bonus_slots ?? 0),
+    legendaryFragments: Number(d.legendary_fragments ?? 0),
   };
 }
 
@@ -1291,5 +1326,426 @@ export async function getCoinHistory(
     page,
     inflow: Number(s.inflow ?? 0),
     outflow: Number(s.outflow ?? 0),
+  };
+}
+
+// ── 任務指派（鏡像 src/features/quests/questAssignmentService.js）─────────
+//
+// Bot 改成「玩家當期抽選池 + 重抽/跳過」制。dashboard 改成只顯示玩家當期被指派
+// 的任務，並標出已 skip 的條目；底部告訴玩家剩餘行動次數與費用。
+//
+// 找不到 assignment doc → quests 為空陣列（代表玩家本期還沒觸發指派），UI 顯示
+// 「到 Discord 用 /逼幣任務 觸發」。
+
+export interface QuestAssignment {
+  tier: "daily" | "weekly";
+  period: string;
+  questIds: string[];
+  skippedIds: string[];
+  rerollsUsed: number;
+  skipsUsed: number;
+  actionLimit: number;
+  rerollCost: number;
+  skipCost: number;
+}
+
+export interface QuestAssignmentBundle {
+  daily: QuestAssignment;
+  weekly: QuestAssignment;
+}
+
+function weeklyPeriodKey(): string {
+  return periodKeyForWeek();
+}
+
+export async function getQuestAssignment(
+  userId: string,
+  guildId: string,
+): Promise<QuestAssignmentBundle | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const col = db.collection("QuestAssignments");
+  const dailyPeriod = periodKeyForToday();
+  const weeklyPeriod = weeklyPeriodKey();
+  const docs = await col
+    .find({
+      userId,
+      guildId,
+      $or: [
+        { tier: "daily", period: dailyPeriod },
+        { tier: "weekly", period: weeklyPeriod },
+      ],
+    })
+    .toArray();
+  const byTier = new Map<string, Record<string, unknown>>();
+  for (const d of docs) {
+    byTier.set(String((d as Record<string, unknown>).tier), d as Record<string, unknown>);
+  }
+  const build = (
+    tier: "daily" | "weekly",
+    period: string,
+  ): QuestAssignment => {
+    const doc = byTier.get(tier);
+    const quests = Array.isArray(doc?.quests) ? (doc!.quests as string[]) : [];
+    const skipped = Array.isArray(doc?.skipped) ? (doc!.skipped as string[]) : [];
+    return {
+      tier,
+      period,
+      questIds: quests,
+      skippedIds: skipped,
+      rerollsUsed: Number(doc?.rerollsUsed ?? 0),
+      skipsUsed: Number(doc?.skipsUsed ?? 0),
+      actionLimit: QUEST_ASSIGNMENT.actionLimit[tier],
+      rerollCost: QUEST_ASSIGNMENT.rerollCost[tier],
+      skipCost: QUEST_ASSIGNMENT.skipCost[tier],
+    };
+  };
+  return {
+    daily: build("daily", dailyPeriod),
+    weekly: build("weekly", weeklyPeriod),
+  };
+}
+
+// ── 食物 buff（active_food_buffs）─────────────────────────────────────────
+
+export interface FoodBuff {
+  type: string;
+  value: number;
+  expiresAt: Date | null;
+  usesLeft: number | null;
+}
+
+// ── 贊助幸運（MiningProfiles.donation_luck_bonus + donation_luck_expires_at）──
+
+export interface DonorLuckBuff {
+  bonus: number;
+  expiresAt: Date;
+}
+
+export async function getProfileBuffSources(
+  userId: string,
+  guildId: string,
+): Promise<{ food: FoodBuff[]; donorLuck: DonorLuckBuff | null } | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const doc = await db.collection("MiningProfiles").findOne(
+    { userId, guildId },
+    {
+      projection: {
+        active_food_buffs: 1,
+        donation_luck_bonus: 1,
+        donation_luck_expires_at: 1,
+      },
+    },
+  );
+  if (!doc) return { food: [], donorLuck: null };
+  const now = Date.now();
+  const rawFood = (doc.active_food_buffs as unknown[] | undefined) ?? [];
+  const food: FoodBuff[] = [];
+  for (const r of rawFood) {
+    const b = r as Record<string, unknown>;
+    const expRaw = b.expires_at;
+    const exp =
+      expRaw == null
+        ? null
+        : expRaw instanceof Date
+          ? expRaw.getTime()
+          : Number(expRaw);
+    const uses = b.uses_left == null ? null : Number(b.uses_left);
+    if (exp != null && exp <= now) continue;
+    if (uses != null && uses <= 0) continue;
+    food.push({
+      type: String(b.type ?? ""),
+      value: Number(b.value ?? 0),
+      expiresAt: exp == null ? null : new Date(exp),
+      usesLeft: uses,
+    });
+  }
+  let donorLuck: DonorLuckBuff | null = null;
+  const expRaw = (doc as Record<string, unknown>).donation_luck_expires_at;
+  const bonus = Number((doc as Record<string, unknown>).donation_luck_bonus ?? 0);
+  if (expRaw && bonus > 0) {
+    const exp = expRaw instanceof Date ? expRaw : new Date(String(expRaw));
+    if (exp.getTime() > now) donorLuck = { bonus, expiresAt: exp };
+  }
+  return { food, donorLuck };
+}
+
+// ── 公會（GuildsClub + GuildClubMembers + GuildClubContributions）─────────
+
+export interface GuildClubInfo {
+  clubId: string;
+  name: string;
+  level: number;
+  treasury: number;
+  treasuryLocked: number;
+  description: string | null;
+  leaderId: string;
+  memberCount: number;
+  maxMembers: number;
+  buffs: GuildClubBuff[];
+  /** 玩家在公會的角色 */
+  myRole: string;
+  /** 玩家累計貢獻金幣 */
+  myContribution: number;
+  /** 加入時間 */
+  joinedAt: Date | null;
+  /** 下一級門檻；已最高級則為 null */
+  nextLevel: GuildClubLevelDef | null;
+}
+
+export async function getGuildClubMembership(
+  userId: string,
+  guildId: string,
+): Promise<GuildClubInfo | null | "no_membership"> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const member = await db
+    .collection("GuildClubMembers")
+    .findOne({ userId, guildId });
+  if (!member) return "no_membership";
+  const m = member as Record<string, unknown>;
+  const club = await db
+    .collection("GuildsClub")
+    .findOne({ guild_club_id: m.guild_club_id, disbanded_at: null });
+  if (!club) return "no_membership";
+  const c = club as Record<string, unknown>;
+  const lv = Number(c.level ?? 1);
+  const levelDef =
+    GUILD_CLUB_LEVELS.find((l) => l.level === lv) ?? GUILD_CLUB_LEVELS[0];
+  const nextLevel =
+    GUILD_CLUB_LEVELS.find((l) => l.level === lv + 1) ?? null;
+  const [memberCount, contribDoc] = await Promise.all([
+    db
+      .collection("GuildClubMembers")
+      .countDocuments({ guild_club_id: m.guild_club_id }),
+    db
+      .collection("GuildClubContributions")
+      .findOne({ userId, guildId }),
+  ]);
+  return {
+    clubId: String(c.guild_club_id ?? ""),
+    name: String(c.name ?? ""),
+    level: lv,
+    treasury: Number(c.treasury_current ?? c.treasury ?? 0),
+    treasuryLocked: Number(c.treasury_locked ?? 0),
+    description:
+      typeof c.description === "string" && c.description.length > 0
+        ? c.description
+        : null,
+    leaderId: String(c.leader_id ?? ""),
+    memberCount,
+    maxMembers: levelDef.maxMembers,
+    buffs: levelDef.buffs,
+    myRole: String(m.role ?? "member"),
+    myContribution: Number(
+      (contribDoc as Record<string, unknown> | null)?.contribution_total ?? 0,
+    ),
+    joinedAt:
+      m.joined_at instanceof Date
+        ? m.joined_at
+        : m.joined_at
+          ? new Date(String(m.joined_at))
+          : null,
+    nextLevel,
+  };
+}
+
+// ── 農場（FarmPlots）─────────────────────────────────────────────────────
+
+export interface FarmPlot {
+  plotIndex: number;
+  status: CropStatus;
+  crop: string | null;
+  readyAt: Date | null;
+  expiresAt: Date | null;
+  fertilizer: string | null;
+  /** 距下個狀態變化的剩餘毫秒（成長中 → 成熟；可收成 → 腐爛）；其他狀態為 0 */
+  remainingMs: number;
+}
+
+export interface FarmStatus {
+  plotCount: number;
+  plots: FarmPlot[];
+  harvestTotal: number;
+  plantTotal: number;
+}
+
+export async function getFarmStatus(
+  userId: string,
+  guildId: string,
+): Promise<FarmStatus | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const profile = await db
+    .collection("MiningProfiles")
+    .findOne(
+      { userId, guildId },
+      {
+        projection: {
+          farm_plot_count: 1,
+          farm_harvest_total: 1,
+          farm_count_total: 1,
+        },
+      },
+    );
+  const plotCount = Number(
+    (profile as Record<string, unknown> | null)?.farm_plot_count ?? 2,
+  );
+  const docs = await db
+    .collection("FarmPlots")
+    .find({ userId, guildId })
+    .toArray();
+  const map = new Map<number, Record<string, unknown>>();
+  for (const d of docs) {
+    map.set(
+      Number((d as Record<string, unknown>).plotIndex ?? -1),
+      d as Record<string, unknown>,
+    );
+  }
+  const now = Date.now();
+  const plots: FarmPlot[] = [];
+  for (let i = 0; i < plotCount; i += 1) {
+    const d = map.get(i);
+    if (!d || !d.crop) {
+      plots.push({
+        plotIndex: i,
+        status: "empty",
+        crop: null,
+        readyAt: null,
+        expiresAt: null,
+        fertilizer: null,
+        remainingMs: 0,
+      });
+      continue;
+    }
+    const readyAt =
+      d.ready_at instanceof Date
+        ? d.ready_at
+        : d.ready_at
+          ? new Date(Number(d.ready_at))
+          : null;
+    const expiresAt =
+      d.expires_at instanceof Date
+        ? d.expires_at
+        : d.expires_at
+          ? new Date(Number(d.expires_at))
+          : null;
+    let status = String(d.status ?? "growing") as CropStatus;
+    if (status === "growing" && readyAt && now >= readyAt.getTime()) {
+      status = "ready";
+    }
+    if (
+      (status === "growing" || status === "ready") &&
+      expiresAt &&
+      now >= expiresAt.getTime()
+    ) {
+      status = "rotted";
+    }
+    const remainingMs =
+      status === "growing" && readyAt
+        ? Math.max(0, readyAt.getTime() - now)
+        : status === "ready" && expiresAt
+          ? Math.max(0, expiresAt.getTime() - now)
+          : 0;
+    plots.push({
+      plotIndex: i,
+      status,
+      crop: String(d.crop ?? ""),
+      readyAt,
+      expiresAt,
+      fertilizer:
+        typeof d.fertilizer === "string"
+          ? d.fertilizer
+          : (d.fertilizer as Record<string, unknown> | null)?.key
+            ? String((d.fertilizer as Record<string, unknown>).key)
+            : null,
+      remainingMs,
+    });
+  }
+  return {
+    plotCount,
+    plots,
+    harvestTotal: Number(
+      (profile as Record<string, unknown> | null)?.farm_harvest_total ?? 0,
+    ),
+    plantTotal: Number(
+      (profile as Record<string, unknown> | null)?.farm_count_total ?? 0,
+    ),
+  };
+}
+
+// ── 股票（UserPortfolio + StockMarket）───────────────────────────────────
+
+export interface StockPosition {
+  symbol: string;
+  shares: number;
+  avgCost: number;
+  currentPrice: number | null;
+  marketValue: number;
+  unrealized: number;
+  unrealizedPct: number | null;
+}
+
+export interface StockPortfolio {
+  positions: StockPosition[];
+  totalCost: number;
+  totalValue: number;
+  totalUnrealized: number;
+}
+
+export async function getStockPortfolio(
+  userId: string,
+  guildId: string,
+): Promise<StockPortfolio | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const docs = await db
+    .collection("UserPortfolio")
+    .find({ userId, guildId, shares: { $gt: 0 } })
+    .toArray();
+  const symbols = docs.map((d) => String((d as Record<string, unknown>).symbol));
+  const markets = symbols.length
+    ? await db
+        .collection("StockMarket")
+        .find({ guildId, symbol: { $in: symbols } })
+        .toArray()
+    : [];
+  const priceBySymbol = new Map<string, number>();
+  for (const m of markets) {
+    const mm = m as Record<string, unknown>;
+    priceBySymbol.set(String(mm.symbol), Number(mm.currentPrice ?? 0));
+  }
+  const positions: StockPosition[] = docs.map((d) => {
+    const dd = d as Record<string, unknown>;
+    const symbol = String(dd.symbol);
+    const shares = Number(dd.shares ?? 0);
+    const avgCost = Number(dd.avgCost ?? 0);
+    const cp = priceBySymbol.get(symbol);
+    const currentPrice = cp == null ? null : cp;
+    const marketValue = currentPrice == null ? 0 : currentPrice * shares;
+    const cost = avgCost * shares;
+    const unrealized = currentPrice == null ? 0 : marketValue - cost;
+    return {
+      symbol,
+      shares,
+      avgCost,
+      currentPrice,
+      marketValue,
+      unrealized,
+      unrealizedPct: cost > 0 ? unrealized / cost : null,
+    };
+  });
+  positions.sort((a, b) => b.marketValue - a.marketValue);
+  const totalCost = positions.reduce(
+    (s, p) => s + p.avgCost * p.shares,
+    0,
+  );
+  const totalValue = positions.reduce((s, p) => s + p.marketValue, 0);
+  return {
+    positions,
+    totalCost,
+    totalValue,
+    totalUnrealized: totalValue - totalCost,
   };
 }
