@@ -20,6 +20,11 @@ import {
   getEquipment,
   getFoodStockpile,
   getQuestStatus,
+  getQuestAssignment,
+  getFarmStatus,
+  getStockPortfolio,
+  getGuildClubMembership,
+  getProfileBuffSources,
   evaluateBadges,
   getPrimaryGuildId,
   COIN_SOURCE_LABELS,
@@ -41,8 +46,15 @@ import {
   type BackpackSummary,
   type EquipmentSummary,
   type FoodStockpile,
+  type FoodBuff,
+  type DonorLuckBuff,
   type QuestStatus,
   type QuestStateRow,
+  type QuestAssignmentBundle,
+  type QuestAssignment,
+  type FarmStatus,
+  type StockPortfolio,
+  type GuildClubInfo,
   type BadgeProgressRow,
 } from "@/lib/dashboard/profile";
 import {
@@ -58,6 +70,16 @@ import {
   WEEKLY_QUESTS,
   BADGE_CATEGORIES,
   DUNGEON_BASE_ATK,
+  CROPS,
+  SEEDS,
+  FERTILIZERS,
+  CROP_STATUS_LABELS,
+  GUILD_CLUB_LEVELS,
+  GUILD_CLUB_ROLE_LABELS,
+  guildClubBuffLabel,
+  FOOD_BUFF_TYPE_LABELS,
+  STOCKS,
+  STOCK_TYPE_LABELS,
   type BadgeCategory,
   type QuestDef,
 } from "@/lib/dashboard/botDefs";
@@ -206,13 +228,19 @@ type DashTab =
   | "invites"
   | "lottery"
   | "backpack"
+  | "farm"
   | "quests"
+  | "guild"
+  | "stocks"
   | "badges";
 
 const DASH_TABS: { id: DashTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "backpack", label: "背包" },
+  { id: "farm", label: "農場" },
   { id: "quests", label: "任務" },
+  { id: "guild", label: "公會" },
+  { id: "stocks", label: "股票" },
   { id: "badges", label: "稱號" },
   { id: "transactions", label: "金流" },
   { id: "tax", label: "稅務" },
@@ -395,8 +423,17 @@ export default async function DashboardPage({
         {tab === "backpack" && (
           <BackpackTab session={session} guildId={guildId} />
         )}
+        {tab === "farm" && (
+          <FarmTab session={session} guildId={guildId} />
+        )}
         {tab === "quests" && (
           <QuestsTab session={session} guildId={guildId} />
+        )}
+        {tab === "guild" && (
+          <GuildTab session={session} guildId={guildId} />
+        )}
+        {tab === "stocks" && (
+          <StocksTab session={session} guildId={guildId} />
         )}
         {tab === "badges" && (
           <BadgesTab session={session} guildId={guildId} />
@@ -445,15 +482,19 @@ async function OverviewTab({
   session: { id: string };
   guildId: string | null;
 }) {
-  const [coin, level, mining, donations, buffs] = guildId
+  const [coin, level, mining, donations, buffs, buffSrc, club] = guildId
     ? await Promise.all([
         getCoinSummary(session.id, guildId),
         getLevelSummary(session.id, guildId),
         getMiningSummary(session.id, guildId),
         getDonationHistory(session.id, guildId, 10),
         getActiveBuffs(session.id, guildId),
+        getProfileBuffSources(session.id, guildId),
+        getGuildClubMembership(session.id, guildId),
       ])
-    : [null, null, null, [], null];
+    : [null, null, null, [], null, null, null];
+
+  const clubInfo = club === "no_membership" ? null : club;
 
   return (
     <>
@@ -463,7 +504,12 @@ async function OverviewTab({
         <>
           <HeroRow coin={coin} level={level} mining={mining} />
           <StatRow level={level} />
-          {buffs && <BuffsCard buffs={buffs} />}
+          <BuffsCard
+            shopBuffs={buffs ?? []}
+            foodBuffs={buffSrc?.food ?? []}
+            donorLuck={buffSrc?.donorLuck ?? null}
+            club={clubInfo}
+          />
           <ActivityRow mining={mining} />
           <CollectionRow mining={mining} />
         </>
@@ -1169,6 +1215,9 @@ function FoodStockpileView({ food }: { food: FoodStockpile }) {
 function BackpackView({ bag }: { bag: BackpackSummary }) {
   const oreEntries = Object.entries(ORES);
   const fishEntries = Object.entries(FISH);
+  const cropEntries = Object.entries(CROPS);
+  const seedEntries = Object.entries(SEEDS);
+  const fertEntries = Object.entries(FERTILIZERS);
   const usedSlots = Object.values(bag.oreBag).reduce(
     (sum, n) => sum + (Number(n) || 0),
     0,
@@ -1265,6 +1314,63 @@ function BackpackView({ bag }: { bag: BackpackSummary }) {
               <span className="d-list-val">{fmt(bag.fishBag[id] ?? 0)}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      <SectionTitle title="菜袋・種子・肥料" en="FARM SUPPLIES" />
+      <div className="d-grid-2-eq">
+        <div className="d-card">
+          <CardHead title="菜袋" sub="VEGGIE BAG" />
+          <div className="d-row-list">
+            {cropEntries.map(([id, info]) => (
+              <div key={id} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">{info.emoji}</span>
+                  {info.name}
+                </span>
+                <span className="d-list-val">
+                  {fmt(bag.veggieBag[id] ?? 0)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="種子袋" sub="SEEDS" />
+          <div className="d-row-list">
+            {seedEntries.map(([id, info]) => (
+              <div key={id} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">{info.emoji}</span>
+                  {info.name}
+                </span>
+                <span className="d-list-val">{fmt(bag.seedBag[id] ?? 0)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="d-card">
+        <CardHead title="肥料 & 雜物" sub="FERTILIZERS" />
+        <div className="d-row-list">
+          {fertEntries.map(([id, info]) => (
+            <div key={id} className="d-list-row">
+              <span className="d-list-key">
+                <span className="d-emoji">{info.emoji}</span>
+                {info.name}
+              </span>
+              <span className="d-list-val">
+                {fmt(bag.fertilizers[id] ?? 0)}
+              </span>
+            </div>
+          ))}
+          <div className="d-list-row">
+            <span className="d-list-key">
+              <span className="d-emoji">🪱</span>
+              稀有魚餌
+            </span>
+            <span className="d-list-val">{fmt(bag.rareBait)}</span>
+          </div>
         </div>
       </div>
 
@@ -1398,11 +1504,24 @@ function maxMult(buffs: ActiveBuff[]): number {
   return m;
 }
 
-function BuffsCard({ buffs }: { buffs: ActiveBuff[] }) {
-  const xpBuffs = buffs.filter((b) => b.type === "xp_boost");
-  const coinBuffs = buffs.filter((b) => b.type === "coin_boost");
-  const xpMax = maxMult(xpBuffs);
-  const coinMax = maxMult(coinBuffs);
+function BuffsCard({
+  shopBuffs,
+  foodBuffs,
+  donorLuck,
+  club,
+}: {
+  shopBuffs: ActiveBuff[];
+  foodBuffs: FoodBuff[];
+  donorLuck: DonorLuckBuff | null;
+  club: GuildClubInfo | null;
+}) {
+  const xpMax = maxMult(shopBuffs.filter((b) => b.type === "xp_boost"));
+  const coinMax = maxMult(shopBuffs.filter((b) => b.type === "coin_boost"));
+  const hasAny =
+    shopBuffs.length > 0 ||
+    foodBuffs.length > 0 ||
+    !!donorLuck ||
+    (club && club.buffs.length > 0);
 
   return (
     <div className="d-card d-buffs-card">
@@ -1418,18 +1537,18 @@ function BuffsCard({ buffs }: { buffs: ActiveBuff[] }) {
             <span className="d-buffs-mult-val">×{coinMax.toFixed(2)}</span>
           </div>
         </div>
-        {buffs.length === 0 ? (
+        {!hasAny ? (
           <div className="d-buffs-empty">
-            沒有生效中的藥水 buff。完整加成（挖礦、釣魚、食物）請用 Discord{" "}
+            沒有生效中的加成。完整加成（挖礦、釣魚、食物、身分組）請用 Discord{" "}
             <code>/加成</code>。
           </div>
         ) : (
           <ul className="d-buffs-list">
-            {buffs.map((b, i) => {
+            {shopBuffs.map((b, i) => {
               const def = b.source ? SHOP_ITEMS[b.source] : null;
               return (
                 <li
-                  key={`${b.source ?? "x"}-${b.expiresAt.getTime()}-${i}`}
+                  key={`shop-${b.source ?? "x"}-${b.expiresAt.getTime()}-${i}`}
                   className="d-buffs-row"
                 >
                   <span className="d-buffs-row-name">
@@ -1444,8 +1563,62 @@ function BuffsCard({ buffs }: { buffs: ActiveBuff[] }) {
                 </li>
               );
             })}
+            {donorLuck && (
+              <li className="d-buffs-row">
+                <span className="d-buffs-row-name">
+                  💖 贊助幸運加成
+                </span>
+                <span className="d-buffs-row-mult mono">
+                  🍀 +{Math.round(donorLuck.bonus * 100)}%
+                </span>
+                <span className="d-buffs-row-exp">
+                  {fmtTxTime(donorLuck.expiresAt)}
+                </span>
+              </li>
+            )}
+            {foodBuffs.map((b, i) => {
+              const label = FOOD_BUFF_TYPE_LABELS[b.type] ?? `🍱 ${b.type}`;
+              const valLabel =
+                b.type === "dungeon_atk"
+                  ? `+${fmt(Math.round(b.value))}`
+                  : `+${Math.round(b.value * 100)}%`;
+              const expLabel = b.expiresAt
+                ? fmtTxTime(b.expiresAt)
+                : b.usesLeft != null
+                  ? `剩 ${b.usesLeft} 次`
+                  : "—";
+              return (
+                <li
+                  key={`food-${b.type}-${i}`}
+                  className="d-buffs-row"
+                >
+                  <span className="d-buffs-row-name">{label}</span>
+                  <span className="d-buffs-row-mult mono">{valLabel}</span>
+                  <span className="d-buffs-row-exp">{expLabel}</span>
+                </li>
+              );
+            })}
+            {club &&
+              club.buffs.map((b, i) => (
+                <li key={`club-${b.type}-${i}`} className="d-buffs-row">
+                  <span className="d-buffs-row-name">
+                    🏛️ {club.name}・Lv.{club.level}
+                  </span>
+                  <span className="d-buffs-row-mult mono">
+                    {guildClubBuffLabel(b)}
+                  </span>
+                  <span className="d-buffs-row-exp">公會</span>
+                </li>
+              ))}
           </ul>
         )}
+        <p
+          className="d-notice"
+          style={{ marginTop: 12, marginBottom: 0 }}
+        >
+          身分組類加成（Twitch 訂閱、伺服器加成 Booster）以 Discord 內{" "}
+          <code>/加成</code> 顯示為準，網站無法讀取你目前的身分組清單。
+        </p>
       </div>
     </div>
   );
@@ -1459,94 +1632,654 @@ async function QuestsTab({
   guildId: string | null;
 }) {
   if (!guildId) return null;
-  const status = await getQuestStatus(session.id, guildId);
-  if (!status) return <DataUnavailable />;
-  return <QuestsView status={status} />;
+  const [status, assignment] = await Promise.all([
+    getQuestStatus(session.id, guildId),
+    getQuestAssignment(session.id, guildId),
+  ]);
+  if (!status || !assignment) return <DataUnavailable />;
+  return <QuestsView status={status} assignment={assignment} />;
 }
 
-function QuestsView({ status }: { status: QuestStatus }) {
-  const ready = [...status.daily, ...status.weekly].filter(
-    (q) => q.state === "ready",
-  ).length;
+function QuestsView({
+  status,
+  assignment,
+}: {
+  status: QuestStatus;
+  assignment: QuestAssignmentBundle;
+}) {
+  const isAssigned = (tier: "daily" | "weekly", id: string) =>
+    assignment[tier].questIds.includes(id);
+  const isSkipped = (tier: "daily" | "weekly", id: string) =>
+    assignment[tier].skippedIds.includes(id);
+
+  const assignedReady = [
+    ...status.daily.filter((q) => isAssigned("daily", q.questId) && !isSkipped("daily", q.questId)),
+    ...status.weekly.filter((q) => isAssigned("weekly", q.questId) && !isSkipped("weekly", q.questId)),
+  ].filter((q) => q.state === "ready").length;
+
   return (
     <>
-      {ready > 0 && (
+      {assignedReady > 0 && (
         <div className="d-empty d-my-rank" style={{ textAlign: "left" }}>
-          有 <strong>{ready}</strong> 個任務剛完成、等待自動入帳。如未到帳，請到
+          有 <strong>{assignedReady}</strong> 個任務剛完成、等待自動入帳。如未到帳，請到
           Discord 按「領錢」按鈕補領。
         </div>
       )}
 
       <SectionTitle title="🌞 每日任務" en="DAILY" />
-      <QuestList defs={DAILY_QUESTS} rows={status.daily} />
+      <AssignmentHeader assignment={assignment.daily} />
+      <QuestAssignmentList
+        tier="daily"
+        defs={DAILY_QUESTS}
+        rows={status.daily}
+        assignment={assignment.daily}
+      />
 
       <SectionTitle title="📅 週常任務" en="WEEKLY" />
-      <QuestList defs={WEEKLY_QUESTS} rows={status.weekly} />
+      <AssignmentHeader assignment={assignment.weekly} />
+      <QuestAssignmentList
+        tier="weekly"
+        defs={WEEKLY_QUESTS}
+        rows={status.weekly}
+        assignment={assignment.weekly}
+      />
 
       <p className="d-notice">
-        任務完成會自動入帳；如未到帳，請到 Discord 按 <code>/逼幣任務</code>{" "}
-        裡的「領錢」補領。
+        任務改為「抽選制」：每期玩家只會被指派少數任務，不再全部開放。重抽 / 跳過需要花費金幣，
+        且每期共有上限。操作（重抽、跳過、領錢）請到 Discord 用 <code>/逼幣任務</code>。
       </p>
     </>
   );
 }
 
-function QuestList({
+function AssignmentHeader({ assignment }: { assignment: QuestAssignment }) {
+  const actionsLeft = Math.max(
+    0,
+    assignment.actionLimit - assignment.rerollsUsed - assignment.skipsUsed,
+  );
+  const empty = assignment.questIds.length === 0;
+  if (empty) {
+    return (
+      <div className="d-empty" style={{ textAlign: "left" }}>
+        本期還沒指派任何任務。到 Discord 用 <code>/逼幣任務</code>{" "}
+        會自動為你抽選一批可挑戰的任務。
+      </div>
+    );
+  }
+  return (
+    <div className="d-card d-card-small" style={{ marginBottom: 12 }}>
+      <div className="d-row between" style={{ flexWrap: "wrap", gap: 8 }}>
+        <span className="d-kicker">
+          本期已指派 <strong>{assignment.questIds.length}</strong> 個任務
+          {assignment.skippedIds.length > 0 && (
+            <>　・　跳過 <strong>{assignment.skippedIds.length}</strong></>
+          )}
+        </span>
+        <span className="d-kicker mono">
+          剩餘行動 {actionsLeft} / {assignment.actionLimit}　・　重抽 {fmt(assignment.rerollCost)} 幣　・　跳過 {fmt(assignment.skipCost)} 幣
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function QuestAssignmentList({
+  tier,
   defs,
   rows,
+  assignment,
 }: {
+  tier: "daily" | "weekly";
   defs: QuestDef[];
   rows: QuestStateRow[];
+  assignment: QuestAssignment;
 }) {
+  void tier;
+  if (assignment.questIds.length === 0) return null;
   const byId = new Map(rows.map((r) => [r.questId, r]));
+  const defById = new Map(defs.map((d) => [d.id, d]));
+  // 顯示順序：assignment.questIds（未跳過）→ skippedIds
+  const orderedActive = assignment.questIds.filter(
+    (id) => !assignment.skippedIds.includes(id),
+  );
   return (
     <div className="d-quests">
-      {defs.map((def) => {
-        const r = byId.get(def.id) ?? {
-          questId: def.id,
-          progress: 0,
-          target: def.target,
-          completed: false,
-          claimed: false,
-          state: "pending" as const,
-        };
-        const pct = Math.min(
-          100,
-          Math.round((r.progress / Math.max(1, r.target)) * 100),
-        );
-        const stateLabel =
-          r.state === "claimed"
-            ? "已領取"
-            : r.state === "ready"
-              ? "待入帳"
-              : r.state === "in_progress"
-                ? "進行中"
-                : "未開始";
-        return (
-          <div
-            key={def.id}
-            className={"d-quest" + (r.state === "ready" ? " d-quest-ready" : "")}
-          >
-            <div className="d-quest-head">
-              <div>
-                <span className="d-quest-name">{def.name}</span>
-                <span className="d-quest-state">{stateLabel}</span>
+      {orderedActive.map((id) => {
+        const def = defById.get(id);
+        if (!def) return null;
+        return <QuestCard key={id} def={def} row={byId.get(id)} />;
+      })}
+      {assignment.skippedIds.map((id) => {
+        const def = defById.get(id);
+        if (!def) return null;
+        return <QuestCard key={`sk-${id}`} def={def} row={byId.get(id)} skipped />;
+      })}
+    </div>
+  );
+}
+
+function QuestCard({
+  def,
+  row,
+  skipped = false,
+}: {
+  def: QuestDef;
+  row?: QuestStateRow;
+  skipped?: boolean;
+}) {
+  const r =
+    row ?? {
+      questId: def.id,
+      progress: 0,
+      target: def.target,
+      completed: false,
+      claimed: false,
+      state: "pending" as const,
+    };
+  const pct = Math.min(
+    100,
+    Math.round((r.progress / Math.max(1, r.target)) * 100),
+  );
+  const stateLabel = skipped
+    ? "已跳過"
+    : r.state === "claimed"
+      ? "已領取"
+      : r.state === "ready"
+        ? "待入帳"
+        : r.state === "in_progress"
+          ? "進行中"
+          : "未開始";
+  return (
+    <div
+      className={
+        "d-quest" +
+        (r.state === "ready" && !skipped ? " d-quest-ready" : "") +
+        (skipped ? " d-quest-skipped" : "")
+      }
+      style={skipped ? { opacity: 0.55 } : undefined}
+    >
+      <div className="d-quest-head">
+        <div>
+          <span className="d-quest-name">{def.name}</span>
+          <span className="d-quest-state">{stateLabel}</span>
+        </div>
+        <span className="d-quest-reward">+{fmt(def.reward)} 幣</span>
+      </div>
+      <div className="d-quest-desc">{def.description}</div>
+      <div className="d-row between" style={{ marginTop: 8 }}>
+        <span className="d-kicker mono">
+          {fmt(r.progress)} / {fmt(r.target)}
+        </span>
+        <span className="d-kicker mono">{pct}%</span>
+      </div>
+      <div className="d-bar d-bar-accent">
+        <span style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// ── 農場 / 公會 / 股票 ───────────────────────────────────────────────────────
+
+async function FarmTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const farm = await getFarmStatus(session.id, guildId);
+  if (!farm) return <DataUnavailable />;
+  return <FarmView farm={farm} />;
+}
+
+function fmtDuration(ms: number): string {
+  if (ms <= 0) return "0 分";
+  const totalMin = Math.round(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h === 0) return `${m} 分`;
+  if (m === 0) return `${h} 時`;
+  return `${h} 時 ${m} 分`;
+}
+
+function FarmView({ farm }: { farm: FarmStatus }) {
+  const readyCount = farm.plots.filter((p) => p.status === "ready").length;
+  const growingCount = farm.plots.filter((p) => p.status === "growing").length;
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="田地" sub="PLOTS" />
+          <div className="d-card-body">
+            <div className="d-num-xl">
+              {fmt(farm.plotCount)}
+              <span className="d-num-unit"> / 8</span>
+            </div>
+            <span className="d-feature-meta" style={{ marginTop: 6 }}>
+              當前持有田地
+            </span>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="可收成" sub="READY" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {readyCount > 0 ? `✨ ${readyCount}` : "—"}
+            </div>
+            <div className="d-kbd">塊</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="成長中" sub="GROWING" />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {growingCount > 0 ? `🌿 ${growingCount}` : "—"}
+            </div>
+            <div className="d-kbd">塊</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="d-grid-3">
+        <div className="d-card">
+          <CardHead title="累計種植" sub="PLANTED" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(farm.plantTotal)}</div>
+            <div className="d-kbd">次</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="累計收成" sub="HARVESTED" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(farm.harvestTotal)}</div>
+            <div className="d-kbd">次</div>
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="田地狀態" en="PLOT STATUS" />
+      <div className="d-card">
+        <div className="d-row-list">
+          {farm.plots.map((p) => {
+            const def = p.crop ? CROPS[p.crop] : null;
+            const status = CROP_STATUS_LABELS[p.status];
+            const fert = p.fertilizer ? FERTILIZERS[p.fertilizer] : null;
+            const remainLabel =
+              p.status === "growing"
+                ? `成熟還需 ${fmtDuration(p.remainingMs)}`
+                : p.status === "ready"
+                  ? `腐爛還剩 ${fmtDuration(p.remainingMs)}`
+                  : null;
+            return (
+              <div key={p.plotIndex} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">
+                    {def?.emoji ?? status.tag}
+                  </span>
+                  田 #{p.plotIndex + 1}
+                  <div className="d-row-sub" style={{ marginTop: 2 }}>
+                    {def ? (
+                      <>
+                        {def.name}・{status.label}
+                        {fert && <> ・施肥 {fert.emoji}{fert.name}</>}
+                        {remainLabel && <> ・{remainLabel}</>}
+                      </>
+                    ) : (
+                      "空地（可種植）"
+                    )}
+                  </div>
+                </span>
+                <span className="d-list-val">{status.tag}</span>
               </div>
-              <span className="d-quest-reward">+{fmt(def.reward)} 幣</span>
-            </div>
-            <div className="d-quest-desc">{def.description}</div>
-            <div className="d-row between" style={{ marginTop: 8 }}>
-              <span className="d-kicker mono">
-                {fmt(r.progress)} / {fmt(r.target)}
-              </span>
-              <span className="d-kicker mono">{pct}%</span>
-            </div>
-            <div className="d-bar d-bar-accent">
-              <span style={{ width: `${pct}%` }} />
+            );
+          })}
+        </div>
+      </div>
+
+      <SectionTitle title="作物圖鑑" en="CROPS" />
+      <div className="d-grid-2-eq">
+        {Object.entries(CROPS).map(([id, def]) => (
+          <div key={id} className="d-card">
+            <CardHead
+              title={`${def.emoji} ${def.name}`}
+              sub={`${fmtDuration(def.growMs)} 成熟`}
+            />
+            <div className="d-card-body">
+              <div className="d-kbd">種植費 {fmt(def.plantCost)} 幣</div>
+              <div className="d-kbd">
+                收成 {fmt(def.payout[0])} ~ {fmt(def.payout[1])} 幣・賣價 {fmt(def.sellPrice)} 幣
+              </div>
+              <div className="d-kbd">
+                {def.seedKey
+                  ? def.seedOptional
+                    ? `可消耗種子（${SEEDS[def.seedKey]?.name}）省種植費`
+                    : `需消耗種子（${SEEDS[def.seedKey]?.name}）`
+                  : "免種子"}
+              </div>
             </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
+
+      <p className="d-notice">
+        所有種植 / 施肥 / 收成 / 設陷阱操作請到 Discord 使用 <code>/農場</code>。
+        作物腐爛後就無法收成，請留意「腐爛還剩」時間。
+      </p>
+    </>
+  );
+}
+
+async function GuildTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const club = await getGuildClubMembership(session.id, guildId);
+  if (club === null) return <DataUnavailable />;
+  if (club === "no_membership") {
+    return (
+      <div className="d-empty">
+        你還沒加入任何公會。
+        <br />
+        要加入或建立公會請到 Discord 用 <code>/公會</code>。
+      </div>
+    );
+  }
+  return <GuildView club={club} />;
+}
+
+function GuildView({ club }: { club: GuildClubInfo }) {
+  const progressPct =
+    club.nextLevel && club.nextLevel.threshold > 0
+      ? Math.min(
+          100,
+          Math.round((club.myContribution / club.nextLevel.threshold) * 100),
+        )
+      : 100;
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead
+            title={`🏛️ ${club.name}`}
+            sub={`Lv.${club.level}`}
+          />
+          <div className="d-card-body">
+            <div className="d-num-md">
+              {club.memberCount}
+              <span className="d-num-unit"> / {club.maxMembers}</span>
+            </div>
+            <span className="d-feature-meta" style={{ marginTop: 6 }}>
+              成員數
+            </span>
+            <div className="d-kbd" style={{ marginTop: 10 }}>
+              身分：{GUILD_CLUB_ROLE_LABELS[club.myRole] ?? club.myRole}
+            </div>
+            {club.description && (
+              <div className="d-kbd">「{club.description}」</div>
+            )}
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="公會金庫" sub="TREASURY" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(club.treasury)}</div>
+            <div className="d-kbd">幣</div>
+            {club.treasuryLocked > 0 && (
+              <div className="d-kbd">鎖定中 {fmt(club.treasuryLocked)}</div>
+            )}
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="我的貢獻" sub="MY CONTRIBUTION" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(club.myContribution)}</div>
+            <div className="d-kbd">幣</div>
+            {club.joinedAt && (
+              <div className="d-kbd">加入 {fmtTxTime(club.joinedAt)}</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {club.nextLevel && (
+        <div className="d-card">
+          <CardHead
+            title={`升級至 Lv.${club.nextLevel.level}`}
+            sub="NEXT LEVEL"
+          />
+          <div className="d-card-body">
+            <div className="d-row between" style={{ marginBottom: 8 }}>
+              <span className="d-kicker mono">
+                {fmt(club.myContribution)} / {fmt(club.nextLevel.threshold)} 貢獻
+              </span>
+              <span className="d-kicker mono">{progressPct}%</span>
+            </div>
+            <div className="d-bar d-bar-accent">
+              <span style={{ width: `${progressPct}%` }} />
+            </div>
+            <div className="d-kbd" style={{ marginTop: 10 }}>
+              升級後上限 {club.nextLevel.maxMembers} 人・新增 buff{" "}
+              {club.nextLevel.buffs.length} 個
+            </div>
+          </div>
+        </div>
+      )}
+
+      <SectionTitle title="目前等級 BUFF" en="ACTIVE GUILD BUFFS" />
+      {club.buffs.length === 0 ? (
+        <div className="d-empty">
+          公會等級 Lv.{club.level} 目前沒有額外 buff，提升等級即可解鎖。
+        </div>
+      ) : (
+        <div className="d-card">
+          <div className="d-row-list">
+            {club.buffs.map((b, i) => (
+              <div key={`${b.type}-${i}`} className="d-list-row">
+                <span className="d-list-key">{guildClubBuffLabel(b)}</span>
+                <span className="d-list-val mono">+{b.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <SectionTitle title="等級門檻" en="LEVEL TABLE" />
+      <div className="d-table-wrap">
+        <table className="d-tbl">
+          <thead>
+            <tr>
+              <th>等級</th>
+              <th>累計貢獻</th>
+              <th>成員上限</th>
+              <th>Buff 數</th>
+            </tr>
+          </thead>
+          <tbody>
+            {GUILD_CLUB_LEVELS.map((lv) => (
+              <tr
+                key={lv.level}
+                style={
+                  lv.level === club.level
+                    ? { background: "rgba(255,255,255,0.04)" }
+                    : undefined
+                }
+              >
+                <td className="mono">Lv.{lv.level}</td>
+                <td className="mono">{fmt(lv.threshold)}</td>
+                <td className="mono">{lv.maxMembers}</td>
+                <td className="mono">{lv.buffs.length}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="d-notice">
+        詳細公會操作（招募、踢人、捐獻、解散、領取週任務獎勵）請到 Discord 用{" "}
+        <code>/公會</code>。
+      </p>
+    </>
+  );
+}
+
+async function StocksTab({
+  session,
+  guildId,
+}: {
+  session: { id: string };
+  guildId: string | null;
+}) {
+  if (!guildId) return null;
+  const port = await getStockPortfolio(session.id, guildId);
+  if (!port) return <DataUnavailable />;
+  return <StocksView portfolio={port} />;
+}
+
+function StocksView({ portfolio }: { portfolio: StockPortfolio }) {
+  if (portfolio.positions.length === 0) {
+    return (
+      <>
+        <div className="d-empty">
+          你目前沒有持倉。到 Discord 用 <code>/股票</code> 看行情、買股。
+        </div>
+        <SectionTitle title="可交易股票" en="LISTED" />
+        <StockListedGrid />
+      </>
+    );
+  }
+  const totalPct =
+    portfolio.totalCost > 0
+      ? portfolio.totalUnrealized / portfolio.totalCost
+      : 0;
+  return (
+    <>
+      <div className="d-grid-3">
+        <div className="d-card d-card-feature">
+          <CardHead title="持倉市值" sub="MARKET VALUE" />
+          <div className="d-card-body">
+            <div className="d-num-xl">{fmt(Math.round(portfolio.totalValue))}</div>
+            <span className="d-feature-meta" style={{ marginTop: 6 }}>
+              幣（以最新收盤價估）
+            </span>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="持倉成本" sub="COST" />
+          <div className="d-card-body">
+            <div className="d-num-md">{fmt(Math.round(portfolio.totalCost))}</div>
+            <div className="d-kbd">幣</div>
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="未實現損益" sub="UNREALIZED" />
+          <div className="d-card-body">
+            <div
+              className={
+                "d-num-md " +
+                (portfolio.totalUnrealized >= 0 ? "d-tx-pos" : "d-tx-neg")
+              }
+            >
+              {portfolio.totalUnrealized >= 0 ? "+" : ""}
+              {fmt(Math.round(portfolio.totalUnrealized))}
+            </div>
+            <div className="d-kbd">
+              {portfolio.totalUnrealized >= 0 ? "+" : ""}
+              {(totalPct * 100).toFixed(2)}%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="持倉" en="POSITIONS" />
+      <div className="d-table-wrap">
+        <table className="d-tbl">
+          <thead>
+            <tr>
+              <th>標的</th>
+              <th className="num">股數</th>
+              <th className="num">均價</th>
+              <th className="num">現價</th>
+              <th className="num">市值</th>
+              <th className="num">損益</th>
+            </tr>
+          </thead>
+          <tbody>
+            {portfolio.positions.map((p) => {
+              const def = STOCKS[p.symbol];
+              return (
+                <tr key={p.symbol}>
+                  <td>
+                    <span className="mono">{p.symbol}</span>
+                    {def && <span className="d-row-sub"> · {def.name}</span>}
+                  </td>
+                  <td className="num">{fmt(p.shares)}</td>
+                  <td className="num">{p.avgCost.toFixed(2)}</td>
+                  <td className="num">
+                    {p.currentPrice == null ? "—" : p.currentPrice.toFixed(2)}
+                  </td>
+                  <td className="num">{fmt(Math.round(p.marketValue))}</td>
+                  <td
+                    className={
+                      "num " +
+                      (p.unrealized >= 0 ? "d-tx-pos" : "d-tx-neg")
+                    }
+                  >
+                    {p.unrealized >= 0 ? "+" : ""}
+                    {fmt(Math.round(p.unrealized))}
+                    {p.unrealizedPct !== null && (
+                      <span className="d-row-sub">
+                        {" "}
+                        ({p.unrealizedPct >= 0 ? "+" : ""}
+                        {(p.unrealizedPct * 100).toFixed(2)}%)
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <SectionTitle title="可交易股票" en="LISTED" />
+      <StockListedGrid />
+
+      <p className="d-notice">
+        市場開盤時間 09:00–21:00（Asia/Taipei），每 5 分鐘 tick 一次。買賣 / 看
+        K 線 / 訂閱事件請到 Discord 用 <code>/股票</code>。
+      </p>
+    </>
+  );
+}
+
+function StockListedGrid() {
+  return (
+    <div className="d-grid-3">
+      {Object.values(STOCKS).map((s) => (
+        <div key={s.symbol} className="d-card">
+          <CardHead title={`${s.name}`} sub={s.symbol} />
+          <div className="d-card-body">
+            <div className="d-kbd">
+              {STOCK_TYPE_LABELS[s.type] ?? s.type}
+            </div>
+            <div className="d-kbd">
+              IPO 價 {fmt(s.initialPrice)} 幣
+            </div>
+            <div className="d-kbd">
+              年化股息{" "}
+              {s.dividendYield > 0
+                ? `${(s.dividendYield * 100).toFixed(1)}%`
+                : "—"}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1774,6 +2507,8 @@ function ActivityRow({ mining }: { mining: MiningSummary }) {
     { label: "打工次數", value: mining.workCountTotal },
     { label: "地下城通關", value: mining.dungeonCount },
     { label: "合成次數", value: mining.craftCountTotal },
+    { label: "種植次數", value: mining.farmCountTotal },
+    { label: "收成次數", value: mining.farmHarvestTotal },
   ];
   return (
     <>
@@ -1793,9 +2528,11 @@ function ActivityRow({ mining }: { mining: MiningSummary }) {
 function CollectionRow({ mining }: { mining: MiningSummary }) {
   const oreEntries = Object.entries(ORE_NAMES);
   const fishEntries = Object.entries(FISH_NAMES);
+  const cropEntries = Object.entries(CROPS);
+  const seedEntries = Object.entries(SEEDS);
   return (
     <>
-      <SectionTitle title="挖礦・釣魚收穫" en="HARVEST" />
+      <SectionTitle title="挖礦・釣魚・農場收穫" en="HARVEST" />
       <div className="d-grid-2-eq">
         <div className="d-card">
           <CardHead title="累計挖到" sub="LIFETIME ORE" />
@@ -1824,6 +2561,40 @@ function CollectionRow({ mining }: { mining: MiningSummary }) {
                 </span>
                 <span className="d-list-val">
                   {fmt(mining.fishBag[id] ?? 0)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="d-grid-2-eq">
+        <div className="d-card">
+          <CardHead title="菜袋（持有中）" sub="VEGGIE BAG" />
+          <div className="d-row-list">
+            {cropEntries.map(([id, info]) => (
+              <div key={id} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">{info.emoji}</span>
+                  {info.name}
+                </span>
+                <span className="d-list-val">
+                  {fmt(mining.veggieBag[id] ?? 0)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="d-card">
+          <CardHead title="種子袋" sub="SEEDS" />
+          <div className="d-row-list">
+            {seedEntries.map(([id, info]) => (
+              <div key={id} className="d-list-row">
+                <span className="d-list-key">
+                  <span className="d-emoji">{info.emoji}</span>
+                  {info.name}
+                </span>
+                <span className="d-list-val">
+                  {fmt(mining.seedBag[id] ?? 0)}
                 </span>
               </div>
             ))}
