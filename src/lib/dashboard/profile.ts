@@ -12,6 +12,7 @@ import {
   DAILY_QUESTS,
   WEEKLY_QUESTS,
   BADGES,
+  FOOD_STORAGE,
   type BadgeDef,
 } from "./botDefs";
 
@@ -167,6 +168,136 @@ export async function getMiningSummary(
     stamina: miningDoc?.stamina == null ? null : Number(miningDoc.stamina),
     lifetimeOre: (miningDoc?.lifetime_ore as Record<string, number>) ?? {},
     fishBag: (miningDoc?.fish_bag as Record<string, number>) ?? {},
+  };
+}
+
+// ── 食物倉庫 ─────────────────────────────────────────────────────────────────
+// 鏡像 bibi-bot src/features/fishing/foodBag.js：每份食物的 freshness = value
+// 倍率。網站只讀，不會回寫；過期（freshness=0）的食物會在玩家下次 /食物 時被
+// bot 端 sweep 成廚餘堆肥，這裡顯示時直接濾掉，並回報「腐壞中」總數讓玩家知
+// 道下次開倉時會被清。
+
+export interface FoodInstance {
+  id: string;
+  recipeId: string;
+  cookedAt: Date;
+  useCoal: boolean;
+  freshness: number; // 0..1
+}
+
+export interface FoodGroup {
+  recipeId: string;
+  count: number;
+  oldestFreshness: number;
+  newestFreshness: number;
+  avgFreshness: number;
+  useCoal: boolean;
+}
+
+export interface FoodStockpile {
+  total: number;
+  spoiledPending: number;
+  avgFreshness: number;
+  urgentCount: number;
+  groups: FoodGroup[];
+}
+
+function computeFreshness(
+  cookedAt: number,
+  useCoal: boolean,
+  now: number,
+): number {
+  const m = useCoal ? FOOD_STORAGE.coalMultiplier : 1;
+  const freshUntil = FOOD_STORAGE.freshUntilMs * m;
+  const zeroAt = FOOD_STORAGE.zeroAtMs * m;
+  const age = now - cookedAt;
+  if (age <= 0) return 1;
+  if (age <= freshUntil) return 1;
+  if (age >= zeroAt) return 0;
+  const span = zeroAt - freshUntil;
+  if (span <= 0) return 0;
+  return Math.max(0, Math.min(1, 1 - (age - freshUntil) / span));
+}
+
+export async function getFoodStockpile(
+  userId: string,
+  guildId: string,
+): Promise<FoodStockpile | null> {
+  const db = await getDonationDb();
+  if (!db) return null;
+  const doc = await db
+    .collection("MiningProfiles")
+    .findOne({ userId, guildId }, { projection: { food_bag: 1 } });
+  const empty: FoodStockpile = {
+    total: 0,
+    spoiledPending: 0,
+    avgFreshness: 0,
+    urgentCount: 0,
+    groups: [],
+  };
+  if (!doc) return empty;
+  const raw = ((doc as Record<string, unknown>).food_bag as unknown[]) ?? [];
+  if (!Array.isArray(raw) || raw.length === 0) return empty;
+
+  const now = Date.now();
+  const items: FoodInstance[] = [];
+  let spoiledPending = 0;
+  for (const r of raw) {
+    const it = r as Record<string, unknown>;
+    const cookedAtRaw = it.cookedAt;
+    const cookedAt =
+      cookedAtRaw instanceof Date
+        ? cookedAtRaw.getTime()
+        : typeof cookedAtRaw === "number"
+          ? cookedAtRaw
+          : Number(cookedAtRaw ?? 0);
+    if (!cookedAt) continue;
+    const useCoal = !!it.useCoal;
+    const fresh = computeFreshness(cookedAt, useCoal, now);
+    if (fresh <= 0) {
+      spoiledPending += 1;
+      continue;
+    }
+    items.push({
+      id: String(it.id ?? ""),
+      recipeId: String(it.recipeId ?? ""),
+      cookedAt: new Date(cookedAt),
+      useCoal,
+      freshness: fresh,
+    });
+  }
+
+  if (items.length === 0) {
+    return { ...empty, spoiledPending };
+  }
+
+  const byRecipe = new Map<string, FoodInstance[]>();
+  for (const it of items) {
+    if (!byRecipe.has(it.recipeId)) byRecipe.set(it.recipeId, []);
+    byRecipe.get(it.recipeId)!.push(it);
+  }
+  const groups: FoodGroup[] = [];
+  for (const [recipeId, arr] of byRecipe) {
+    arr.sort((a, b) => a.freshness - b.freshness);
+    const sum = arr.reduce((s, it) => s + it.freshness, 0);
+    groups.push({
+      recipeId,
+      count: arr.length,
+      oldestFreshness: arr[0].freshness,
+      newestFreshness: arr[arr.length - 1].freshness,
+      avgFreshness: sum / arr.length,
+      useCoal: arr.some((it) => it.useCoal),
+    });
+  }
+  groups.sort((a, b) => a.avgFreshness - b.avgFreshness);
+
+  const totalSum = items.reduce((s, it) => s + it.freshness, 0);
+  return {
+    total: items.length,
+    spoiledPending,
+    avgFreshness: totalSum / items.length,
+    urgentCount: items.filter((it) => it.freshness < 0.2).length,
+    groups,
   };
 }
 

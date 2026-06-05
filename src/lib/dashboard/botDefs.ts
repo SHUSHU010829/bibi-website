@@ -156,6 +156,7 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: "weekly_mine", period: "weekly", name: "週礦工", description: "本週挖礦 ≥ 20 次", reward: 1500, target: 20 },
   { id: "weekly_dungeon", period: "weekly", name: "週地城", description: "本週地下城探索 ≥ 30 次", reward: 2000, target: 30 },
   { id: "weekly_diamond", period: "weekly", name: "週鑽石", description: "本週挖到鑽石 ≥ 1 顆", reward: 3000, target: 1 },
+  { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 5000, target: 50 },
 ];
 
 // ── 等級徽章 ─────────────────────────────────────────────────────────────────
@@ -204,3 +205,42 @@ export const BADGES: BadgeDef[] = [
   { id: "react_10", category: "social", name: "受歡迎", emoji: "❤️", description: "被加 10 個反應", field: "totalReactionsReceived", threshold: 10 },
   { id: "react_100", category: "social", name: "人氣王", emoji: "🌟", description: "被加 100 個反應", field: "totalReactionsReceived", threshold: 100 },
 ];
+
+// ── 烹飪食譜 / 食物倉庫衰減 ─────────────────────────────────────────────────
+// 鏡像自 bibi-bot src/config/fishing.json 的 recipes / foodStorage。
+// recipes 只保留顯示用的最小集合（name / emoji / 兩種 buff label）；衰減曲線
+// 與 bot 端 src/features/fishing/foodBag.js 同義，網站只讀，不會回寫 DB。
+
+export interface RecipeDef {
+  name: string;
+  emoji: string;
+  buffLabel: string;
+  coalBuffLabel: string | null;
+}
+
+export const RECIPES: Record<string, RecipeDef> = {
+  fish_bento:       { name: "魚排便當",     emoji: "🍱", buffLabel: "接下來 3 次打工收入 +25%",                coalBuffLabel: "接下來 4 次打工收入 +35%（煤炭烤製）" },
+  seafood_feast:    { name: "海鮮拼盤",     emoji: "🍤", buffLabel: "接下來 3 次釣魚 成功率/稀有度提升",        coalBuffLabel: "接下來 4 次釣魚 成功率/稀有度提升（煤炭烤製）" },
+  shark_noodle:     { name: "鯊魚麵",       emoji: "🍜", buffLabel: "地下城 ATK +20",                          coalBuffLabel: "地下城 ATK +35（煤炭烤製）" },
+  octopus_rice:     { name: "章魚飯",       emoji: "🐙", buffLabel: "挖礦幸運 +8%（共 3 次）",                  coalBuffLabel: "挖礦幸運 +12%（共 4 次，煤炭烤製）" },
+  lava_hotpot:      { name: "熔岩鍋",       emoji: "🍲", buffLabel: "全屬性 +15%（60 分鐘）",                    coalBuffLabel: "全屬性 +20%（90 分鐘，煤炭烤製）" },
+  veggie_fish_soup: { name: "蔬菜魚湯",     emoji: "🥣", buffLabel: "接下來 3 次收成 +25%",                      coalBuffLabel: "接下來 4 次收成 +35%（煤炭烤製）" },
+  corn_chowder:     { name: "玉米巧達濃湯", emoji: "🌽", buffLabel: "全屬性 +10%（90 分鐘）",                    coalBuffLabel: "全屬性 +15%（120 分鐘，煤炭烤製）" },
+  rose_elixir:      { name: "黑玫瑰精華",   emoji: "🌹", buffLabel: "全屬性 +25%（60 分鐘）",                    coalBuffLabel: "全屬性 +30%（90 分鐘，煤炭烤製）" },
+  dried_small_fish: { name: "小魚乾",       emoji: "🐟", buffLabel: "接下來 2 次釣魚 成功率/稀有度提升",        coalBuffLabel: "接下來 3 次釣魚 成功率/稀有度提升（煤炭烤製）" },
+  crucian_sushi:    { name: "鯽魚握壽司",   emoji: "🍣", buffLabel: "挖礦幸運 +6%（共 2 次）",                  coalBuffLabel: "挖礦幸運 +9%（共 3 次，煤炭烤製）" },
+  shark_sashimi:    { name: "鯊魚生魚片",   emoji: "🔪", buffLabel: "地下城 ATK +18（120 分鐘）",               coalBuffLabel: "地下城 ATK +28（180 分鐘，煤炭烤製）" },
+  octopus_skewer:   { name: "章魚串燒",     emoji: "🍢", buffLabel: "接下來 3 次打工收入 +35%",                  coalBuffLabel: "接下來 4 次打工收入 +45%（煤炭烤製）" },
+  lava_sashimi:     { name: "熔岩雙拼刺身", emoji: "🌶️", buffLabel: "全屬性 +12%（60 分鐘）",                    coalBuffLabel: "全屬性 +18%（90 分鐘，煤炭烤製）" },
+  carrot_juice:     { name: "鮮榨紅蘿蔔汁", emoji: "🥤", buffLabel: "接下來 3 次釣魚 成功率/稀有度提升",        coalBuffLabel: "接下來 4 次釣魚 成功率/稀有度提升（煤炭烤製）" },
+  grilled_corn:     { name: "奶油烤玉米",   emoji: "🌽", buffLabel: "接下來 3 次打工收入 +30%",                  coalBuffLabel: "接下來 4 次打工收入 +40%（煤炭烤製）" },
+  garden_soup:      { name: "田園蔬菜湯",   emoji: "🍲", buffLabel: "接下來 3 次收成 +30%",                      coalBuffLabel: "接下來 4 次收成 +40%（煤炭烤製）" },
+  strawberry_tart:  { name: "草莓塔",       emoji: "🍰", buffLabel: "挖礦幸運 +12%（共 3 次）",                 coalBuffLabel: "挖礦幸運 +16%（共 4 次，煤炭烤製）" },
+  harvest_feast:    { name: "豐收盛宴",     emoji: "🥗", buffLabel: "全屬性 +12%（60 分鐘）",                    coalBuffLabel: "全屬性 +18%（90 分鐘，煤炭烤製）" },
+};
+
+export const FOOD_STORAGE = {
+  freshUntilMs: 43_200_000,   // 12h
+  zeroAtMs:    604_800_000,   // 7d
+  coalMultiplier: 1.5,
+} as const;
