@@ -18,6 +18,7 @@ import {
   getActiveBuffs,
   getBackpack,
   getEquipment,
+  getFoodStockpile,
   getQuestStatus,
   evaluateBadges,
   getPrimaryGuildId,
@@ -39,6 +40,7 @@ import {
   type ActiveBuff,
   type BackpackSummary,
   type EquipmentSummary,
+  type FoodStockpile,
   type QuestStatus,
   type QuestStateRow,
   type BadgeProgressRow,
@@ -50,6 +52,8 @@ import {
   RODS,
   WEAPONS,
   SHOP_ITEMS,
+  RECIPES,
+  FOOD_STORAGE,
   DAILY_QUESTS,
   WEEKLY_QUESTS,
   BADGE_CATEGORIES,
@@ -1040,9 +1044,10 @@ async function BackpackTab({
   guildId: string | null;
 }) {
   if (!guildId) return null;
-  const [bag, eq] = await Promise.all([
+  const [bag, eq, food] = await Promise.all([
     getBackpack(session.id, guildId),
     getEquipment(session.id, guildId),
+    getFoodStockpile(session.id, guildId),
   ]);
   if (!bag || !eq) return <DataUnavailable />;
   return (
@@ -1050,6 +1055,113 @@ async function BackpackTab({
       <SectionTitle title="裝備" en="EQUIPMENT" />
       <EquipmentView eq={eq} />
       <BackpackView bag={bag} />
+      {food && <FoodStockpileView food={food} />}
+    </>
+  );
+}
+
+function freshnessTone(f: number): { tag: string; label: string } {
+  if (f >= 0.8) return { tag: "🟢", label: "新鮮" };
+  if (f >= 0.5) return { tag: "🟡", label: "普通" };
+  if (f >= 0.2) return { tag: "🟠", label: "偏舊" };
+  return { tag: "🔴", label: "快壞了" };
+}
+
+function FoodStockpileView({ food }: { food: FoodStockpile }) {
+  const avgPct = Math.round(food.avgFreshness * 100);
+  return (
+    <>
+      <SectionTitle title="食物倉庫" en="FOOD STOCKPILE" />
+      {food.total === 0 ? (
+        <div className="d-empty">
+          {food.spoiledPending > 0
+            ? `倉庫裡只剩 ${food.spoiledPending} 份腐壞的食物（下次在 Discord 開 /食物 會自動轉成廚餘堆肥）`
+            : "倉庫是空的。到 Discord 用 /烹飪 做幾份囤起來吧。"}
+        </div>
+      ) : (
+        <>
+          <div className="d-grid-3">
+            <div className="d-card d-card-feature">
+              <CardHead title="目前持有" sub="TOTAL" />
+              <div className="d-card-body">
+                <div className="d-num-xl">{fmt(food.total)}</div>
+                <span className="d-feature-meta" style={{ marginTop: 6 }}>
+                  份
+                </span>
+              </div>
+            </div>
+            <div className="d-card">
+              <CardHead title="平均新鮮度" sub="AVG FRESHNESS" />
+              <div className="d-card-body">
+                <div className="d-num-md">
+                  {freshnessTone(food.avgFreshness).tag} {avgPct}%
+                </div>
+                <div className="d-bar" style={{ marginTop: 14 }}>
+                  <span style={{ width: `${avgPct}%` }} />
+                </div>
+              </div>
+            </div>
+            <div className="d-card">
+              <CardHead
+                title={food.urgentCount > 0 ? "快壞了" : "腐壞待清"}
+                sub="ATTENTION"
+              />
+              <div className="d-card-body">
+                <div className="d-num-md">
+                  {food.urgentCount > 0
+                    ? `🔴 ${food.urgentCount} 份`
+                    : food.spoiledPending > 0
+                      ? `🗑 ${food.spoiledPending} 份`
+                      : "—"}
+                </div>
+                <span className="d-feature-meta" style={{ marginTop: 6 }}>
+                  {food.urgentCount > 0
+                    ? "新鮮度 < 20%"
+                    : food.spoiledPending > 0
+                      ? "下次開 /食物 會轉堆肥"
+                      : "全部都還很新鮮"}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="d-card">
+            <div className="d-row-list">
+              {food.groups.map((g) => {
+                const def = RECIPES[g.recipeId];
+                const oldTone = freshnessTone(g.oldestFreshness);
+                const oldPct = Math.round(g.oldestFreshness * 100);
+                const newPct = Math.round(g.newestFreshness * 100);
+                const rangeText =
+                  g.count === 1
+                    ? `${oldTone.tag} ${oldPct}%（${oldTone.label}）`
+                    : `${oldTone.tag} ${oldPct}% ─ ${newPct}%`;
+                return (
+                  <div key={g.recipeId} className="d-list-row">
+                    <span className="d-list-key">
+                      <span className="d-emoji">{def?.emoji ?? "🍽️"}</span>
+                      {def?.name ?? g.recipeId}
+                      {g.useCoal && (
+                        <span className="d-row-sub"> · 🔥 煤炭烤製</span>
+                      )}
+                      <div className="d-row-sub" style={{ marginTop: 2 }}>
+                        {rangeText}
+                        {def?.buffLabel && ` · ${def.buffLabel}`}
+                      </div>
+                    </span>
+                    <span className="d-list-val">×{fmt(g.count)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <p className="d-notice">
+            食物新鮮度會隨時間衰減：剛煮好 12 小時內 100%，之後線性降到 0；
+            7 天後（煤炭烤製 ×{FOOD_STORAGE.coalMultiplier} 倍時間）變廚餘堆肥。
+            食用時 Discord 端會以「當下新鮮度」乘上效果。完整食用流程請到{" "}
+            <code>/食物</code>。
+          </p>
+        </>
+      )}
     </>
   );
 }
