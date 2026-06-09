@@ -4,7 +4,12 @@ const DOCS_HOST = 'docs.bibi.shushu.tw';
 const MAIN_HOST = 'bibi.shushu.tw';
 
 export function proxy(req: NextRequest) {
-  const { hostname, pathname, search } = req.nextUrl;
+  const { pathname, search } = req.nextUrl;
+  const hostname = (
+    req.headers.get('x-forwarded-host') ??
+    req.headers.get('host') ??
+    req.nextUrl.hostname
+  ).split(':')[0];
 
   if (hostname === DOCS_HOST) {
     if (pathname === '/') {
