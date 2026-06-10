@@ -12,7 +12,8 @@ description: 需要管理權限的指令一覽
 | 指令 | 用途 |
 | --- | --- |
 | `/give-coins` | 發放或扣除指定成員的逼幣 |
-| `/circulation` | 查看全伺服器的逼幣總流通量 |
+| `/economy-dashboard` | 經濟健康度儀表板（流通量／賭場 Edge／物資流通／集中度） |
+| `/survey-results` | 查看問卷統計與自由意見 |
 | `/level-admin give-xp` | 為某個身份組的所有成員統一加 XP |
 | `/level-admin roles` | 管理「等級 → 身份組」對應表（set / remove / list / apply） |
 
@@ -20,7 +21,6 @@ description: 需要管理權限的指令一覽
 
 | 指令 | 用途 |
 | --- | --- |
-| `/casino-stats` | 查看賭場各遊戲的投報率（RTP）統計 |
 | `/lotteryadmin` | 樂透管理（強制開獎、建立期數、執行訂閱、發送提醒等） |
 | `/stock-event` | 觸發或管理股市事件（崩盤、利多等） |
 
@@ -44,12 +44,13 @@ description: 需要管理權限的指令一覽
 | --- | --- |
 | `/food-admin` | 食物資料管理（add 新增 / batch 批次 / import 匯入菜單 / delete 刪除） |
 | `/recommendation-admin` | 推薦管理（刪除、重新分析分類） |
+| `/event-admin` | 限時活動管理（list / preview / force-start / force-end / clear-force） |
+| `/title-admin` | 遊戲稱號管理（grant / revoke / list） |
 
 ## 面板與系統設定
 
 | 指令 | 用途 |
 | --- | --- |
-| `/ticket setup` | 在當前頻道部署票務面板 |
 | `/ticket suggestion-setup` | 部署建議申訴面板 |
 | `/ticket proposal` | 發起／結束遊戲頻道提案投票（start / end / cancel） |
 | `/ticket vote create` | 依範本發起一場投票（遊戲新增／封存、活動、規則修改、一般提案） |
