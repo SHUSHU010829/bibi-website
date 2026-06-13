@@ -26,11 +26,31 @@ type AdminMeResponse = {
 
 /**
  * 輕量版：只要知道「現在登入的人是不是 admin」就好。
- * 用於在一般頁面的 nav 顯示 admin 連結等場景；失敗 / 不是 admin 都回 false。
+ * 用於在一般頁面的 nav 顯示 admin 連結等場景。
+ *
+ * 直接讀登入時寫進 session 的 isAdmin 旗標，不再每次打 admin API，
+ * 避免一般使用者每次開頁都觸發 bot 的 admin 權限檢查與 WARN log。
+ * admin 權限有變動時，使用者重新登入（或 cookie 過期重簽）即會更新；
+ * 真正的 /admin 存取仍由各頁的 checkAdmin() 即時驗證。
  */
 export async function isCurrentUserAdmin(): Promise<boolean> {
-  const result = await checkAdmin().catch(() => null);
-  return result?.status === "ok";
+  const session = await readSession();
+  return session?.isAdmin === true;
+}
+
+/**
+ * 在登入當下查一次「這個 userId 是不是 admin」，結果會寫進 session。
+ * 任何失敗（API 未設定、403、網路錯誤）都回 false，且不丟例外，
+ * 以免拖垮登入流程。
+ */
+export async function fetchAdminFlag(userId: string): Promise<boolean> {
+  if (!adminApiConfigured()) return false;
+  try {
+    await adminFetch<AdminMeResponse>("/api/v1/admin/me", userId);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function checkAdmin(): Promise<AdminCheckResult> {

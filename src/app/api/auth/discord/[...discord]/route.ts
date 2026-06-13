@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { buildAuthorizeUrl, exchangeCode, fetchUser } from "@/lib/donation/discord";
 import { clearSession, writeSession } from "@/lib/donation/session";
+import { fetchAdminFlag } from "@/lib/admin/permissions";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -80,12 +81,17 @@ async function handleCallback(req: Request): Promise<Response> {
     return new Response(`oauth failed: ${(e as Error).message}`, { status: 502 });
   }
 
+  // 登入當下查一次 admin 旗標，存進 session；之後 nav 直接讀 cookie，
+  // 不必每次開頁都打 admin API。失敗一律當非 admin，不影響登入。
+  const isAdmin = await fetchAdminFlag(user.id);
+
   await writeSession({
     id: user.id,
     username: user.username,
     globalName: user.global_name,
     avatar: user.avatar,
     iat: Math.floor(Date.now() / 1000),
+    isAdmin,
   });
 
   return Response.redirect(new URL(next, baseUrl()), 302);

@@ -7,6 +7,12 @@ export type DiscordSession = {
   globalName: string | null;
   avatar: string | null;
   iat: number;
+  /**
+   * 登入當下查到的 admin 旗標，用來決定 nav 要不要顯示 admin 連結。
+   * 舊 cookie 沒有這個欄位 → undefined → 視為非 admin（安全預設）。
+   * 真正的 /admin 存取仍會在 server 端即時驗證，不靠這個旗標。
+   */
+  isAdmin?: boolean;
 };
 
 const COOKIE_NAME = "bb_discord";
