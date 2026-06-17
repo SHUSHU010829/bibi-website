@@ -72,21 +72,72 @@ export interface WeaponDef {
   name: string;
   emoji: string;
   atk: number;
+  /** Phase H+：武器副屬性 DEF（減傷） */
+  def: number;
   critRate: number;
   durability: number | null;
 }
 
 export const WEAPONS: Record<string, WeaponDef> = {
-  fist: { name: "赤手空拳", emoji: "👊", atk: 0, critRate: 0, durability: null },
-  iron_sword: { name: "鐵劍", emoji: "🗡️", atk: 25, critRate: 0, durability: 60 },
-  steel_sword: { name: "鋼劍", emoji: "⚔️", atk: 50, critRate: 0.03, durability: 60 },
-  gold_sword: { name: "黃金劍", emoji: "🌟", atk: 80, critRate: 0.06, durability: 60 },
-  diamond_sword: { name: "鑽石劍", emoji: "💎", atk: 120, critRate: 0.1, durability: 50 },
-  legendary_sword: { name: "傳說之劍", emoji: "🔥", atk: 180, critRate: 0.2, durability: 80 },
+  fist: { name: "赤手空拳", emoji: "👊", atk: 0, def: 0, critRate: 0, durability: null },
+  iron_sword: { name: "鐵劍", emoji: "🗡️", atk: 25, def: 5, critRate: 0, durability: 40 },
+  steel_sword: { name: "鋼劍", emoji: "⚔️", atk: 50, def: 10, critRate: 0.03, durability: 45 },
+  gold_sword: { name: "黃金劍", emoji: "🌟", atk: 80, def: 18, critRate: 0.06, durability: 60 },
+  diamond_sword: { name: "鑽石劍", emoji: "💎", atk: 120, def: 28, critRate: 0.1, durability: 80 },
+  legendary_sword: { name: "傳說之劍", emoji: "🔥", atk: 180, def: 40, critRate: 0.2, durability: 120 },
 };
 
 // 基礎 ATK（dungeon.baseAtk），單獨拿出來方便加總顯示
 export const DUNGEON_BASE_ATK = 20;
+
+// ── Phase H+ 盾牌 ────────────────────────────────────────────────────────────
+
+export interface ShieldDef {
+  name: string;
+  emoji: string;
+  def: number;
+  blockRate: number;
+  reflectRate: number;
+  durability: number;
+  unlockLevel: number;
+  tier: "v1" | "v2";
+}
+
+export const SHIELDS: Record<string, ShieldDef> = {
+  iron_shield:   { name: "鐵盾",   emoji: "🪨", def: 10, blockRate: 0.25, reflectRate: 0,    durability: 50,  unlockLevel: 5,  tier: "v1" },
+  steel_shield:  { name: "鋼盾",   emoji: "⚙️", def: 18, blockRate: 0.30, reflectRate: 0,    durability: 60,  unlockLevel: 15, tier: "v1" },
+  gold_shield:   { name: "黃金盾", emoji: "🟡", def: 28, blockRate: 0.35, reflectRate: 0.05, durability: 70,  unlockLevel: 30, tier: "v2" },
+  diamond_shield:{ name: "鑽石盾", emoji: "💠", def: 42, blockRate: 0.45, reflectRate: 0.10, durability: 90,  unlockLevel: 50, tier: "v2" },
+  legendary_shield: { name: "傳說之盾", emoji: "🔥", def: 65, blockRate: 0.60, reflectRate: 0.20, durability: 120, unlockLevel: 75, tier: "v2" },
+};
+
+// ── Phase H+ 副本主題 / 樓層 ──────────────────────────────────────────────
+
+export interface DungeonThemeDef {
+  id: string;
+  name: string;
+  emoji: string;
+}
+export const DUNGEON_THEMES: Record<string, DungeonThemeDef> = {
+  mine:  { id: "mine",  name: "礦坑", emoji: "⛏️" },
+  ruins: { id: "ruins", name: "廢墟", emoji: "🏛️" },
+  ice:   { id: "ice",   name: "冰窟", emoji: "❄️" },
+};
+
+export interface DungeonFloorDef {
+  floor: number;
+  name: string;
+  emoji: string;
+  staminaCost: number;
+  rewardMultiplier: number;
+}
+export const DUNGEON_FLOORS: DungeonFloorDef[] = [
+  { floor: 1, name: "廢棄礦坑", emoji: "🏚️", staminaCost: 1, rewardMultiplier: 1.0 },
+  { floor: 2, name: "礦工迷宮", emoji: "⛏️", staminaCost: 1, rewardMultiplier: 1.3 },
+  { floor: 3, name: "古遺跡",   emoji: "🏛️", staminaCost: 2, rewardMultiplier: 1.7 },
+  { floor: 4, name: "熔岩深淵", emoji: "🔥", staminaCost: 2, rewardMultiplier: 2.2 },
+  { floor: 5, name: "虛空之門", emoji: "🌌", staminaCost: 3, rewardMultiplier: 3.0 },
+];
 
 // ── shop items（精選會出現在背包/加成的 type）──────────────────────────────
 
@@ -114,6 +165,9 @@ export const SHOP_ITEMS: Record<string, ShopItemDef> = {
   // 挖礦道具
   mining_luck_potion: { id: "mining_luck_potion", type: "mining_luck_potion", category: "挖礦道具", name: "幸運藥水", emoji: "🍀" },
   mining_stamina_potion: { id: "mining_stamina_potion", type: "mining_stamina_potion", category: "挖礦道具", name: "體力藥水", emoji: "🥤" },
+  mining_hp_potion_small: { id: "mining_hp_potion_small", type: "mining_hp_potion_small", category: "挖礦道具", name: "生命藥水（小）", emoji: "💊" },
+  mining_hp_potion_medium: { id: "mining_hp_potion_medium", type: "mining_hp_potion_medium", category: "挖礦道具", name: "生命藥水（中）", emoji: "💊" },
+  mining_hp_potion_large: { id: "mining_hp_potion_large", type: "mining_hp_potion_large", category: "挖礦道具", name: "生命藥水（大）", emoji: "💊" },
   mining_cd_ticket: { id: "mining_cd_ticket", type: "mining_cd_ticket", category: "挖礦道具", name: "CD 縮短券", emoji: "🎫" },
   mining_backpack_expand: { id: "mining_backpack_expand", type: "mining_backpack", category: "挖礦道具", name: "背包擴充", emoji: "🎒" },
   mining_whetstone_inferior: { id: "mining_whetstone_inferior", type: "mining_whetstone_inferior", category: "挖礦道具", name: "劣質磨鎬石", emoji: "🪨" },
