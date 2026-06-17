@@ -200,6 +200,7 @@ export const DAILY_QUESTS: QuestDef[] = [
   { id: "daily_work", period: "daily", name: "今日打工", description: "當日完成任意一次打工", reward: 100, target: 1 },
   { id: "daily_dungeon_win", period: "daily", name: "地城獵人", description: "當日地下城戰鬥勝利 ≥ 3 次", reward: 250, target: 3 },
   { id: "daily_dungeon_10", period: "daily", name: "地城常客", description: "當日完成地下城探索 ≥ 15 次（不論勝負）", reward: 350, target: 15 },
+  { id: "daily_dungeon_floor3", period: "daily", name: "深淵探索", description: "當日通關 3F 以上樓層 ≥ 3 次", reward: 400, target: 3 },
   { id: "daily_farm_harvest", period: "daily", name: "今日豐收", description: "當日從農場收成 ≥ 4 次", reward: 200, target: 4 },
   { id: "daily_farm_plant", period: "daily", name: "晨間耕作", description: "當日種植任意作物 ≥ 1 次", reward: 100, target: 1 },
 ];
@@ -214,6 +215,8 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: "weekly_sell_value", period: "weekly", name: "礦石大亨", description: "本週賣礦累積收入 ≥ 3,000 金幣", reward: 1500, target: 3000 },
   { id: "weekly_dungeon", period: "weekly", name: "週週下城", description: "本週完成地下城探索 ≥ 70 次", reward: 1500, target: 70 },
   { id: "weekly_dungeon_win", period: "weekly", name: "深淵征服者", description: "本週地下城戰鬥勝利 ≥ 20 次", reward: 1800, target: 20 },
+  { id: "weekly_mini_boss", period: "weekly", name: "屠龍週", description: "本週擊敗 mini-BOSS ≥ 1 次（5F 通關 5 次後解鎖挑戰）", reward: 2500, target: 1 },
+  { id: "weekly_dungeon_ice", period: "weekly", name: "冰窟洗禮", description: "本週冰窟通關 ≥ 3 次（需先解鎖冰窟主題）", reward: 2200, target: 3 },
   { id: "weekly_farm_harvest", period: "weekly", name: "週末市集", description: "本週累積收成 ≥ 25 次", reward: 1500, target: 25 },
   { id: "weekly_farm_rose", period: "weekly", name: "黑玫瑰栽培家", description: "本週成功收成黑玫瑰 ≥ 1 次", reward: 2500, target: 1 },
   { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 6000, target: 50 },
@@ -428,12 +431,14 @@ export const GUILD_CLUB_ROLE_LABELS: Record<string, string> = {
 // ── 食物 buff（active_food_buffs.type）──────────────────────────────────────
 
 export const FOOD_BUFF_TYPE_LABELS: Record<string, string> = {
-  work_income:   "💼 打工收入",
-  dungeon_atk:   "⚔️ 地下城 ATK",
-  mine_luck:     "🍀 挖礦幸運",
-  all_boost:     "✨ 全屬性",
-  fish_fortune:  "🎣 釣魚運",
-  farm_yield:    "🌾 收成倍率",
+  work_income:    "💼 打工收入",
+  dungeon_atk:    "⚔️ 地下城 ATK",
+  dungeon_def:    "🛡️ 地下城 DEF",
+  dungeon_hp_max: "❤️ 地下城 HP 上限",
+  mine_luck:      "🍀 挖礦幸運",
+  all_boost:      "✨ 全屬性",
+  fish_fortune:   "🎣 釣魚運",
+  farm_yield:     "🌾 收成倍率",
 };
 
 // ── 股票（鏡像 src/config/stocks.json stockSystem.pool）────────────────────
