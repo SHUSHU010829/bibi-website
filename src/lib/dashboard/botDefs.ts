@@ -164,7 +164,7 @@ export const SHOP_ITEMS: Record<string, ShopItemDef> = {
 
   // 挖礦道具
   mining_luck_potion: { id: "mining_luck_potion", type: "mining_luck_potion", category: "挖礦道具", name: "幸運藥水", emoji: "🍀" },
-  mining_stamina_potion: { id: "mining_stamina_potion", type: "mining_stamina_potion", category: "地下城道具", name: "精力藥水", emoji: "🥤" },
+  mining_stamina_potion: { id: "mining_stamina_potion", type: "mining_stamina_potion", category: "地下城道具", name: "體力藥水", emoji: "🥤" },
   mining_hp_potion_small: { id: "mining_hp_potion_small", type: "mining_hp_potion_small", category: "地下城道具", name: "生命藥水（小）", emoji: "💊" },
   mining_hp_potion_medium: { id: "mining_hp_potion_medium", type: "mining_hp_potion_medium", category: "地下城道具", name: "生命藥水（中）", emoji: "💊" },
   mining_hp_potion_large: { id: "mining_hp_potion_large", type: "mining_hp_potion_large", category: "地下城道具", name: "生命藥水（大）", emoji: "💊" },
