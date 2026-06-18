@@ -170,7 +170,7 @@ export const SHOP_ITEMS: Record<string, ShopItemDef> = {
   mining_hp_potion_large: { id: "mining_hp_potion_large", type: "mining_hp_potion_large", category: "挖礦道具", name: "生命藥水（大）", emoji: "💊" },
   mining_cd_ticket: { id: "mining_cd_ticket", type: "mining_cd_ticket", category: "挖礦道具", name: "CD 縮短券", emoji: "🎫" },
   mining_backpack_expand: { id: "mining_backpack_expand", type: "mining_backpack", category: "挖礦道具", name: "背包擴充", emoji: "🎒" },
-  mining_whetstone_inferior: { id: "mining_whetstone_inferior", type: "mining_whetstone_inferior", category: "挖礦道具", name: "磨石", emoji: "🪨" },
+  mining_whetstone_inferior: { id: "mining_whetstone_inferior", type: "mining_whetstone_inferior", category: "挖礦道具", name: "劣質磨石", emoji: "🪨" },
 
   // 釣魚道具
   fishing_rod_carbon: { id: "fishing_rod_carbon", type: "fishing_rod", category: "釣魚道具", name: "碳纖釣竿", emoji: "🎏" },
