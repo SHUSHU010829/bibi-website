@@ -416,8 +416,8 @@ export function guildClubBuffLabel(buff: GuildClubBuff): string {
     case "mining_luck_pct":          return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
     case "work_income_multiplier":   return `💼 打工收入 +${Math.round(buff.value * 100)}%`;
     case "dungeon_stamina_max":      return `🛡️ 地下城體力上限 +${buff.value}`;
-    case "boss_atk_pct":             return `💥 Boss ATK +${Math.round(buff.value * 100)}%`;
-    case "boss_attack_limit_bonus":  return `🔁 Boss 出手次數 +${buff.value}`;
+    case "boss_atk_pct":             return `💥 世界王 ATK +${Math.round(buff.value * 100)}%`;
+    case "boss_attack_limit_bonus":  return `🔁 世界王出手次數 +${buff.value}`;
     default:                         return `${buff.type} +${buff.value}`;
   }
 }
