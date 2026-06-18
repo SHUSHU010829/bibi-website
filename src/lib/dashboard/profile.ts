@@ -487,7 +487,8 @@ export interface EquipmentSummary {
 }
 
 // 與 bibi-bot src/config/dungeon.json 對齊。
-const STAMINA_BASE_MAX = 10;
+// Phase H+ 把基礎上限從 10 提升到 12（補償高樓層耗量）。
+const STAMINA_BASE_MAX = 12;
 const STAMINA_REGEN_MS = 60 * 60 * 1000;
 
 // 鏡像 bibi-bot src/features/mining/dungeonService.js 的 resolveStamina：
