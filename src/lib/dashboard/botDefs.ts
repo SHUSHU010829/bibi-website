@@ -111,7 +111,7 @@ export const SHIELDS: Record<string, ShieldDef> = {
   legendary_shield: { name: "傳說之盾", emoji: "🔥", def: 65, blockRate: 0.60, reflectRate: 0.20, durability: 120, unlockLevel: 75, tier: "v2" },
 };
 
-// ── Phase H+ 副本主題 / 樓層 ──────────────────────────────────────────────
+// ── Phase H+ 地下城主題 / 樓層 ──────────────────────────────────────────────
 
 export interface DungeonThemeDef {
   id: string;
