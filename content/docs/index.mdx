@@ -3,6 +3,8 @@ title: 介紹
 description: 逼逼機器人（bibi-bot）完整使用說明
 ---
 
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
 # 歡迎使用逼逼機器人
 
 逼逼機器人（bibi-bot）是一隻多功能的 Discord 機器人，集**等級成長、逼幣經濟、賭場遊戲、樂透、股票市場、商店、社群活動與各種實用工具**於一身，讓伺服器更熱鬧、更好玩。
@@ -18,31 +20,46 @@ description: 逼逼機器人（bibi-bot）完整使用說明
 ## 功能總覽
 
 ### 成長與經濟
-- [等級系統](/docs/leveling) — 靠聊天、語音、簽到累積經驗值（XP）升等，解鎖徽章與稱號。
-- [逼幣經濟](/docs/economy) — 錢包、逼幣來源、轉帳、定存、每日／每週任務、福利與財產稅。
-- [商店與背包](/docs/shop) — 用逼幣購買顏色身份組、加成藥水與錢包卡面。
+
+<Cards>
+  <Card title="等級系統" href="/docs/leveling" description="靠聊天、語音、簽到累積經驗值（XP）升等，解鎖徽章與稱號。" />
+  <Card title="逼幣經濟" href="/docs/economy" description="錢包、逼幣來源、轉帳、定存、每日／每週任務、福利與財產稅。" />
+  <Card title="商店與背包" href="/docs/shop" description="用逼幣購買顏色身份組、加成藥水與錢包卡面。" />
+</Cards>
 
 ### 遊戲與投資
-- [賭場遊戲](/docs/casino) — 拉霸、骰寶、二十一點、HI-LO、輪盤、尋寶、火箭、射龍門、賽馬、德州撲克。
-- [樂透](/docs/lottery) — 大樂透 6/49 與小樂透 3/20，支援包牌與訂閱。
-- [股票市場](/docs/stocks) — 買賣股票、領配息、看走勢圖。
-- [挖礦與打工](/docs/mining) — 挖礦、打工賺逼幣，合成裝備、闖地下城、週六晚上全伺服器圍毆 BOSS。
-- [釣魚](/docs/fishing) — 釣魚賺逼幣、解鎖三大釣點、用釣竿提升稀有魚機率。
-- [烹飪](/docs/cooking) — 把魚與蔬菜煮成 buff 食物，加成打工、地下城、挖礦、釣魚、收成。
-- [農場與種田](/docs/farming) — 種紅蘿蔔到黑玫瑰，被動收入；肥料來自挖礦／釣魚／地下城／烹飪，全系統循環。
-- [玩家交易](/docs/trading) — 市集一口價買賣、徵求、競標、贈送，以及交易所的物物交換。
+
+<Cards>
+  <Card title="賭場遊戲" href="/docs/casino" description="拉霸、骰寶、二十一點、HI-LO、輪盤、尋寶、火箭、射龍門、賽馬、德州撲克。" />
+  <Card title="樂透" href="/docs/lottery" description="大樂透 6/49 與小樂透 3/20，支援包牌與訂閱。" />
+  <Card title="股票市場" href="/docs/stocks" description="買賣股票、領配息、看走勢圖。" />
+  <Card title="挖礦與打工" href="/docs/mining" description="挖礦、打工賺逼幣，合成裝備、闖地下城、週六晚上全伺服器圍毆 BOSS。" />
+  <Card title="釣魚" href="/docs/fishing" description="釣魚賺逼幣、解鎖三大釣點、用釣竿提升稀有魚機率。" />
+  <Card title="烹飪" href="/docs/cooking" description="把魚與蔬菜煮成 buff 食物，加成打工、地下城、挖礦、釣魚、收成。" />
+  <Card title="農場與種田" href="/docs/farming" description="種紅蘿蔔到黑玫瑰，被動收入；肥料來自挖礦／釣魚／地下城／烹飪，全系統循環。" />
+  <Card title="玩家交易" href="/docs/trading" description="市集一口價買賣、徵求、競標、贈送，以及交易所的物物交換。" />
+</Cards>
 
 ### 社群與互動
-- [互動活動](/docs/activities) — 自辦活動、有獎預測與問答。
-- [客服與投票](/docs/community) — 票務客服、建議申訴、社群投票表決。
-- [伺服器功能](/docs/server-features) — 自助身份組、動態語音頻道、邀請獎勵。
+
+<Cards>
+  <Card title="互動活動" href="/docs/activities" description="自辦活動、有獎預測與問答。" />
+  <Card title="客服與投票" href="/docs/community" description="票務客服、建議申訴、社群投票表決。" />
+  <Card title="伺服器功能" href="/docs/server-features" description="自助身份組、動態語音頻道、邀請獎勵。" />
+</Cards>
 
 ### 工具與自動推播
-- [實用工具](/docs/utilities) — 吃什麼、地點推薦、天氣、抽籤與更多趣味指令。
-- [自動推播](/docs/automated) — 每日早安卡、Steam 特價、免費遊戲、Twitch 開台通知與週報。
+
+<Cards>
+  <Card title="實用工具" href="/docs/utilities" description="吃什麼、地點推薦、天氣、抽籤與更多趣味指令。" />
+  <Card title="自動推播" href="/docs/automated" description="每日早安卡、Steam 特價、免費遊戲、Twitch 開台通知與週報。" />
+</Cards>
 
 ### 管理員
-- [管理員指令](/docs/admin-commands) — 需要管理權限的指令一覽。
+
+<Cards>
+  <Card title="管理員指令" href="/docs/admin-commands" description="需要管理權限的指令一覽。" />
+</Cards>
 
 <Callout type="info">
   文件中的數值（下注上下限、手續費、利率、賠率、倍率、排程時間等）皆以伺服器目前的設定為準，未來可能微調。
