@@ -3,8 +3,6 @@ title: 世界 BOSS 共鬥
 description: 全伺服器一起打 BOSS — 階段轉換、反擊、Combo、尾刀獎勵與 MVP 公告
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-
 # 世界 BOSS 共鬥
 
 <Callout type="info">
@@ -26,7 +24,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 BOSS 出現時會自動發出召喚公告，標記血量與戰鬥結束時間。
 
 <Callout type="warn">
-  錯過了就是錯過了——時間結束後 BOSS 會逃跑，獎勵池不再分配。建議固定週六晚上掛機。
+  錯過了就是錯過了——時間結束後 BOSS 會逃跑，獎勵池不再分配。
 </Callout>
 
 ## 攻擊
@@ -47,7 +45,7 @@ BOSS 出現時會自動發出召喚公告，標記血量與戰鬥結束時間。
 連擊結束後會顯示每刀傷害條列、最終 BOSS 狀態、剩餘體力與攻擊次數。**體力 ≤ 1 時**訊息會轉紅警告，「再次攻擊」按鈕自動 disabled。
 
 <Callout type="warn">
-  Combo 是**多人接力**機制：一個人連擊不會累積 combo。旺場時段建議**一刀一刀打**，讓他人接力觸發全場 ×1.3。冷場或想快速清攻擊次數時再用連擊。
+  Combo 是**多人接力**機制：一個人連擊不會累積 combo，需多人接力才會觸發全場 ×1.3。
 </Callout>
 
 <Callout type="info">
@@ -163,35 +161,3 @@ BOSS 結算（擊殺或時間到）後，會自動發出戰報並同步歸檔。
 | ⚔️ 萬人敵 | 單場傷害 Top 1 | 每月輪替 |
 | 🎯 開團王 | 觸發 Combo 滿格的「最後一棒」 | 每月輪替 |
 | 🤡 被龍揍王 | 單場被反擊 ≥ 3 次且最多 | 每月輪替（搞笑性質） |
-
-## 戰前準備建議
-
-想在週六場拿好成績？建議：
-
-<Steps>
-  <Step>
-    **武器升級**
-
-    [合成](/docs/mining/crafting) 鋼劍以上，傷害公式裡的 baseAtk 才會夠看。
-  </Step>
-  <Step>
-    **體力滿格**
-
-    開打前一小時別亂打地下城，留 10 點體力打 5 次完整輸出 + 應付反擊。
-  </Step>
-  <Step>
-    **吃 buff**
-
-    [烹飪](/docs/cooking) 一份提升戰鬥力的食物再上場。
-  </Step>
-  <Step>
-    **看時機衝**
-
-    等 BOSS 進入破防（HP 50%）再連打，傷害 ×1.5。
-  </Step>
-  <Step>
-    **搶尾刀**
-
-    BOSS HP ≤ 5% 時注意節奏，致命一擊是月榜常勝軍的關鍵。
-  </Step>
-</Steps>
