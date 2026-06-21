@@ -65,8 +65,8 @@
    border around dark-themed pages until fumadocs' CSS got loaded.            */
 
 html, body { margin: 0; padding: 0; }
-html { background: var(--color-shell); }
-body { background: var(--color-shell); color: var(--color-primary); }
+html { background: var(--color-fd-background); }
+body { background: var(--color-fd-background); color: var(--color-fd-foreground); }
 
 /* ── Page-specific classes ───────────────────────────────────────────────────*/
 
