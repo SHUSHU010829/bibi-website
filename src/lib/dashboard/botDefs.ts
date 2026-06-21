@@ -412,15 +412,210 @@ export const GUILD_CLUB_LEVELS: GuildClubLevelDef[] = [
 
 export function guildClubBuffLabel(buff: GuildClubBuff): string {
   switch (buff.type) {
-    case "mining_qty_bonus":         return `⛏️ 挖礦數量 +${buff.value}`;
-    case "mining_luck_pct":          return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
-    case "work_income_multiplier":   return `💼 打工收入 +${Math.round(buff.value * 100)}%`;
-    case "dungeon_stamina_max":      return `🛡️ 地下城體力上限 +${buff.value}`;
-    case "boss_atk_pct":             return `💥 世界王 ATK +${Math.round(buff.value * 100)}%`;
-    case "boss_attack_limit_bonus":  return `🔁 世界王出手次數 +${buff.value}`;
-    default:                         return `${buff.type} +${buff.value}`;
+    case "mining_qty_bonus":               return `⛏️ 挖礦數量 +${buff.value}`;
+    case "mining_luck_pct":                return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
+    case "mining_cooldown_pct":            return `⏱️ 挖礦冷卻 -${buff.value}%`;
+    case "work_income_multiplier":         return `💼 打工收入 +${Math.round(buff.value * 100)}%`;
+    case "dungeon_stamina_max":            return `🛡️ 地下城體力上限 +${buff.value}`;
+    case "dungeon_damage_pct":             return `⚔️ 地下城傷害 +${buff.value}%`;
+    case "crit_rate_pct":                  return `💥 暴擊率 +${buff.value}%`;
+    case "boss_atk_pct":                   return `💥 世界王 ATK +${Math.round(buff.value * 100)}%`;
+    case "boss_damage_pct":                return `🐲 世界王傷害 +${buff.value}%`;
+    case "boss_attack_limit_bonus":        return `🔁 世界王出手次數 +${buff.value}`;
+    case "farm_growth_reduction_pct":      return `🌱 作物成熟 -${buff.value}%`;
+    case "harvest_coin_pct":               return `💰 收成金幣 +${buff.value}%`;
+    case "cooking_crit_pct":               return `✨ 烹飪美味暴擊 +${buff.value}%`;
+    case "farm_low_tier_extra_count":      return `🥕 紅蘿蔔/玉米收成 +${buff.value} 個`;
+    case "weapon_max_durability_pct":      return `🗡️ 武器耐久上限 +${buff.value}%`;
+    case "equipment_repair_discount_pct":  return `🔧 裝備修復材料 -${buff.value}%`;
+    case "combat_durability_save_pct":     return `🛡️ 戰鬥耐久節省 ${buff.value}%`;
+    default:                               return `${buff.type} +${buff.value}`;
   }
 }
+
+// ── 公會建築（鏡像 src/config/guild_buildings.json）────────────────────────
+
+export interface GuildBuildingLevelDef {
+  level: number;
+  cost: Record<string, number>;
+  buffs?: GuildClubBuff[];
+  capacity_bonus?: number;
+}
+
+export interface GuildBuildingKindDef {
+  id: string;
+  label: string;
+  emoji: string;
+  maxLevel: number;
+  unlockClubLevel: number;
+  levels: GuildBuildingLevelDef[];
+}
+
+export const GUILD_BUILDINGS: Record<string, GuildBuildingKindDef> = {
+  mine: {
+    id: "mine",
+    label: "礦坑",
+    emoji: "⛏️",
+    maxLevel: 3,
+    unlockClubLevel: 2,
+    levels: [
+      { level: 1, cost: { building_material: 1 },                buffs: [{ type: "mining_cooldown_pct", value: 5 }] },
+      { level: 2, cost: { building_material: 5 },                buffs: [{ type: "mining_cooldown_pct", value: 10 }] },
+      { level: 3, cost: { building_material: 15, steel_ingot: 5 }, buffs: [
+        { type: "mining_cooldown_pct", value: 10 },
+        { type: "mining_luck_pct", value: 0.05 },
+      ]},
+    ],
+  },
+  training: {
+    id: "training",
+    label: "訓練場",
+    emoji: "🏋️",
+    maxLevel: 3,
+    unlockClubLevel: 2,
+    levels: [
+      { level: 1, cost: { steel_ingot: 1 },                       buffs: [{ type: "dungeon_damage_pct", value: 5 }] },
+      { level: 2, cost: { steel_ingot: 8, building_material: 5 }, buffs: [
+        { type: "dungeon_damage_pct", value: 10 },
+        { type: "crit_rate_pct", value: 3 },
+      ]},
+      { level: 3, cost: { steel_ingot: 15, building_material: 10 }, buffs: [
+        { type: "dungeon_damage_pct", value: 10 },
+        { type: "crit_rate_pct", value: 5 },
+        { type: "boss_damage_pct", value: 5 },
+      ]},
+    ],
+  },
+  warehouse: {
+    id: "warehouse",
+    label: "倉庫擴建",
+    emoji: "📦",
+    maxLevel: 5,
+    unlockClubLevel: 2,
+    levels: [
+      { level: 1, cost: { building_material: 1,  coins: 5000  }, capacity_bonus: 50 },
+      { level: 2, cost: { building_material: 2,  coins: 10000 }, capacity_bonus: 100 },
+      { level: 3, cost: { building_material: 4,  coins: 15000 }, capacity_bonus: 200 },
+      { level: 4, cost: { building_material: 8,  steel_ingot: 2, coins: 30000 }, capacity_bonus: 400 },
+      { level: 5, cost: { building_material: 15, steel_ingot: 5, coins: 50000 }, capacity_bonus: 800 },
+    ],
+  },
+  farm_kitchen: {
+    id: "farm_kitchen",
+    label: "農膳坊",
+    emoji: "🍳",
+    maxLevel: 5,
+    unlockClubLevel: 3,
+    levels: [
+      { level: 1, cost: { building_material: 2 },                          buffs: [
+        { type: "farm_growth_reduction_pct", value: 3 },
+      ]},
+      { level: 2, cost: { building_material: 4, steel_ingot: 2 },          buffs: [
+        { type: "farm_growth_reduction_pct", value: 5 },
+        { type: "harvest_coin_pct", value: 5 },
+      ]},
+      { level: 3, cost: { building_material: 6, steel_ingot: 5, coins: 20000 }, buffs: [
+        { type: "farm_growth_reduction_pct", value: 8 },
+        { type: "harvest_coin_pct", value: 10 },
+        { type: "cooking_crit_pct", value: 10 },
+      ]},
+      { level: 4, cost: { building_material: 10, steel_ingot: 10, coins: 40000 }, buffs: [
+        { type: "farm_growth_reduction_pct", value: 10 },
+        { type: "harvest_coin_pct", value: 15 },
+        { type: "cooking_crit_pct", value: 15 },
+      ]},
+      { level: 5, cost: { building_material: 15, steel_ingot: 15, coins: 60000 }, buffs: [
+        { type: "farm_growth_reduction_pct", value: 12 },
+        { type: "harvest_coin_pct", value: 20 },
+        { type: "cooking_crit_pct", value: 20 },
+        { type: "farm_low_tier_extra_count", value: 1 },
+      ]},
+    ],
+  },
+  blacksmith: {
+    id: "blacksmith",
+    label: "鐵匠鋪",
+    emoji: "⚒️",
+    maxLevel: 5,
+    unlockClubLevel: 4,
+    levels: [
+      { level: 1, cost: { building_material: 2, steel_ingot: 3 },          buffs: [
+        { type: "weapon_max_durability_pct", value: 5 },
+      ]},
+      { level: 2, cost: { building_material: 4, steel_ingot: 6 },          buffs: [
+        { type: "weapon_max_durability_pct", value: 10 },
+      ]},
+      { level: 3, cost: { building_material: 6, steel_ingot: 10, coins: 15000 }, buffs: [
+        { type: "weapon_max_durability_pct", value: 15 },
+        { type: "equipment_repair_discount_pct", value: 10 },
+      ]},
+      { level: 4, cost: { building_material: 10, steel_ingot: 15, coins: 30000 }, buffs: [
+        { type: "weapon_max_durability_pct", value: 20 },
+        { type: "equipment_repair_discount_pct", value: 25 },
+      ]},
+      { level: 5, cost: { building_material: 15, steel_ingot: 20, coins: 50000 }, buffs: [
+        { type: "weapon_max_durability_pct", value: 20 },
+        { type: "equipment_repair_discount_pct", value: 40 },
+        { type: "combat_durability_save_pct", value: 5 },
+      ]},
+    ],
+  },
+};
+
+// ── 公會宴會（鏡像 src/config/guild_banquet.json）────────────────────────
+
+export interface GuildBanquetMenuDef {
+  id: string;
+  name: string;
+  emoji: string;
+  materials: Record<string, number>;
+  buffs: GuildClubBuff[];
+  durationMs: number;
+  description: string;
+}
+
+export const GUILD_BANQUET_REQUIRED_FARM_KITCHEN_LEVEL = 5;
+export const GUILD_BANQUET_COOLDOWN_HOURS = 24;
+
+export const GUILD_BANQUET_MENUS: Record<string, GuildBanquetMenuDef> = {
+  harvest_feast: {
+    id: "harvest_feast",
+    name: "豐年宴",
+    emoji: "🥗",
+    materials: { carrot: 80, corn: 40, octopus: 30 },
+    buffs: [
+      { type: "work_income_multiplier", value: 0.20 },
+      { type: "harvest_coin_pct", value: 10 },
+    ],
+    durationMs: 3_600_000,
+    description: "公會宴席滿桌時鮮，今晚打工與下田都格外有精神",
+  },
+  surf_and_turf: {
+    id: "surf_and_turf",
+    name: "海陸雙拼",
+    emoji: "🍱",
+    materials: { strawberry: 25, shark: 100, coal: 50 },
+    buffs: [
+      { type: "dungeon_damage_pct", value: 25 },
+      { type: "crit_rate_pct", value: 5 },
+    ],
+    durationMs: 7_200_000,
+    description: "公會主廚親自掌勺，下副本的兄弟刀刀致命",
+  },
+  black_rose_grand: {
+    id: "black_rose_grand",
+    name: "黑玫瑰盛宴",
+    emoji: "🌹",
+    materials: { black_rose: 10, lava_fish: 10, steel_ingot: 5 },
+    buffs: [
+      { type: "mining_luck_pct", value: 0.10 },
+      { type: "dungeon_damage_pct", value: 15 },
+      { type: "work_income_multiplier", value: 0.10 },
+    ],
+    durationMs: 5_400_000,
+    description: "黑玫瑰熬煮的高湯與熔岩魚的烈焰精華，全公會今晚天時地利人和",
+  },
+};
 
 export const GUILD_CLUB_ROLE_LABELS: Record<string, string> = {
   leader:      "👑 會長",
