@@ -3,6 +3,8 @@ title: 賭場總覽
 description: 賭場通則、下注上下限總表、排行榜與個人紀錄
 ---
 
+import { Card, Cards } from 'fumadocs-ui/components/card';
+
 # 賭場總覽
 
 用逼幣在賭場小試手氣！賭場提供多種遊戲，每種都有自己的下注上下限與賠率規則。
@@ -11,20 +13,20 @@ description: 賭場通則、下注上下限總表、排行榜與個人紀錄
   賭博有風險，所有遊戲長期期望值對玩家不利（莊家優勢）。請量力而為，把它當娛樂而非賺錢手段。
 </Callout>
 
-## 遊戲一覽與下注上下限
+## 遊戲列表
 
-| 遊戲 | 指令 | 最低下注 | 最高下注 |
-| --- | --- | --- | --- |
-| [拉霸](/docs/casino/slot) | `/賭場 拉霸` | 5 | 500 |
-| [骰寶](/docs/casino/dice) | `/賭場 骰寶` | 10 | 1000 |
-| [二十一點](/docs/casino/blackjack) | `/賭場 二十一點` | 10 | 1000 |
-| [HI-LO](/docs/casino/賭場 猜大小) | `/賭場 猜大小` | 10 | 1000 |
-| [輪盤](/docs/casino/roulette) | `/賭場 輪盤` | 30（每注） | 2000（總額） |
-| [尋寶（Keno）](/docs/casino/keno) | `/賭場 尋寶` | 10 | 50000 |
-| [火箭（Crash）](/docs/casino/crash) | `/賭場 火箭` | 10 | 5000 |
-| [射龍門](/docs/casino/dragon-gate) | `/賭場 射龍門` | 50 | 1000 |
-| [賽馬](/docs/casino/horse-racing) | `/賭場 賽馬` | 10 | 1000 |
-| [德州撲克](/docs/casino/poker) | `/賭場 德州撲克 開桌` | 盲注 10 | 盲注 500 |
+<Cards>
+  <Card title="🎰 拉霸" href="/docs/casino/slot" description="`/賭場 拉霸`・下注 5 ~ 500・全伺服器共享 Jackpot 獎池" />
+  <Card title="🎲 骰寶" href="/docs/casino/dice" description="`/賭場 骰寶`・下注 10 ~ 1000・三顆骰子多種押法" />
+  <Card title="🃏 二十一點" href="/docs/casino/blackjack" description="`/賭場 二十一點`・下注 10 ~ 1000・跟莊家比點數" />
+  <Card title="🔼 HI-LO" href="/docs/casino/hilo" description="`/賭場 猜大小`・下注 10 ~ 1000・最多 10 連勝" />
+  <Card title="🎡 輪盤" href="/docs/casino/roulette" description="`/賭場 輪盤`・每注 30、單局上限 2000・紅黑單雙多種押法" />
+  <Card title="🗺️ 尋寶（Keno）" href="/docs/casino/keno" description="`/賭場 尋寶`・下注 10 ~ 50000・選 5 格、全中 ×400" />
+  <Card title="🚀 火箭（Crash）" href="/docs/casino/crash" description="`/賭場 火箭`・下注 10 ~ 5000・限週末開放" />
+  <Card title="🐉 射龍門" href="/docs/casino/dragon-gate" description="`/賭場 射龍門`・下注 50 ~ 1000・梭哈撲克玩法" />
+  <Card title="🐎 賽馬" href="/docs/casino/horse-racing" description="`/賭場 賽馬`・下注 10 ~ 1000・6 匹馬即時下注" />
+  <Card title="♠️ 德州撲克" href="/docs/casino/poker" description="`/賭場 德州撲克 開桌`・盲注 10 ~ 500・多人連線開桌" />
+</Cards>
 
 許多遊戲的下注參數支援 `梭哈`（把可用餘額全押），詳見各遊戲頁面。
 
