@@ -1,0 +1,14 @@
+{
+  "title": "公會",
+  "description": "建立或加入公會、捐款升等解鎖全公會 buff、合力完成週任務領取金庫獎勵",
+  "pages": [
+    "index",
+    "members",
+    "leveling",
+    "warehouse",
+    "expansion",
+    "boss",
+    "feast",
+    "faq"
+  ]
+}

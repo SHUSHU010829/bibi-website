@@ -2,6 +2,11 @@
   "title": "地下城",
   "pages": [
     "index",
+    "hp-combat",
+    "floors-themes",
+    "mini-boss",
+    "events-loot",
+    "buffs-rewards",
     "boss",
     "duel"
   ]

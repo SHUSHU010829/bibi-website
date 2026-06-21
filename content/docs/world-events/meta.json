@@ -1,0 +1,10 @@
+{
+  "title": "世界事件",
+  "description": "全伺服器共同目標 — 觸發、捐獻、達標啟動全服 buff",
+  "pages": [
+    "index",
+    "events-list",
+    "donation",
+    "faq"
+  ]
+}
