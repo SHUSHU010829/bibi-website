@@ -1,0 +1,10 @@
+{
+  "title": "農場與種田",
+  "description": "種植與收成、施肥加速、地塊擴建，與挖礦／釣魚／地下城／烹飪形成完整資源循環",
+  "pages": [
+    "index",
+    "planting",
+    "raiders",
+    "vegetables"
+  ]
+}

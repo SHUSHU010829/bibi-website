@@ -4,5 +4,4 @@ export const baseOptions: BaseLayoutProps = {
   nav: {
     title: '逼逼機器人',
   },
-  themeSwitch: { enabled: false },
 };
