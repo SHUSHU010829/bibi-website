@@ -1444,6 +1444,9 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               成功率 +{Math.round(rod.successBonus * 100)}% · 稀有 +{rod.rareBonus}
             </div>
             <div className="d-kbd">
+              數量 +{rod.qtyBonus} · 豐收 {Math.round(rod.bonusChance * 100)}%
+            </div>
+            <div className="d-kbd">
               CD 縮短 {Math.round(rod.cdReductionMs / 60000)} 分
             </div>
             <div className="d-kbd">

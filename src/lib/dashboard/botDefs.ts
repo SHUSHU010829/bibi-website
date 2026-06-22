@@ -57,15 +57,16 @@ export interface RodDef {
   successBonus: number;
   rareBonus: number;
   qtyBonus: number;
+  bonusChance: number;
   cdReductionMs: number;
   durability: number | null;
 }
 
 export const RODS: Record<string, RodDef> = {
-  bamboo: { name: "竹釣竿", emoji: "🎣", successBonus: 0, rareBonus: 0, qtyBonus: 0, cdReductionMs: 0, durability: null },
-  carbon: { name: "碳纖釣竿", emoji: "🎏", successBonus: 0.12, rareBonus: 0.5, qtyBonus: 0, cdReductionMs: 1800000, durability: 50 },
-  gold: { name: "黃金釣竿", emoji: "🥇", successBonus: 0.2, rareBonus: 1.0, qtyBonus: 0, cdReductionMs: 2700000, durability: 50 },
-  mythril: { name: "秘銀釣竿", emoji: "🔱", successBonus: 0.28, rareBonus: 1.5, qtyBonus: 1, cdReductionMs: 3600000, durability: 50 },
+  bamboo: { name: "竹釣竿", emoji: "🎣", successBonus: 0, rareBonus: 0, qtyBonus: 0, bonusChance: 0, cdReductionMs: 0, durability: null },
+  carbon: { name: "碳纖釣竿", emoji: "🎏", successBonus: 0.12, rareBonus: 0.5, qtyBonus: 0, bonusChance: 0.12, cdReductionMs: 1800000, durability: 50 },
+  gold: { name: "黃金釣竿", emoji: "🥇", successBonus: 0.2, rareBonus: 1.0, qtyBonus: 0, bonusChance: 0.2, cdReductionMs: 2700000, durability: 50 },
+  mythril: { name: "秘銀釣竿", emoji: "🔱", successBonus: 0.28, rareBonus: 1.5, qtyBonus: 1, bonusChance: 0.25, cdReductionMs: 3600000, durability: 50 },
 };
 
 export interface WeaponDef {
