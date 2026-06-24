@@ -19,6 +19,57 @@ export type UserSummary = {
   recentTx: { createdAt: string; source: string; amount: number }[];
 };
 
+export type EconomySnapshotPoint = {
+  date: string;
+  totalCirculation: number;
+  totalWalletCoins: number;
+  totalDepositPrincipal: number;
+  activeUsers: number;
+  flow: {
+    mintedTotal: number;
+    burnedTotal: number;
+    netFlow: number;
+  } | null;
+  concentration: {
+    top10Coins: number;
+    top10Share: number;
+  } | null;
+};
+
+export type EconomyOverview = {
+  ok: true;
+  guildId: string;
+  range: { days: number; fromIso: string; toIso: string };
+  circulation: {
+    totalWalletCoins: number;
+    totalDepositPrincipal: number;
+    totalCirculation: number;
+    activeUsers: number;
+    userCount: number;
+    activeDepositCount: number;
+  };
+  totals: {
+    mintedTotal: number;
+    burnedTotal: number;
+    netFlow: number;
+  };
+  topHolders: { top10Coins: number; top10Share: number };
+  snapshots: EconomySnapshotPoint[];
+};
+
+// 經濟健康度趨勢：讀 EconomySnapshots（每日凍結、永久保留），
+// 而非即時 CoinTransactions（30 天 TTL），長天期才不會後段歸零。
+export async function fetchEconomyOverview(
+  adminUserId: string,
+  days: number,
+): Promise<EconomyOverview> {
+  return adminFetch<EconomyOverview>(
+    "/api/v1/admin/economy/overview",
+    adminUserId,
+    { query: { days } },
+  );
+}
+
 export async function searchMembers(
   adminUserId: string,
   q: string,
