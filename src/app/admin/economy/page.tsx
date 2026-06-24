@@ -3,11 +3,16 @@ import { checkAdmin } from "@/lib/admin/permissions";
 import {
   searchMembers,
   fetchUserSummary,
+  fetchEconomyOverview,
   type UserSummary,
+  type EconomyOverview,
 } from "@/lib/admin/economy";
 import { AdminApiError } from "@/lib/admin/fetcher";
 import { fmtShortDateTime } from "@/lib/format/time";
 import { AdjustForm } from "./AdjustForm";
+import { EconomyTrend } from "./EconomyTrend";
+
+const ALLOWED_RANGES = [7, 30, 90];
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +40,24 @@ export default async function AdminEconomyPage({
   const params = await searchParams;
   const q = asStr(params.q) ?? "";
   const targetId = asStr(params.id) ?? "";
+  const rangeRaw = Number(asStr(params.range));
+  const range = ALLOWED_RANGES.includes(rangeRaw) ? rangeRaw : 30;
+
+  let overview: EconomyOverview | null = null;
+  let overviewError: string | null = null;
+  try {
+    overview = await fetchEconomyOverview(admin.identity.userId, range);
+  } catch (err) {
+    overviewError =
+      err instanceof AdminApiError
+        ? `bot ${err.status}：${err.message}`
+        : String(err);
+  }
+
+  // range 切換連結保留目前查到的玩家
+  const baseQuery =
+    (q ? `&q=${encodeURIComponent(q)}` : "") +
+    (targetId ? `&id=${encodeURIComponent(targetId)}` : "");
 
   let summary: UserSummary | null = null;
   let summaryError: string | null = null;
@@ -62,8 +85,44 @@ export default async function AdminEconomyPage({
       <div className="d-greeting">
         <div className="d-greeting-text">
           <span className="d-greeting-hi">經濟管理</span>
-          <span className="d-greeting-name">調整金幣 / XP</span>
+          <span className="d-greeting-name">健康度趨勢 · 調整金幣 / XP</span>
         </div>
+      </div>
+
+      {overviewError ? (
+        <div className="d-empty d-tx-neg">經濟總覽載入失敗：{overviewError}</div>
+      ) : overview ? (
+        <>
+          <div className="d-grid-3">
+            <Stat
+              title="當下流通量"
+              sub="CIRCULATION"
+              value={fmt(overview.circulation.totalCirculation)}
+            />
+            <Stat
+              title={`近 ${range} 天淨流動`}
+              sub="NET FLOW"
+              value={`${overview.totals.netFlow >= 0 ? "+" : ""}${fmt(overview.totals.netFlow)}`}
+              accent={overview.totals.netFlow >= 0 ? "d-tx-pos" : "d-tx-neg"}
+            />
+            <Stat
+              title="Top 10 集中度"
+              sub="CONCENTRATION"
+              value={`${(overview.topHolders.top10Share * 100).toFixed(1)}%`}
+            />
+          </div>
+
+          <EconomyTrend
+            range={range}
+            snapshots={overview.snapshots}
+            baseQuery={baseQuery}
+          />
+        </>
+      ) : null}
+
+      <div className="d-section-title">
+        <h2>玩家調整</h2>
+        <span className="d-section-en">ADJUST</span>
       </div>
 
       <form method="get" className="d-search-form">
