@@ -4,6 +4,8 @@
     "index",
     "slot",
     "dice",
+    "baccarat",
+    "fish-prawn-crab",
     "blackjack",
     "hilo",
     "roulette",
@@ -13,8 +15,13 @@
     "mines",
     "plinko",
     "scratch",
+    "lucky-wheel",
+    "bingo",
     "dragon-gate",
     "horse-racing",
-    "poker"
+    "poker",
+    "red-packet",
+    "russian-roulette",
+    "bingo-hall"
   ]
 }
