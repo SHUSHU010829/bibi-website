@@ -131,13 +131,15 @@ export interface DungeonFloorDef {
   emoji: string;
   staminaCost: number;
   rewardMultiplier: number;
+  /** 通關保底金幣（不論戰利品骰到什麼，勝利就必給） */
+  clearReward: number;
 }
 export const DUNGEON_FLOORS: DungeonFloorDef[] = [
-  { floor: 1, name: "廢棄礦坑", emoji: "🏚️", staminaCost: 1, rewardMultiplier: 1.0 },
-  { floor: 2, name: "礦工迷宮", emoji: "⛏️", staminaCost: 1, rewardMultiplier: 1.3 },
-  { floor: 3, name: "古遺跡",   emoji: "🏛️", staminaCost: 2, rewardMultiplier: 1.7 },
-  { floor: 4, name: "熔岩深淵", emoji: "🔥", staminaCost: 2, rewardMultiplier: 2.2 },
-  { floor: 5, name: "虛空之門", emoji: "🌌", staminaCost: 3, rewardMultiplier: 3.0 },
+  { floor: 1, name: "廢棄礦坑", emoji: "🏚️", staminaCost: 1, rewardMultiplier: 1.0, clearReward: 30 },
+  { floor: 2, name: "礦工迷宮", emoji: "⛏️", staminaCost: 1, rewardMultiplier: 1.5, clearReward: 80 },
+  { floor: 3, name: "古遺跡",   emoji: "🏛️", staminaCost: 2, rewardMultiplier: 2.6, clearReward: 180 },
+  { floor: 4, name: "熔岩深淵", emoji: "🔥", staminaCost: 2, rewardMultiplier: 3.8, clearReward: 400 },
+  { floor: 5, name: "虛空之門", emoji: "🌌", staminaCost: 3, rewardMultiplier: 5.5, clearReward: 800 },
 ];
 
 // ── shop items（精選會出現在背包/加成的 type）──────────────────────────────
