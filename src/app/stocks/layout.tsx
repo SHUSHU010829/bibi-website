@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../dashboard/dashboard.css";
+import "./stocks.css";
 
 export const metadata: Metadata = {
-  title: "排行榜 — 逼逼機器人",
-  description: "查看伺服器內挖礦、稱號、週榜排行。",
+  title: "股市 — 逼逼機器人",
+  description: "即時查看逼逼股市行情、走勢與成交量。",
 };
 
-export default function LeaderboardLayout({
+export default function StocksLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -21,13 +22,13 @@ export default function LeaderboardLayout({
               <Link href="/" className="d-logo" aria-label="逼逼機器人 — 回首頁">
                 <span className="mark">BB</span>
                 <span className="bn">
-                  LEADER<em>BOARD</em>
+                  STOCK<em>MARKET</em>
                 </span>
               </Link>
             </div>
             <div className="d-account">
-              <Link href="/stocks" className="d-btn d-btn-ghost">
-                股市
+              <Link href="/leaderboard/mining" className="d-btn d-btn-ghost">
+                排行榜
               </Link>
               <Link href="/dashboard" className="d-btn d-btn-ghost">
                 我的儀表板

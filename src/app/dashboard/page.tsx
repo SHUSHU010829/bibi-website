@@ -183,6 +183,9 @@ function TopNav({
               height={32}
             />
             <span className="d-account-name">{identity.name}</span>
+            <Link href="/stocks" className="d-btn d-btn-ghost">
+              股市
+            </Link>
             <Link href="/leaderboard" className="d-btn d-btn-ghost">
               排行榜
             </Link>
@@ -203,6 +206,9 @@ function TopNav({
           </>
         ) : (
           <>
+            <Link href="/stocks" className="d-btn d-btn-ghost">
+              股市
+            </Link>
             <Link href="/leaderboard" className="d-btn d-btn-ghost">
               排行榜
             </Link>
@@ -459,6 +465,7 @@ export default async function DashboardPage({
           </div>
           <div className="d-foot-links">
             <Link href="/">首頁</Link>
+            <Link href="/stocks">股市</Link>
             <Link href="/leaderboard">排行榜</Link>
             <a href="/docs" target="_blank" rel="noreferrer">查看文件</a>
             <Link href="/donate">抖內</Link>
