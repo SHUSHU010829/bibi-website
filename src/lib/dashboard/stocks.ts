@@ -12,17 +12,19 @@ import { getDonationDb } from "@/lib/donation/mongo";
 import { getPrimaryGuildId } from "@/lib/dashboard/profile";
 import { STOCKS, STOCK_TYPE_LABELS } from "@/lib/dashboard/botDefs";
 
-export type StockPeriod = "1d" | "1w" | "1m";
+export type StockPeriod = "1h" | "1d" | "1w" | "1m";
 
 const PERIOD_MS: Record<StockPeriod, number> = {
+  "1h": 60 * 60 * 1000,
   "1d": 24 * 60 * 60 * 1000,
   "1w": 7 * 24 * 60 * 60 * 1000,
   "1m": 30 * 24 * 60 * 60 * 1000,
 };
 
-// 每個期間的分桶大小：1天→每小時，1週/1月→每天。K 線與量柱共用同一組桶，
-// 桶邊界一致 → 兩者在時間軸上自然對齊。
+// 每個期間的分桶大小：1小時→每15分、1天→每小時、1週/1月→每天。
+// K 線與量柱共用同一組桶，桶邊界一致 → 兩者在時間軸上自然對齊。
 const BUCKET_MS: Record<StockPeriod, number> = {
+  "1h": 15 * 60 * 1000,
   "1d": 60 * 60 * 1000,
   "1w": 24 * 60 * 60 * 1000,
   "1m": 24 * 60 * 60 * 1000,

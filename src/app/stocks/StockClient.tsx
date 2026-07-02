@@ -10,6 +10,7 @@ import type {
 type Mode = "line" | "candle";
 
 const PERIOD_TABS: { id: StockPeriod; label: string }[] = [
+  { id: "1h", label: "1小時" },
   { id: "1d", label: "1天" },
   { id: "1w", label: "1週" },
   { id: "1m", label: "1月" },
@@ -54,7 +55,9 @@ const TIME_FMT_MD = new Intl.DateTimeFormat("zh-TW", {
 });
 
 function fmtAxisTime(t: number, period: StockPeriod): string {
-  return period === "1d" ? TIME_FMT_HM.format(t) : TIME_FMT_MD.format(t);
+  return period === "1h" || period === "1d"
+    ? TIME_FMT_HM.format(t)
+    : TIME_FMT_MD.format(t);
 }
 
 // ── 布林通道：對收盤序列做 SMA / ±2σ ────────────────────────────────────
@@ -90,7 +93,6 @@ const PRICE_H = 300;
 const GAP_V = 12;
 const VOL_H = 64;
 const PAD_B = 24;
-const PRICE_TOP = PAD_T;
 const PRICE_BOTTOM = PAD_T + PRICE_H;
 const VOL_TOP = PRICE_BOTTOM + GAP_V;
 const VOL_BOTTOM = VOL_TOP + VOL_H;
@@ -101,16 +103,10 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-function Chart({
-  series,
-  mode,
-  showBB,
-}: {
-  series: StockSeries;
-  mode: Mode;
-  showBB: boolean;
-}) {
+function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
   const { points, candles, volume, period, bucketMs } = series;
+  // 布林只在較長期間（1週/1月）顯示，短期間資料點不足自動隱藏。
+  const showBB = period === "1w" || period === "1m";
 
   const geom = useMemo(() => {
     // x 取實際資料範圍（比 since..now 緊湊，避免收盤時段大片空白）
@@ -176,7 +172,7 @@ function Chart({
     );
   }
 
-  const { x, y, yVol, closes, bb, ticks } = geom;
+  const { x, y, yVol, bb, ticks } = geom;
 
   const linePath =
     mode === "line" && points.length
@@ -355,11 +351,6 @@ function Chart({
       <text x={PAD_L} y={VOL_TOP - 3} fontSize={10} fill="var(--ink-4)" fontFamily="var(--mono)">
         成交量
       </text>
-      {closes.length < BB_PERIOD && showBB && (
-        <text x={PAD_L} y={PRICE_TOP + 12} fontSize={10} fill="var(--ink-4)" fontFamily="var(--mono)">
-          -# 資料點不足 {BB_PERIOD}，暫不顯示布林
-        </text>
-      )}
     </svg>
   );
 }
@@ -379,7 +370,6 @@ export function StockClient({
   const [symbol, setSymbol] = useState<string>(initialSymbol);
   const [period, setPeriod] = useState<StockPeriod>(initialPeriod);
   const [mode, setMode] = useState<Mode>("line");
-  const [showBB, setShowBB] = useState(true);
   const [series, setSeries] = useState<StockSeries | null>(initialSeries);
   const [updatedAt, setUpdatedAt] = useState<number | null>(initialSeries?.now ?? null);
   const [loading, setLoading] = useState(false);
@@ -486,12 +476,6 @@ export function StockClient({
               K 線
             </button>
           </div>
-          <button
-            className={`stk-toggle${showBB ? " is-on" : ""}`}
-            onClick={() => setShowBB((v) => !v)}
-          >
-            布林通道
-          </button>
           <span className="stk-updated">
             {loading ? "更新中…" : `更新於 ${updatedLabel}`}
           </span>
@@ -500,7 +484,7 @@ export function StockClient({
         {/* 圖表 */}
         <div className="stk-chart">
           {series ? (
-            <Chart series={series} mode={mode} showBB={showBB} />
+            <Chart series={series} mode={mode} />
           ) : (
             <div className="stk-chart-empty">尚無走勢資料 📭</div>
           )}
