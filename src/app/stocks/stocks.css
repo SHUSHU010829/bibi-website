@@ -1,0 +1,260 @@
+/* 股市查看頁樣式。沿用 dashboard.css 的 .dash-root 色票與字體變數。 */
+
+.dash-root .stk-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  padding: 20px 0 48px;
+}
+
+@media (max-width: 900px) {
+  .dash-root .stk-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-root .stk-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── 標頭報價 ── */
+.dash-root .stk-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dash-root .stk-head-id {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dash-root .stk-symbol {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+.dash-root .stk-name {
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.dash-root .stk-tag {
+  font-size: 12px;
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.dash-root .stk-head-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--mono);
+}
+.dash-root .stk-price {
+  font-size: 30px;
+  font-weight: 700;
+}
+.dash-root .stk-delta {
+  font-size: 14px;
+}
+
+/* ── 控制列 ── */
+.dash-root .stk-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dash-root .stk-seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 8px);
+  overflow: hidden;
+}
+.dash-root .stk-seg-btn {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-3);
+  background: var(--paper);
+  padding: 6px 12px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.dash-root .stk-seg-btn + .stk-seg-btn {
+  border-left: 1px solid var(--line);
+}
+.dash-root .stk-seg-btn:hover {
+  color: var(--ink);
+}
+.dash-root .stk-seg-btn.is-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.dash-root .stk-toggle {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-3);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 8px);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.dash-root .stk-toggle.is-on {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+}
+.dash-root .stk-updated {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-4);
+}
+
+/* ── 圖表 ── */
+.dash-root .stk-chart {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r, 12px);
+  padding: 8px 10px;
+}
+.dash-root .stk-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.dash-root .stk-chart-empty {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+/* ── 期間統計 ── */
+.dash-root .stk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+.dash-root .stk-stat {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 8px);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dash-root .stk-stat-l {
+  font-size: 11px;
+  color: var(--ink-4);
+}
+.dash-root .stk-stat-v {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* ── 自選清單 ── */
+.dash-root .stk-watch {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r, 12px);
+  padding: 12px;
+  align-self: start;
+  position: sticky;
+  top: 12px;
+}
+.dash-root .stk-watch-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.dash-root .stk-watch-cols {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-4);
+}
+.dash-root .stk-watch-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dash-root .stk-watch-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm, 8px);
+  padding: 7px 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s;
+}
+.dash-root .stk-watch-row:hover {
+  background: var(--paper-2);
+}
+.dash-root .stk-watch-row.is-on {
+  background: var(--paper-2);
+  border-color: var(--accent-2);
+}
+.dash-root .stk-watch-id {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dash-root .stk-watch-sym {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.dash-root .stk-watch-name {
+  font-size: 11px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-root .stk-watch-nums {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-family: var(--mono);
+}
+.dash-root .stk-watch-price {
+  font-size: 13px;
+  color: var(--ink);
+}
+.dash-root .stk-watch-pct {
+  font-size: 11px;
+}
+.dash-root .stk-note {
+  margin: 10px 2px 0;
+  font-size: 11px;
+  color: var(--ink-4);
+  line-height: 1.5;
+}
