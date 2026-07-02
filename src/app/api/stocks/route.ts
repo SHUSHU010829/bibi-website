@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 10;
 
-const PERIODS: StockPeriod[] = ["1d", "1w", "1m"];
+const PERIODS: StockPeriod[] = ["1h", "1d", "1w", "1m"];
 
 function parsePeriod(v: string | null): StockPeriod {
   return PERIODS.includes(v as StockPeriod) ? (v as StockPeriod) : "1d";

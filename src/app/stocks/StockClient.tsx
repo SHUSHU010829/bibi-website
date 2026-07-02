@@ -10,6 +10,7 @@ import type {
 type Mode = "line" | "candle";
 
 const PERIOD_TABS: { id: StockPeriod; label: string }[] = [
+  { id: "1h", label: "1小時" },
   { id: "1d", label: "1天" },
   { id: "1w", label: "1週" },
   { id: "1m", label: "1月" },
@@ -54,7 +55,9 @@ const TIME_FMT_MD = new Intl.DateTimeFormat("zh-TW", {
 });
 
 function fmtAxisTime(t: number, period: StockPeriod): string {
-  return period === "1d" ? TIME_FMT_HM.format(t) : TIME_FMT_MD.format(t);
+  return period === "1h" || period === "1d"
+    ? TIME_FMT_HM.format(t)
+    : TIME_FMT_MD.format(t);
 }
 
 // ── 布林通道：對收盤序列做 SMA / ±2σ ────────────────────────────────────
