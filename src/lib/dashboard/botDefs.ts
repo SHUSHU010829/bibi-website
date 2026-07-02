@@ -655,6 +655,10 @@ export const STOCKS: Record<string, StockDef> = {
   EGPP: { symbol: "EGPP", name: "嗶嗶海運", initialPrice: 120, type: "meme", dividendYield: 0 },
   CTPP: { symbol: "CTPP", name: "嗶嗶金控", initialPrice: 800, type: "blue", dividendYield: 0.05 },
   MTKP: { symbol: "MTKP", name: "嗶發科",   initialPrice: 200, type: "tech", dividendYield: 0.025 },
+  FHPP: { symbol: "FHPP", name: "鴻嗶科技", initialPrice: 180, type: "tech", dividendYield: 0.03 },
+  DLPP: { symbol: "DLPP", name: "嗶達電",   initialPrice: 360, type: "tech", dividendYield: 0.025 },
+  TCPP: { symbol: "TCPP", name: "嗶泥",     initialPrice: 90,  type: "blue", dividendYield: 0.045 },
+  EAPP: { symbol: "EAPP", name: "長嗶航空", initialPrice: 65,  type: "meme", dividendYield: 0 },
 };
 
 export const STOCK_TYPE_LABELS: Record<string, string> = {
