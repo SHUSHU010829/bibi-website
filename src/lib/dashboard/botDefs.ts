@@ -177,6 +177,11 @@ export const SHOP_ITEMS: Record<string, ShopItemDef> = {
 
   // 釣魚道具
   fishing_rod_carbon: { id: "fishing_rod_carbon", type: "fishing_rod", category: "釣魚道具", name: "碳纖釣竿", emoji: "🎏" },
+
+  // 防身道具（盜賊系統）
+  theft_watchdog: { id: "theft_watchdog", type: "theft_watchdog", category: "防身道具", name: "看門狗", emoji: "🐕" },
+  theft_safebox: { id: "theft_safebox", type: "theft_safebox", category: "防身道具", name: "保險箱", emoji: "🔒" },
+  theft_cloak: { id: "theft_cloak", type: "theft_cloak", category: "防身道具", name: "夜行衣", emoji: "🕶️" },
 };
 
 // ── daily / weekly quests ──────────────────────────────────────────────────
