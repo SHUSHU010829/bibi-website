@@ -709,6 +709,8 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
   stock_sell: "📈 賣股票",
   stock_fee: "📈 股票手續費",
   stock_dividend: "📈 股息",
+  stock_short_margin: "📉 融券保證金",
+  stock_short_settle: "📉 融券結算",
   transfer_in: "💸 收到轉帳",
   transfer_out: "💸 轉出",
   deposit_lock: "🏦 存款鎖定",
@@ -734,6 +736,7 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
   donation: "💖 抖內",
   admin: "🛠️ 系統調整",
   daily: "📆 每日簽到",
+  item_sell: "🏷️ 雜物販售",
   quest_reroll: "🔄 任務重抽",
   quest_skip: "⏭️ 任務跳過",
   transfer_fee: "💸 轉帳手續費",
@@ -760,7 +763,7 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
 export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[] =
   [
     { id: "all", label: "全部來源", sources: [] },
-    { id: "earn", label: "📥 一般收入", sources: ["message", "voice", "reaction"] },
+    { id: "earn", label: "📥 一般收入", sources: ["message", "voice", "reaction", "daily", "item_sell"] },
     { id: "casino", label: "🎰 賭場", sources: ["bet", "payout"] },
     { id: "shop", label: "🛒 商店", sources: ["shop_buy"] },
     {
@@ -780,7 +783,14 @@ export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[]
     {
       id: "stock",
       label: "📈 股票",
-      sources: ["stock_buy", "stock_sell", "stock_fee", "stock_dividend"],
+      sources: [
+        "stock_buy",
+        "stock_sell",
+        "stock_fee",
+        "stock_dividend",
+        "stock_short_margin",
+        "stock_short_settle",
+      ],
     },
     {
       id: "transfer",
