@@ -43,15 +43,18 @@ export default async function AdminEconomyPage({
   const rangeRaw = Number(asStr(params.range));
   const range = ALLOWED_RANGES.includes(rangeRaw) ? rangeRaw : 30;
 
+  // 查看個別玩家時不需要上方整體經濟圖表，只在總覽模式載入。
   let overview: EconomyOverview | null = null;
   let overviewError: string | null = null;
-  try {
-    overview = await fetchEconomyOverview(admin.identity.userId, range);
-  } catch (err) {
-    overviewError =
-      err instanceof AdminApiError
-        ? `bot ${err.status}：${err.message}`
-        : String(err);
+  if (!targetId) {
+    try {
+      overview = await fetchEconomyOverview(admin.identity.userId, range);
+    } catch (err) {
+      overviewError =
+        err instanceof AdminApiError
+          ? `bot ${err.status}：${err.message}`
+          : String(err);
+    }
   }
 
   // range 切換連結保留目前查到的玩家
@@ -259,7 +262,7 @@ function UserDetail({ summary }: { summary: UserSummary }) {
       <AdjustForm userId={u.userId} kind="xp" />
 
       <div className="d-section-title">
-        <h2>最近 10 筆金流</h2>
+        <h2>最近 {summary.recentTx.length} 筆金流</h2>
         <span className="d-section-en">RECENT TX</span>
       </div>
       {summary.recentTx.length === 0 ? (
@@ -278,7 +281,7 @@ function UserDetail({ summary }: { summary: UserSummary }) {
               {summary.recentTx.map((t, i) => (
                 <tr key={`${t.createdAt}-${i}`}>
                   <td>{fmtTime(t.createdAt)}</td>
-                  <td className="mono">{t.source}</td>
+                  <td>{t.sourceLabel ?? t.source}</td>
                   <td
                     className={
                       "num " + (t.amount >= 0 ? "d-tx-pos" : "d-tx-neg")

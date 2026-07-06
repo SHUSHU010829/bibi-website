@@ -16,7 +16,12 @@ export type UserSummary = {
   coin: { balance: number; lifetime: number };
   level: { level: number; totalXp: number; streak: number };
   last30Days: { inflow: number; outflow: number; net: number; count: number };
-  recentTx: { createdAt: string; source: string; amount: number }[];
+  recentTx: {
+    createdAt: string;
+    source: string;
+    sourceLabel?: string;
+    amount: number;
+  }[];
 };
 
 export type EconomySnapshotPoint = {
@@ -82,10 +87,12 @@ export async function searchMembers(
 export async function fetchUserSummary(
   adminUserId: string,
   targetUserId: string,
+  txLimit = 50,
 ): Promise<UserSummary> {
   return adminFetch<UserSummary>(
     `/api/v1/admin/users/${targetUserId}`,
     adminUserId,
+    { query: { tx: txLimit } },
   );
 }
 
