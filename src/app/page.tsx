@@ -26,6 +26,9 @@ export default function Home() {
           <div className="nav-mid">
             <a href="#features">能玩什麼</a>
             <a href="#donate">抖內支持</a>
+            <a href="/stocks" target="_blank" rel="noreferrer">
+              股市 <span className="arr" aria-hidden>↗</span>
+            </a>
             <a href="/docs" target="_blank" rel="noreferrer">
               查看文件 <span className="arr" aria-hidden>↗</span>
             </a>
