@@ -25,6 +25,9 @@ const SENTIMENT_LABEL: Record<string, string> = {
 const UP = "#6cc98a";
 const DOWN = "#e57373";
 const FLAT = "#8a8c84";
+// 成交量用去飽和的細線色，和上方 K 線的鮮明綠紅區隔，避免視覺混淆。
+const VOL_UP = "#8fb7a2";
+const VOL_DOWN = "#c79a9a";
 const BB_PERIOD = 20;
 
 function colorFor(pct: number): string {
@@ -200,7 +203,7 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
   }
 
   const nVol = volume.length || 1;
-  const volW = clamp((PLOT_W / nVol) * 0.6, 1, 18);
+  const volW = clamp((PLOT_W / nVol) * 0.5, 1, 3);
   const nC = candles.length || 1;
   const candleW = clamp((PLOT_W / nC) * 0.6, 1, 14);
 
@@ -293,7 +296,7 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
           );
         })}
 
-      {/* 成交量（買綠 / 賣紅堆疊） */}
+      {/* 成交量（買綠 / 賣紅堆疊，細線與上方 K 線區隔） */}
       <line
         x1={PAD_L}
         x2={PAD_L + PLOT_W}
@@ -309,21 +312,23 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
         const hSell = yVol(b.sell);
         return (
           <g key={i}>
-            <rect
-              x={cx - volW / 2}
-              y={VOL_BOTTOM - hBuy}
-              width={volW}
-              height={hBuy}
-              fill={UP}
-              opacity={0.8}
+            <line
+              x1={cx}
+              x2={cx}
+              y1={VOL_BOTTOM}
+              y2={VOL_BOTTOM - hBuy}
+              stroke={VOL_UP}
+              strokeWidth={volW}
+              opacity={0.7}
             />
-            <rect
-              x={cx - volW / 2}
-              y={VOL_BOTTOM - hBuy - hSell}
-              width={volW}
-              height={hSell}
-              fill={DOWN}
-              opacity={0.8}
+            <line
+              x1={cx}
+              x2={cx}
+              y1={VOL_BOTTOM - hBuy}
+              y2={VOL_BOTTOM - hBuy - hSell}
+              stroke={VOL_DOWN}
+              strokeWidth={volW}
+              opacity={0.7}
             />
           </g>
         );
