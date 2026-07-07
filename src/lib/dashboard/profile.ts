@@ -769,6 +769,15 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
   barter_fee: "🔀 物物交換手續費",
 };
 
+// 紅包用 source=bet/payout 記帳，需靠 meta.game 才能和賭場區分，故不能只查 source 表
+export function coinSourceLabel(
+  source: string,
+  meta?: Record<string, unknown> | null,
+): string {
+  if (meta && meta.game === "redPacket") return "🧧 紅包";
+  return COIN_SOURCE_LABELS[source] ?? `❓ ${source}`;
+}
+
 export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[] =
   [
     { id: "all", label: "全部來源", sources: [] },
@@ -920,7 +929,11 @@ function buildHistoryMatch(opts: {
   // "all" → 無 date 條件
 
   const cat = COIN_CATEGORIES.find((c) => c.id === opts.category);
-  if (cat && cat.sources.length > 0) match.source = { $in: cat.sources };
+  if (cat && cat.sources.length > 0) {
+    match.source = { $in: cat.sources };
+    // 紅包用 source=bet/payout 記帳，但屬社交送禮、不算賭場金流
+    if (opts.category === "casino") match["meta.game"] = { $ne: "redPacket" };
+  }
 
   if (opts.direction === "in") match.amount = { $gt: 0 };
   else if (opts.direction === "out") match.amount = { $lt: 0 };

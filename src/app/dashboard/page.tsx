@@ -27,7 +27,7 @@ import {
   getProfileBuffSources,
   evaluateBadges,
   getPrimaryGuildId,
-  COIN_SOURCE_LABELS,
+  coinSourceLabel,
   COIN_CATEGORIES,
   COIN_HISTORY_MAX_PAGE,
   LOTTERY_TYPE_LABELS,
@@ -706,8 +706,7 @@ function TransactionsView({
             </thead>
             <tbody>
               {result.rows.map((r, i) => {
-                const label =
-                  COIN_SOURCE_LABELS[r.source] ?? `❓ ${r.source}`;
+                const label = coinSourceLabel(r.source, r.meta);
                 const positive = r.amount > 0;
                 return (
                   <tr key={`${r.createdAt.getTime()}-${i}`}>
