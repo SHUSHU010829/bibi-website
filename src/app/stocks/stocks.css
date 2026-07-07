@@ -172,9 +172,12 @@
   border: 1px solid var(--line);
   border-radius: var(--r, 12px);
   padding: 12px;
-  align-self: start;
-  position: sticky;
-  top: 12px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+.dash-root .stk-watch .stk-note {
+  margin-top: auto;
 }
 .dash-root .stk-watch-head {
   display: flex;
