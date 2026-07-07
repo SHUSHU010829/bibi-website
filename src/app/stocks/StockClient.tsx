@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import type {
   StockQuote,
   StockSeries,
@@ -83,6 +84,27 @@ function fmtAxisTime(t: number, period: StockPeriod): string {
   return period === "1h" || period === "1d"
     ? TIME_FMT_HM.format(t)
     : TIME_FMT_MD.format(t);
+}
+
+// hover 提示框用完整日期+時間，避免只看到時分不知是哪天。
+const TIME_FMT_FULL = new Intl.DateTimeFormat("zh-TW", {
+  month: "numeric",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "Asia/Taipei",
+});
+
+function fmtVol(n: number): string {
+  return Math.round(n).toLocaleString("en-US");
+}
+
+// SVG 無法量測文字寬度，用 CJK≈13 / 其餘≈7 估算提示框寬度。
+function estTextW(s: string): number {
+  let w = 0;
+  for (const ch of s) w += /[　-〿一-鿿—]/.test(ch) ? 13 : 7;
+  return w;
 }
 
 // ── 布林通道：對收盤序列做 SMA / ±2σ ────────────────────────────────────
@@ -191,6 +213,9 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
     return { x, y, yVol, xMin, xMax, closes, bb, ticks };
   }, [points, candles, volume, mode, showBB, bucketMs]);
 
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [hoverI, setHoverI] = useState<number | null>(null);
+
   if (!geom) {
     return (
       <div className="stk-chart-empty">此期間內尚無足夠資料 📭</div>
@@ -198,6 +223,32 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
   }
 
   const { x, y, yVol, bb, ticks } = geom;
+
+  // hover：以主序列（折線=points / K線=candles 中心）做最近點命中，量柱依同一分桶對齊。
+  const primaryX = (i: number) =>
+    mode === "line" ? x(points[i].t) : x(candles[i].t + bucketMs / 2);
+  const primaryLen = mode === "line" ? points.length : candles.length;
+  const hitXs: number[] = [];
+  for (let i = 0; i < primaryLen; i++) hitXs.push(primaryX(i));
+  const volByBucket = new Map(volume.map((b) => [b.t, b]));
+
+  const onHoverMove = (e: ReactPointerEvent<SVGSVGElement>) => {
+    const svg = svgRef.current;
+    if (!svg || hitXs.length === 0) return;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const ux = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse()).x;
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < hitXs.length; i++) {
+      const d = Math.abs(hitXs[i] - ux);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    setHoverI(best);
+  };
 
   const linePath =
     mode === "line" && points.length
@@ -229,13 +280,116 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
   const nC = candles.length || 1;
   const candleW = clamp((PLOT_W / nC) * 0.6, 1, 14);
 
+  // ── hover 提示：十字準線 + 標記點 + 資訊框 ──
+  const hi = hoverI != null && hoverI < primaryLen ? hoverI : null;
+  let overlay: ReactNode = null;
+  if (hi != null) {
+    const hx = hitXs[hi];
+    const t = mode === "line" ? points[hi].t : candles[hi].t;
+    const bucketKey =
+      mode === "line" ? Math.floor(points[hi].t / bucketMs) * bucketMs : candles[hi].t;
+    const vb = volByBucket.get(bucketKey);
+    const markerY = mode === "line" ? y(points[hi].p) : y(candles[hi].c);
+
+    const priceLines =
+      mode === "line"
+        ? [`價 ${fmtPrice(points[hi].p)}`]
+        : [
+            `開 ${fmtPrice(candles[hi].o)}  收 ${fmtPrice(candles[hi].c)}`,
+            `高 ${fmtPrice(candles[hi].h)}  低 ${fmtPrice(candles[hi].l)}`,
+          ];
+    const volStr = vb ? `買 ${fmtVol(vb.buy)}  賣 ${fmtVol(vb.sell)}` : "量 —";
+    const timeStr = TIME_FMT_FULL.format(t);
+    const allStr = [timeStr, ...priceLines, volStr];
+
+    const lineH = 16;
+    const padX = 9;
+    const padY = 8;
+    const boxW = Math.max(...allStr.map(estTextW)) + padX * 2;
+    const boxH = allStr.length * lineH + padY * 2 - 3;
+    let boxX = hx + 12;
+    if (boxX + boxW > PAD_L + PLOT_W) boxX = hx - 12 - boxW;
+    boxX = clamp(boxX, PAD_L, Math.max(PAD_L, PAD_L + PLOT_W - boxW));
+    const boxY = PAD_T + 2;
+    const textX = padX;
+    const rowY = (n: number) => padY + lineH * n + 12;
+
+    overlay = (
+      <g pointerEvents="none">
+        <line
+          x1={hx}
+          x2={hx}
+          y1={PAD_T}
+          y2={VOL_BOTTOM}
+          stroke="var(--ink-4)"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+          opacity={0.8}
+        />
+        <circle
+          cx={hx}
+          cy={markerY}
+          r={3.5}
+          fill="var(--accent)"
+          stroke="var(--paper)"
+          strokeWidth={1.5}
+        />
+        <g transform={`translate(${boxX.toFixed(1)} ${boxY})`}>
+          <rect
+            width={boxW}
+            height={boxH}
+            rx={6}
+            fill="var(--paper-2)"
+            stroke="var(--line)"
+            strokeWidth={1}
+          />
+          <text x={textX} y={rowY(0)} fontSize={12} fill="var(--ink-3)" fontFamily="var(--mono)">
+            {timeStr}
+          </text>
+          {priceLines.map((s, i) => (
+            <text
+              key={i}
+              x={textX}
+              y={rowY(1 + i)}
+              fontSize={12}
+              fill="var(--ink)"
+              fontFamily="var(--mono)"
+            >
+              {s}
+            </text>
+          ))}
+          <text
+            x={textX}
+            y={rowY(1 + priceLines.length)}
+            fontSize={12}
+            fontFamily="var(--mono)"
+          >
+            {vb ? (
+              <>
+                <tspan fill={VOL_UP}>買 {fmtVol(vb.buy)}</tspan>
+                <tspan fill="var(--ink-4)">　</tspan>
+                <tspan fill={VOL_DOWN}>賣 {fmtVol(vb.sell)}</tspan>
+              </>
+            ) : (
+              <tspan fill="var(--ink-4)">量 —</tspan>
+            )}
+          </text>
+        </g>
+      </g>
+    );
+  }
+
   return (
     <svg
+      ref={svgRef}
       className="stk-svg"
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="股價走勢圖"
+      onPointerMove={onHoverMove}
+      onPointerDown={onHoverMove}
+      onPointerLeave={() => setHoverI(null)}
     >
       {/* 價格格線 + 右側刻度 */}
       {ticks.map((t, i) => (
@@ -378,6 +532,9 @@ function Chart({ series, mode }: { series: StockSeries; mode: Mode }) {
       <text x={PAD_L} y={VOL_TOP - 3} fontSize={10} fill="var(--ink-4)" fontFamily="var(--mono)">
         成交量
       </text>
+
+      {/* hover 提示（最上層） */}
+      {overlay}
     </svg>
   );
 }

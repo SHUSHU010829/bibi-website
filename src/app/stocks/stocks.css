@@ -131,6 +131,8 @@
   width: 100%;
   height: auto;
   display: block;
+  cursor: crosshair;
+  touch-action: pan-y;
 }
 .dash-root .stk-chart-empty {
   min-height: 240px;
