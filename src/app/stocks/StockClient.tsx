@@ -22,6 +22,28 @@ const SENTIMENT_LABEL: Record<string, string> = {
   sideways: "➖ 盤整",
 };
 
+const PERIOD_IDS = PERIOD_TABS.map((p) => p.id);
+const MODES: Mode[] = ["line", "candle"];
+const LS_SYMBOL = "bibi.stocks.symbol";
+const LS_PERIOD = "bibi.stocks.period";
+const LS_MODE = "bibi.stocks.mode";
+
+function lsGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function lsSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* 隱私模式或配額滿：略過，不影響功能 */
+  }
+}
+
 const UP = "#6cc98a";
 const DOWN = "#e57373";
 const FLAT = "#8a8c84";
@@ -404,6 +426,39 @@ export function StockClient({
     [],
   );
 
+  // 掛載後從 localStorage 還原使用者偏好。首渲染必須沿用 initial props 以匹配 SSR，
+  // 因此偏好只能在掛載後套用——這是唯讀外部狀態的一次性同步，非串接式渲染。
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const savedSymbol = lsGet(LS_SYMBOL);
+    const savedPeriod = lsGet(LS_PERIOD);
+    const savedMode = lsGet(LS_MODE);
+    if (savedSymbol && quotes.some((q) => q.symbol === savedSymbol)) {
+      setSymbol(savedSymbol);
+    }
+    if (savedPeriod && (PERIOD_IDS as string[]).includes(savedPeriod)) {
+      setPeriod(savedPeriod as StockPeriod);
+    }
+    if (savedMode && (MODES as string[]).includes(savedMode)) {
+      setMode(savedMode as Mode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const pickSymbol = useCallback((s: string) => {
+    setSymbol(s);
+    lsSet(LS_SYMBOL, s);
+  }, []);
+  const pickPeriod = useCallback((p: StockPeriod) => {
+    setPeriod(p);
+    lsSet(LS_PERIOD, p);
+  }, []);
+  const pickMode = useCallback((m: Mode) => {
+    setMode(m);
+    lsSet(LS_MODE, m);
+  }, []);
+
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -461,7 +516,7 @@ export function StockClient({
               <button
                 key={p.id}
                 className={`stk-seg-btn${period === p.id ? " is-on" : ""}`}
-                onClick={() => setPeriod(p.id)}
+                onClick={() => pickPeriod(p.id)}
               >
                 {p.label}
               </button>
@@ -470,13 +525,13 @@ export function StockClient({
           <div className="stk-seg">
             <button
               className={`stk-seg-btn${mode === "line" ? " is-on" : ""}`}
-              onClick={() => setMode("line")}
+              onClick={() => pickMode("line")}
             >
               折線
             </button>
             <button
               className={`stk-seg-btn${mode === "candle" ? " is-on" : ""}`}
-              onClick={() => setMode("candle")}
+              onClick={() => pickMode("candle")}
             >
               K 線
             </button>
@@ -539,7 +594,7 @@ export function StockClient({
             <li key={q.symbol}>
               <button
                 className={`stk-watch-row${q.symbol === symbol ? " is-on" : ""}`}
-                onClick={() => setSymbol(q.symbol)}
+                onClick={() => pickSymbol(q.symbol)}
               >
                 <span className="stk-watch-id">
                   <span className="stk-watch-sym">{q.symbol}</span>
