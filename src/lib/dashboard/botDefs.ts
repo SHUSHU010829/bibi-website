@@ -655,14 +655,14 @@ export interface StockDef {
 }
 
 export const STOCKS: Record<string, StockDef> = {
-  TSPP: { symbol: "TSPP", name: "嗶積電",   initialPrice: 500, type: "tech", dividendYield: 0.05 },
-  UPPI: { symbol: "UPPI", name: "統嗶超商", initialPrice: 300, type: "blue", dividendYield: 0.15 },
+  TSPP: { symbol: "TSPP", name: "嗶積電",   initialPrice: 500, type: "tech", dividendYield: 0.035 },
+  UPPI: { symbol: "UPPI", name: "統嗶超商", initialPrice: 300, type: "blue", dividendYield: 0.075 },
   EGPP: { symbol: "EGPP", name: "嗶嗶海運", initialPrice: 120, type: "meme", dividendYield: 0 },
-  CTPP: { symbol: "CTPP", name: "嗶嗶金控", initialPrice: 800, type: "blue", dividendYield: 0.18 },
-  MTKP: { symbol: "MTKP", name: "嗶發科",   initialPrice: 200, type: "tech", dividendYield: 0.045 },
-  FHPP: { symbol: "FHPP", name: "鴻嗶科技", initialPrice: 180, type: "tech", dividendYield: 0.06 },
-  DLPP: { symbol: "DLPP", name: "嗶達電",   initialPrice: 360, type: "tech", dividendYield: 0.055 },
-  TCPP: { symbol: "TCPP", name: "嗶泥",     initialPrice: 90,  type: "blue", dividendYield: 0.14 },
+  CTPP: { symbol: "CTPP", name: "嗶嗶金控", initialPrice: 800, type: "blue", dividendYield: 0.09 },
+  MTKP: { symbol: "MTKP", name: "嗶發科",   initialPrice: 200, type: "tech", dividendYield: 0.03 },
+  FHPP: { symbol: "FHPP", name: "鴻嗶科技", initialPrice: 180, type: "tech", dividendYield: 0.042 },
+  DLPP: { symbol: "DLPP", name: "嗶達電",   initialPrice: 360, type: "tech", dividendYield: 0.038 },
+  TCPP: { symbol: "TCPP", name: "嗶泥",     initialPrice: 90,  type: "blue", dividendYield: 0.07 },
   EAPP: { symbol: "EAPP", name: "長嗶航空", initialPrice: 65,  type: "meme", dividendYield: 0 },
 };
 

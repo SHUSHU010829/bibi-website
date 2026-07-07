@@ -2261,8 +2261,8 @@ function StocksView({ portfolio }: { portfolio: StockPortfolio }) {
       <StockListedGrid />
 
       <p className="d-notice">
-        市場開盤時間 09:00–21:00（Asia/Taipei），每 5 分鐘 tick 一次。買賣 / 看
-        K 線 / 訂閱事件請到 Discord 用 <code>/股票</code>。
+        市場開盤時間 09:00–21:00（Asia/Taipei），每 1 分鐘 tick 一次。買賣 / 看
+        K 線 / 訂閱事件請到 Discord 用 <code>/股市</code>。
       </p>
     </>
   );
