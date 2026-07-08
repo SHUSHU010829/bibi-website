@@ -767,6 +767,13 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
   guild_donate_refund: "🏰 公會捐款返還",
   guild_disband_payout: "🏰 公會解散返還",
   barter_fee: "🔀 物物交換手續費",
+  gold_buy: "🪙 買黃金",
+  gold_sell: "🪙 賣黃金",
+  savings_deposit: "🏧 活期存入",
+  savings_withdraw: "🏧 活期提領",
+  savings_interest: "🏧 活期利息",
+  loan_out: "💳 貸款撥款",
+  loan_repay: "💳 貸款還款",
 };
 
 // 紅包用 source=bet/payout 記帳，需靠 meta.game 才能和賭場區分，故不能只查 source 表
@@ -821,12 +828,22 @@ export const COIN_CATEGORIES: { id: string; label: string; sources: string[] }[]
     },
     {
       id: "transfer",
-      label: "💸 轉帳/存款",
+      label: "💸 轉帳/銀行",
       sources: [
         "transfer_in",
         "transfer_out",
+        "transfer_fee",
         "deposit_lock",
         "deposit_release",
+        "deposit_interest",
+        "deposit_penalty",
+        "savings_deposit",
+        "savings_withdraw",
+        "savings_interest",
+        "gold_buy",
+        "gold_sell",
+        "loan_out",
+        "loan_repay",
       ],
     },
     {
