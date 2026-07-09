@@ -644,7 +644,8 @@ export const FOOD_BUFF_TYPE_LABELS: Record<string, string> = {
   farm_yield:     "🌾 收成倍率",
 };
 
-// ── 股票（鏡像 src/config/stocks.json stockSystem.pool）────────────────────
+// ── 股票（鏡像 src/config/stocks.json stockSystem.pool + candidatePool）──────
+// candidatePool 為下市補位用的候補新股，先補進名稱表，避免上市後網站 fallback 成 (id)。
 
 export interface StockDef {
   symbol: string;
@@ -664,6 +665,22 @@ export const STOCKS: Record<string, StockDef> = {
   DLPP: { symbol: "DLPP", name: "嗶達電",   initialPrice: 360, type: "tech", dividendYield: 0.038 },
   TCPP: { symbol: "TCPP", name: "嗶泥",     initialPrice: 90,  type: "blue", dividendYield: 0.07 },
   EAPP: { symbol: "EAPP", name: "長嗶航空", initialPrice: 65,  type: "meme", dividendYield: 0 },
+  // 候補新股（下市換股補位）
+  NVPP: { symbol: "NVPP", name: "嗶偉達",     initialPrice: 700, type: "tech", dividendYield: 0.01 },
+  GLPP: { symbol: "GLPP", name: "大嗶光",     initialPrice: 900, type: "tech", dividendYield: 0.05 },
+  APPP: { symbol: "APPP", name: "嗶果",       initialPrice: 550, type: "tech", dividendYield: 0.006 },
+  MSPP: { symbol: "MSPP", name: "嗶軟",       initialPrice: 620, type: "tech", dividendYield: 0.008 },
+  AMPP: { symbol: "AMPP", name: "超嗶半導體", initialPrice: 340, type: "tech", dividendYield: 0 },
+  ASPP: { symbol: "ASPP", name: "日嗶光電",   initialPrice: 200, type: "tech", dividendYield: 0.045 },
+  PXPP: { symbol: "PXPP", name: "全嗶超商",   initialPrice: 260, type: "blue", dividendYield: 0.06 },
+  BKPP: { symbol: "BKPP", name: "嗶山銀行",   initialPrice: 150, type: "blue", dividendYield: 0.08 },
+  CHPP: { symbol: "CHPP", name: "中嗶電信",   initialPrice: 320, type: "blue", dividendYield: 0.045 },
+  TMPP: { symbol: "TMPP", name: "台嗶大",     initialPrice: 210, type: "blue", dividendYield: 0.05 },
+  FBPP: { symbol: "FBPP", name: "富嗶金控",   initialPrice: 180, type: "blue", dividendYield: 0.06 },
+  TXPP: { symbol: "TXPP", name: "嗶斯拉",     initialPrice: 420, type: "meme", dividendYield: 0 },
+  MMPP: { symbol: "MMPP", name: "嗶因狗狗",   initialPrice: 80,  type: "meme", dividendYield: 0 },
+  CBPP: { symbol: "CBPP", name: "嗶特控股",   initialPrice: 150, type: "meme", dividendYield: 0 },
+  MVPP: { symbol: "MVPP", name: "元嗶宇宙",   initialPrice: 60,  type: "meme", dividendYield: 0 },
 };
 
 export const STOCK_TYPE_LABELS: Record<string, string> = {
