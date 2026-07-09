@@ -644,7 +644,8 @@ export const FOOD_BUFF_TYPE_LABELS: Record<string, string> = {
   farm_yield:     "🌾 收成倍率",
 };
 
-// ── 股票（鏡像 src/config/stocks.json stockSystem.pool）────────────────────
+// ── 股票（鏡像 src/config/stocks.json stockSystem.pool + candidatePool）──────
+// candidatePool 為下市補位用的候補新股，先補進名稱表，避免上市後網站 fallback 成 (id)。
 
 export interface StockDef {
   symbol: string;
@@ -664,6 +665,13 @@ export const STOCKS: Record<string, StockDef> = {
   DLPP: { symbol: "DLPP", name: "嗶達電",   initialPrice: 360, type: "tech", dividendYield: 0.038 },
   TCPP: { symbol: "TCPP", name: "嗶泥",     initialPrice: 90,  type: "blue", dividendYield: 0.07 },
   EAPP: { symbol: "EAPP", name: "長嗶航空", initialPrice: 65,  type: "meme", dividendYield: 0 },
+  // 候補新股（下市換股補位）
+  NVPP: { symbol: "NVPP", name: "嗶偉達",   initialPrice: 700, type: "tech", dividendYield: 0.01 },
+  TXPP: { symbol: "TXPP", name: "嗶斯拉",   initialPrice: 420, type: "meme", dividendYield: 0 },
+  GLPP: { symbol: "GLPP", name: "大嗶光",   initialPrice: 900, type: "tech", dividendYield: 0.05 },
+  PXPP: { symbol: "PXPP", name: "全嗶超商", initialPrice: 260, type: "blue", dividendYield: 0.06 },
+  BKPP: { symbol: "BKPP", name: "嗶山銀行", initialPrice: 150, type: "blue", dividendYield: 0.08 },
+  MMPP: { symbol: "MMPP", name: "嗶因狗狗", initialPrice: 80,  type: "meme", dividendYield: 0 },
 };
 
 export const STOCK_TYPE_LABELS: Record<string, string> = {
