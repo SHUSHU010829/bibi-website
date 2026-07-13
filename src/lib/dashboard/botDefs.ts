@@ -317,6 +317,7 @@ export const RECIPES: Record<string, RecipeDef> = {
   garden_soup:      { name: "田園蔬菜湯",   emoji: "🍲", buffLabel: "接下來 3 次收成 +30%",                      coalBuffLabel: "接下來 4 次收成 +40%（煤炭烤製）" },
   strawberry_tart:  { name: "草莓塔",       emoji: "🍰", buffLabel: "挖礦幸運 +12%（共 3 次）",                 coalBuffLabel: "挖礦幸運 +16%（共 4 次，煤炭烤製）" },
   harvest_feast:    { name: "豐收盛宴",     emoji: "🥗", buffLabel: "全屬性 +12%（60 分鐘）",                    coalBuffLabel: "全屬性 +18%（90 分鐘，煤炭烤製）" },
+  swift_fish_congee:{ name: "順風魚粥",     emoji: "🥣", buffLabel: "釣魚冷卻 -10%（60 分鐘）",                   coalBuffLabel: "釣魚冷卻 -15%（90 分鐘，煤炭烤製）" },
 };
 
 export const FOOD_STORAGE = {
@@ -423,6 +424,8 @@ export function guildClubBuffLabel(buff: GuildClubBuff): string {
     case "mining_qty_bonus":               return `⛏️ 挖礦數量 +${buff.value}`;
     case "mining_luck_pct":                return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
     case "mining_cooldown_pct":            return `⏱️ 挖礦冷卻 -${buff.value}%`;
+    case "fishing_cooldown_pct":           return `🎣 釣魚冷卻 -${buff.value}%`;
+    case "fishing_success_rate_pct":       return `🎣 釣魚成功率 +${buff.value}%`;
     case "work_income_multiplier":         return `💼 打工收入 +${Math.round(buff.value * 100)}%`;
     case "dungeon_stamina_max":            return `🛡️ 地下城體力上限 +${buff.value}`;
     case "dungeon_damage_pct":             return `⚔️ 地下城傷害 +${buff.value}%`;
@@ -472,6 +475,21 @@ export const GUILD_BUILDINGS: Record<string, GuildBuildingKindDef> = {
       { level: 3, cost: { building_material: 15, steel_ingot: 5 }, buffs: [
         { type: "mining_cooldown_pct", value: 10 },
         { type: "mining_luck_pct", value: 0.05 },
+      ]},
+    ],
+  },
+  harbor: {
+    id: "harbor",
+    label: "漁港",
+    emoji: "⚓",
+    maxLevel: 3,
+    unlockClubLevel: 2,
+    levels: [
+      { level: 1, cost: { building_material: 1 },                buffs: [{ type: "fishing_cooldown_pct", value: 5 }] },
+      { level: 2, cost: { building_material: 5 },                buffs: [{ type: "fishing_cooldown_pct", value: 10 }] },
+      { level: 3, cost: { building_material: 15, steel_ingot: 5 }, buffs: [
+        { type: "fishing_cooldown_pct", value: 15 },
+        { type: "fishing_success_rate_pct", value: 5 },
       ]},
     ],
   },
@@ -610,6 +628,18 @@ export const GUILD_BANQUET_MENUS: Record<string, GuildBanquetMenuDef> = {
     durationMs: 7_200_000,
     description: "公會主廚親自掌勺，下副本的兄弟刀刀致命",
   },
+  deep_sea_feast: {
+    id: "deep_sea_feast",
+    name: "深海盛宴",
+    emoji: "🐙",
+    materials: { shark: 60, octopus: 40, lava_fish: 15 },
+    buffs: [
+      { type: "fishing_cooldown_pct", value: 10 },
+      { type: "fishing_success_rate_pct", value: 10 },
+    ],
+    durationMs: 5_400_000,
+    description: "公會漁船滿載歸來，深海珍饈讓全員甩竿如飛、竿竿有魚",
+  },
   black_rose_grand: {
     id: "black_rose_grand",
     name: "黑玫瑰盛宴",
@@ -641,6 +671,7 @@ export const FOOD_BUFF_TYPE_LABELS: Record<string, string> = {
   mine_luck:      "🍀 挖礦幸運",
   all_boost:      "✨ 全屬性",
   fish_fortune:   "🎣 釣魚運",
+  fish_haste:     "🎣 釣魚冷卻",
   farm_yield:     "🌾 收成倍率",
 };
 
