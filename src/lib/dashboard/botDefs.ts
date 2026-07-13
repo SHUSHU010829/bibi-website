@@ -423,6 +423,8 @@ export function guildClubBuffLabel(buff: GuildClubBuff): string {
     case "mining_qty_bonus":               return `⛏️ 挖礦數量 +${buff.value}`;
     case "mining_luck_pct":                return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
     case "mining_cooldown_pct":            return `⏱️ 挖礦冷卻 -${buff.value}%`;
+    case "fishing_cooldown_pct":           return `🎣 釣魚冷卻 -${buff.value}%`;
+    case "fishing_success_rate_pct":       return `🎣 釣魚成功率 +${buff.value}%`;
     case "work_income_multiplier":         return `💼 打工收入 +${Math.round(buff.value * 100)}%`;
     case "dungeon_stamina_max":            return `🛡️ 地下城體力上限 +${buff.value}`;
     case "dungeon_damage_pct":             return `⚔️ 地下城傷害 +${buff.value}%`;
@@ -472,6 +474,21 @@ export const GUILD_BUILDINGS: Record<string, GuildBuildingKindDef> = {
       { level: 3, cost: { building_material: 15, steel_ingot: 5 }, buffs: [
         { type: "mining_cooldown_pct", value: 10 },
         { type: "mining_luck_pct", value: 0.05 },
+      ]},
+    ],
+  },
+  harbor: {
+    id: "harbor",
+    label: "漁港",
+    emoji: "⚓",
+    maxLevel: 3,
+    unlockClubLevel: 2,
+    levels: [
+      { level: 1, cost: { building_material: 1 },                buffs: [{ type: "fishing_cooldown_pct", value: 5 }] },
+      { level: 2, cost: { building_material: 5 },                buffs: [{ type: "fishing_cooldown_pct", value: 10 }] },
+      { level: 3, cost: { building_material: 15, steel_ingot: 5 }, buffs: [
+        { type: "fishing_cooldown_pct", value: 10 },
+        { type: "fishing_success_rate_pct", value: 5 },
       ]},
     ],
   },
