@@ -761,6 +761,8 @@ export const COIN_SOURCE_LABELS: Record<string, string> = {
   boss_loot: "🐲 BOSS 掉落",
   boss_killer: "🐲 BOSS 尾刀",
   boss_kill_bonus: "🐲 BOSS 擊殺獎",
+  boss_first_strike: "🐲 BOSS 首刀獎",
+  boss_treasure: "🎁 BOSS 寶箱",
   guild_create: "🏰 公會建立",
   guild_donate: "🏰 公會捐款",
   guild_create_refund: "🏰 公會建立返還",
