@@ -13,28 +13,28 @@ export type DonationSku = {
 
 export const DONATION_SKUS: DonationSku[] = [
   {
-    id: "mining_pass_x1",
+    id: "batch_pass_x1",
     emoji: "🎟️",
-    name: "連續挖礦通行證 ×1",
+    name: "連續通行證 ×1",
     amount: 50,
     qty: 1,
-    perks: ["連續挖礦通行證 × 1", "啟用後 1 小時內無視等級連續挖礦"],
+    perks: ["連續通行證 × 1", "啟用後 1 小時內無視等級連續挖礦與釣魚"],
   },
   {
-    id: "mining_pass_x3",
+    id: "batch_pass_x3",
     emoji: "🎟️",
-    name: "連續挖礦通行證 ×3",
+    name: "連續通行證 ×3",
     amount: 100,
     qty: 3,
-    perks: ["連續挖礦通行證 × 3", "比單張省更多，適合常挖"],
+    perks: ["連續通行證 × 3", "比單張省更多，適合常挖常釣"],
   },
   {
-    id: "mining_pass_x5",
+    id: "batch_pass_x5",
     emoji: "🎟️",
-    name: "連續挖礦通行證 ×5",
+    name: "連續通行證 ×5",
     amount: 150,
     qty: 5,
-    perks: ["連續挖礦通行證 × 5", "每張最划算"],
+    perks: ["連續通行證 × 5", "每張最划算"],
   },
 ];
 

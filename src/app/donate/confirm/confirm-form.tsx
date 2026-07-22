@@ -147,7 +147,7 @@ export default function ConfirmForm({
             <span className="order-key">{activeSku ? "獲得" : "可獲得金幣"}</span>
             <span className="order-val accent">
               {activeSku
-                ? `連續挖礦通行證 × ${activeSku.qty}`
+                ? `連續通行證 × ${activeSku.qty}`
                 : `${previewCoins.toLocaleString()} 金幣`}
             </span>
           </div>
@@ -221,7 +221,7 @@ export default function ConfirmForm({
   if (activeSku) {
     return (
       <>
-        <div className="section-label">連續挖礦通行證</div>
+        <div className="section-label">連續通行證</div>
         <div className="tier-pill-row">
           {skus.map((s) => (
             <button
@@ -250,7 +250,7 @@ export default function ConfirmForm({
           </div>
         </div>
         <p className="coin-preview">
-          啟用後 1 小時內無視等級即可連續挖礦（仍照冷卻扣 CD 縮短券）。
+          啟用後 1 小時內無視等級即可連續挖礦與連續釣魚（仍照冷卻扣 CD 縮短券）。
         </p>
 
         <div className="section-label">付款平台</div>
@@ -276,7 +276,7 @@ export default function ConfirmForm({
         </div>
 
         <p className="notice">
-          此為獨立商品，只發放 <strong>連續挖礦通行證</strong>，不含金幣 / 身分組等贊助方案回饋。
+          此為獨立商品，只發放 <strong>連續通行證</strong>，不含金幣 / 身分組等贊助方案回饋。
           發放以 bot 依實付金額判定為準。
         </p>
 
@@ -358,7 +358,7 @@ export default function ConfirmForm({
 
       {skus.length > 0 && (
         <p className="coin-preview">
-          想快速連續挖礦？{" "}
+          想快速連續挖礦 / 釣魚？{" "}
           <button
             type="button"
             onClick={() => setSkuId(skus[0].id)}
@@ -372,7 +372,7 @@ export default function ConfirmForm({
               font: "inherit",
             }}
           >
-            改買連續挖礦通行證 🎟️
+            改買連續通行證 🎟️
           </button>
         </p>
       )}
