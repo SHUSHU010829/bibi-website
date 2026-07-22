@@ -1,15 +1,19 @@
 import { redirect } from "next/navigation";
 import { readSession, avatarUrl, type DiscordSession } from "@/lib/donation/session";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
+import { DONATION_SKUS } from "@/lib/donation/skus";
 import ConfirmForm from "./confirm-form";
 import DonateNav from "../_components/donate-nav";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConfirmPage() {
+type SP = Promise<{ sku?: string }>;
+
+export default async function ConfirmPage({ searchParams }: { searchParams: SP }) {
   const session = await readSession();
   if (!session) redirect("/donate");
   const s: DiscordSession = session;
+  const { sku } = await searchParams;
 
   return (
     <>
@@ -37,7 +41,7 @@ export default async function ConfirmPage() {
               </form>
             </div>
 
-            <ConfirmForm tiers={DONATION_TIERS} />
+            <ConfirmForm tiers={DONATION_TIERS} skus={DONATION_SKUS} initialSku={sku ?? null} />
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { readSession } from "@/lib/donation/session";
 import { generateCode } from "@/lib/donation/code";
+import { skuById } from "@/lib/donation/skus";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -7,6 +8,7 @@ export const runtime = "nodejs";
 type Body = {
   amountNtd?: unknown;
   platform?: unknown;
+  sku?: unknown;
 };
 
 const ECPAY_DONATE_URL_PREFIX = "https://payment.ecpay.com.tw/Broadcaster/Donate/";
@@ -19,8 +21,15 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json().catch(() => ({}))) as Body;
-  const amountNtd = Number(body.amountNtd);
   const platform = String(body.platform ?? "");
+  const skuId = typeof body.sku === "string" ? body.sku.trim() : "";
+
+  // 獨立小額商品：金額由商品固定，忽略前端傳來的 amountNtd。
+  const sku = skuId ? skuById(skuId) : null;
+  if (skuId && !sku) {
+    return Response.json({ ok: false, error: "無效的商品" }, { status: 400 });
+  }
+  const amountNtd = sku ? sku.amount : Number(body.amountNtd);
 
   if (!Number.isFinite(amountNtd) || amountNtd < 50) {
     return Response.json(
@@ -77,6 +86,7 @@ export async function POST(req: Request) {
         guildId,
         amountNtd,
         platform,
+        ...(sku ? { sku: sku.id } : {}),
       }),
       cache: "no-store",
     });

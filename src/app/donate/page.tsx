@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DONATION_TIERS } from "@/lib/donation/tiers";
+import { DONATION_SKUS } from "@/lib/donation/skus";
 import { readSession, avatarUrl } from "@/lib/donation/session";
 import DonateNav from "./_components/donate-nav";
 
@@ -79,6 +80,34 @@ export default async function DonatePage() {
                   </ul>
                 </div>
               ))}
+            </div>
+
+            <div className="section-label">🎟️ 連續挖礦通行證（獨立小額）</div>
+            <p className="notice" style={{ marginTop: 0 }}>
+              等級還沒到 Lv.100、但想立刻連續挖礦？購買通行證，啟用後 <strong>1 小時內無視等級</strong>連續挖礦
+              （仍照冷卻扣 CD 縮短券）。只發放通行證，不含金幣 / 身分組等贊助回饋。
+            </p>
+            <div className="tier-grid">
+              {DONATION_SKUS.map((sku) => {
+                const href = session
+                  ? `/donate/confirm?sku=${sku.id}`
+                  : `/api/auth/discord/login?next=${encodeURIComponent(`/donate/confirm?sku=${sku.id}`)}`;
+                return (
+                  <Link key={sku.id} href={href} className="tier-card" style={{ textDecoration: "none", color: "inherit" }}>
+                    <div className="head">
+                      <span className="name">
+                        <span className="emoji">{sku.emoji}</span> {sku.name}
+                      </span>
+                      <span className="amount">NT${sku.amount}</span>
+                    </div>
+                    <ul>
+                      {sku.perks.map((p) => (
+                        <li key={p}>{p}</li>
+                      ))}
+                    </ul>
+                  </Link>
+                );
+              })}
             </div>
 
             <p className="notice">
