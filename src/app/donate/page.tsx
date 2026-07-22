@@ -82,10 +82,10 @@ export default async function DonatePage() {
               ))}
             </div>
 
-            <div className="section-label">🎟️ 連續挖礦通行證（獨立小額）</div>
+            <div className="section-label">🎟️ 連續通行證（獨立小額）</div>
             <p className="notice" style={{ marginTop: 0 }}>
-              等級還沒到 Lv.100、但想立刻連續挖礦？購買通行證，啟用後 <strong>1 小時內無視等級</strong>連續挖礦
-              （仍照冷卻扣 CD 縮短券）。只發放通行證，不含金幣 / 身分組等贊助回饋。
+              等級還沒到 Lv.100、但想立刻連續挖礦或連續釣魚？購買通行證，啟用後 <strong>1 小時內無視等級</strong>
+              連續挖礦與連續釣魚（仍照冷卻扣 CD 縮短券）。只發放通行證，不含金幣 / 身分組等贊助回饋。
             </p>
             <div className="tier-grid">
               {DONATION_SKUS.map((sku) => {
