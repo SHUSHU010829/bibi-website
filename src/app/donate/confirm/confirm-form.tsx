@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { coinsForAmount, type DonationTier } from "@/lib/donation/tiers";
+import { type DonationSku } from "@/lib/donation/skus";
 
 type Platform = "ecpay" | "opay";
 
@@ -13,7 +14,15 @@ type CreatedSession = {
   stub?: boolean;
 };
 
-export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
+export default function ConfirmForm({
+  tiers,
+  skus,
+  initialSku,
+}: {
+  tiers: DonationTier[];
+  skus: DonationSku[];
+  initialSku?: string | null;
+}) {
   const router = useRouter();
   const [tierId, setTierId] = useState<string>(tiers[1].id);
   const [amount, setAmount] = useState<number>(tiers[1].defaultAmount);
@@ -22,6 +31,14 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedSession | null>(null);
   const [copied, setCopied] = useState(false);
+  const [skuId, setSkuId] = useState<string | null>(
+    initialSku && skus.some((s) => s.id === initialSku) ? initialSku : null,
+  );
+
+  const activeSku = useMemo(
+    () => skus.find((s) => s.id === skuId) ?? null,
+    [skus, skuId],
+  );
 
   const selectedTier = useMemo(
     () => tiers.find((t) => t.id === tierId) ?? tiers[0],
@@ -29,6 +46,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
   );
 
   const previewCoins = useMemo(() => coinsForAmount(amount), [amount]);
+  const effectiveAmount = activeSku ? activeSku.amount : amount;
 
   function pickTier(id: string) {
     const t = tiers.find((x) => x.id === id);
@@ -47,7 +65,7 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
   }
 
   async function submit() {
-    if (amount < 50) {
+    if (!activeSku && amount < 50) {
       setError("最低贊助金額為 NT$50（未滿不發放方案回饋）");
       return;
     }
@@ -57,7 +75,9 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
       const r = await fetch("/api/donation/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountNtd: amount, platform }),
+        body: JSON.stringify(
+          activeSku ? { sku: activeSku.id, platform } : { amountNtd: amount, platform },
+        ),
       });
       const data = await r.json();
       if (!r.ok || !data.ok) {
@@ -103,22 +123,32 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
     const platformName = platform === "ecpay" ? "綠界" : "歐付寶";
     return (
       <>
-        <div className="section-label">本次贊助內容</div>
+        <div className="section-label">本次{activeSku ? "購買" : "贊助"}內容</div>
         <div className="order-summary">
           <div className="order-row">
-            <span className="order-key">方案</span>
+            <span className="order-key">{activeSku ? "商品" : "方案"}</span>
             <span className="order-val">
-              {selectedTier.emoji} {selectedTier.name}
+              {activeSku ? (
+                <>
+                  {activeSku.emoji} {activeSku.name}
+                </>
+              ) : (
+                <>
+                  {selectedTier.emoji} {selectedTier.name}
+                </>
+              )}
             </span>
           </div>
           <div className="order-row">
             <span className="order-key">金額</span>
-            <span className="order-val">NT${amount.toLocaleString()}</span>
+            <span className="order-val">NT${effectiveAmount.toLocaleString()}</span>
           </div>
           <div className="order-row">
-            <span className="order-key">可獲得金幣</span>
+            <span className="order-key">{activeSku ? "獲得" : "可獲得金幣"}</span>
             <span className="order-val accent">
-              {previewCoins.toLocaleString()} 金幣
+              {activeSku
+                ? `連續挖礦通行證 × ${activeSku.qty}`
+                : `${previewCoins.toLocaleString()} 金幣`}
             </span>
           </div>
           <div className="order-row">
@@ -140,13 +170,20 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
 
         <ol className="steps">
           <li>點下方「開啟付款頁」會在新分頁開啟{platformName}收款頁</li>
-          <li>填寫贊助者名稱、金額 NT${amount}、付款方式</li>
+          <li>填寫贊助者名稱、金額 NT${effectiveAmount}、付款方式</li>
           <li>
             <strong>務必在「贊助者留言」欄輸入</strong>：
             <code className="inline-code">{created.code}</code>
           </li>
           <li>完成付款後可關閉付款分頁，本頁會自動偵測結果</li>
         </ol>
+
+        {activeSku && (
+          <p className="notice">
+            ⚠️ 請務必付款 <strong>NT${effectiveAmount}</strong>（此為商品固定價格）。
+            若實付低於此金額，系統將不會發放此商品。
+          </p>
+        )}
 
         <p className="notice bot-notice">
           💬 付款完成後，你會在 Discord 收到 <strong>BOT 的發放通知</strong>。
@@ -180,7 +217,86 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
     );
   }
 
-  // ── Stage 1: 選方案 / 金額 / 平台 ──────────────────────────────────────
+  // ── Stage 1（商品 SKU 模式）：選通行證組合 + 平台 ──────────────────────
+  if (activeSku) {
+    return (
+      <>
+        <div className="section-label">連續挖礦通行證</div>
+        <div className="tier-pill-row">
+          {skus.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className="tier-pill"
+              data-active={s.id === skuId}
+              onClick={() => setSkuId(s.id)}
+            >
+              <span>{s.emoji}</span>
+              {s.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="order-summary" style={{ marginTop: 12 }}>
+          <div className="order-row">
+            <span className="order-key">商品</span>
+            <span className="order-val">
+              {activeSku.emoji} {activeSku.name}
+            </span>
+          </div>
+          <div className="order-row">
+            <span className="order-key">價格</span>
+            <span className="order-val accent">NT${activeSku.amount.toLocaleString()}</span>
+          </div>
+        </div>
+        <p className="coin-preview">
+          啟用後 1 小時內無視等級即可連續挖礦（仍照冷卻扣 CD 縮短券）。
+        </p>
+
+        <div className="section-label">付款平台</div>
+        <div className="platform-row">
+          <button
+            type="button"
+            className="platform-card"
+            data-active={platform === "ecpay"}
+            onClick={() => setPlatform("ecpay")}
+          >
+            <span className="ptitle">綠界 ECPay</span>
+            <span className="pmeta">信用卡 / ATM / 超商</span>
+          </button>
+          <button
+            type="button"
+            className="platform-card"
+            data-active={platform === "opay"}
+            onClick={() => setPlatform("opay")}
+          >
+            <span className="ptitle">歐付寶 O&apos;Pay</span>
+            <span className="pmeta">信用卡 / ATM / TWQR</span>
+          </button>
+        </div>
+
+        <p className="notice">
+          此為獨立商品，只發放 <strong>連續挖礦通行證</strong>，不含金幣 / 身分組等贊助方案回饋。
+          發放以 bot 依實付金額判定為準。
+        </p>
+
+        {error && (
+          <p style={{ color: "#ff8080", fontSize: 13, marginTop: 12 }}>{error}</p>
+        )}
+
+        <div className="action-row">
+          <button type="button" className="donate-btn ghost" onClick={() => setSkuId(null)}>
+            ← 改為一般贊助
+          </button>
+          <button type="button" className="donate-btn" onClick={submit} disabled={submitting}>
+            {submitting ? "建立中…" : `取得付款代碼 NT$${activeSku.amount}`}
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // ── Stage 1（一般贊助）：選方案 / 金額 / 平台 ──────────────────────────
   return (
     <>
       <div className="section-label">贊助方案</div>
@@ -239,6 +355,27 @@ export default function ConfirmForm({ tiers }: { tiers: DonationTier[] }) {
           <span className="pmeta">信用卡 / ATM / TWQR</span>
         </button>
       </div>
+
+      {skus.length > 0 && (
+        <p className="coin-preview">
+          想快速連續挖礦？{" "}
+          <button
+            type="button"
+            onClick={() => setSkuId(skus[0].id)}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: "inherit",
+              textDecoration: "underline",
+              font: "inherit",
+            }}
+          >
+            改買連續挖礦通行證 🎟️
+          </button>
+        </p>
+      )}
 
       <p className="notice">
         將收取的回饋方案：<strong>{selectedTier.emoji} {selectedTier.name}</strong>。
