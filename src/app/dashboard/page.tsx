@@ -68,6 +68,7 @@ import {
   FOOD_STORAGE,
   DAILY_QUESTS,
   WEEKLY_QUESTS,
+  QUEST_ITEM_REWARDS,
   BADGE_CATEGORIES,
   DUNGEON_BASE_ATK,
   CROPS,
@@ -1812,7 +1813,16 @@ function QuestCard({
           <span className="d-quest-name">{def.name}</span>
           <span className="d-quest-state">{stateLabel}</span>
         </div>
-        <span className="d-quest-reward">+{fmt(def.reward)} 幣</span>
+        <span className="d-quest-reward">
+          {[
+            def.reward > 0 ? `+${fmt(def.reward)} 幣` : null,
+            ...Object.entries(def.rewardItems ?? {}).map(
+              ([key, qty]) => `${QUEST_ITEM_REWARDS[key] ?? key} ×${qty}`,
+            ),
+          ]
+            .filter(Boolean)
+            .join(" ・ ")}
+        </span>
       </div>
       <div className="d-quest-desc">{def.description}</div>
       <div className="d-row between" style={{ marginTop: 8 }}>
