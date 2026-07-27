@@ -2729,7 +2729,8 @@ function GuildNotConfigured() {
 function DataUnavailable() {
   return (
     <div className="d-empty">
-      目前無法連到資料庫（<code>MONGODB_URI_READONLY</code> 未設定或連線失敗）。
+      目前無法連到資料來源（<code>BOT_API_BASE_URL</code> /{" "}
+      <code>DASHBOARD_READONLY_SECRET</code> 未設定或 bot 無法連線）。
       <br />
       贊助以外的資料暫時無法顯示，請稍後重試。
     </div>
