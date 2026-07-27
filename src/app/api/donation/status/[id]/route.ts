@@ -1,9 +1,6 @@
 import type { NextRequest } from "next/server";
 import { tierForAmount } from "@/lib/donation/tiers";
-import {
-  getDonationSessionsCollection,
-  getDonationRecordsCollection,
-} from "@/lib/donation/mongo";
+import { getRemoteDb } from "@/lib/dashboard/remoteDb";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,13 +20,16 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     return Response.json(stubStatus(id));
   }
 
-  // 試著用 mongo 唯讀查真實狀態；連不上 / 沒設環境變數 → 回 pending（不誤導）
-  const sessions = await getDonationSessionsCollection();
-  if (!sessions) {
+  // 透過 bot 唯讀 API 查真實狀態（網站在 Vercel 連不到內網 Mongo）；
+  // 沒設環境變數 / bot 不可用 → 回 pending（不誤導）
+  const db = getRemoteDb();
+  if (!db) {
     return Response.json({ status: "pending" });
   }
 
-  const session = await sessions.findOne({ sessionId: id }).catch(() => null);
+  const session = await db
+    .collection("DonationSessions")
+    .findOne({ sessionId: id });
   if (!session) {
     // session 不存在（可能 URL 錯、TTL 已清），donor 體感跟 pending 一樣即可
     return Response.json({ status: "pending" });
@@ -48,10 +48,9 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     return Response.json({ status: "pending" });
   }
 
-  const records = await getDonationRecordsCollection();
-  const record = records
-    ? await records.findOne({ tradeNo: session.tradeNo }).catch(() => null)
-    : null;
+  const record = await db
+    .collection("DonationRecords")
+    .findOne({ tradeNo: session.tradeNo });
 
   return Response.json({
     status: "completed" as const,
