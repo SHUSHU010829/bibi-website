@@ -69,6 +69,7 @@ import {
   DAILY_QUESTS,
   WEEKLY_QUESTS,
   QUEST_ITEM_REWARDS,
+  QUEST_MILESTONES,
   BADGE_CATEGORIES,
   DUNGEON_BASE_ATK,
   CROPS,
@@ -1684,6 +1685,7 @@ function QuestsView({
         rows={status.daily}
         assignment={assignment.daily}
       />
+      <QuestMilestones tier="daily" rows={status.daily} assignment={assignment.daily} />
 
       <SectionTitle title="📅 週常任務" en="WEEKLY" />
       <AssignmentHeader assignment={assignment.weekly} />
@@ -1693,12 +1695,55 @@ function QuestsView({
         rows={status.weekly}
         assignment={assignment.weekly}
       />
+      <QuestMilestones tier="weekly" rows={status.weekly} assignment={assignment.weekly} />
 
       <p className="d-notice">
         任務改為「抽選制」：每期玩家只會被指派少數任務，不再全部開放。重抽 / 跳過需要花費金幣，
         且每期共有上限。操作（重抽、跳過、領錢）請到 Discord 用 <code>/逼幣任務</code>。
       </p>
     </>
+  );
+}
+
+function QuestMilestones({
+  tier,
+  rows,
+  assignment,
+}: {
+  tier: "daily" | "weekly";
+  rows: QuestStateRow[];
+  assignment: QuestAssignment;
+}) {
+  const defs = QUEST_MILESTONES[tier];
+  if (defs.length === 0) return null;
+  const claimedCount = rows.filter(
+    (r) => assignment.questIds.includes(r.questId) && r.state === "claimed",
+  ).length;
+  return (
+    <div className="d-card d-card-small" style={{ marginBottom: 12 }}>
+      <div className="d-kicker" style={{ marginBottom: 6 }}>
+        🎁 里程碑獎勵 ・ 完成當期任務額外領（自動入帳）
+      </div>
+      {defs.map((m) => {
+        const reached = claimedCount >= m.count;
+        const items = Object.entries(m.rewardItems)
+          .map(([k, q]) => `${QUEST_ITEM_REWARDS[k] ?? k} ×${q}`)
+          .join("・");
+        return (
+          <div
+            key={m.id}
+            className="d-row between"
+            style={{ gap: 8, flexWrap: "wrap" }}
+          >
+            <span>
+              {reached ? "✅" : "⬜"} {m.name}｜完成 {Math.min(claimedCount, m.count)}/
+              {m.count}
+            </span>
+            <span className="d-quest-reward">{items}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
