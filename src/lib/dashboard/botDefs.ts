@@ -192,9 +192,16 @@ export interface QuestDef {
   name: string;
   description: string;
   reward: number;
+  /** 額外道具獎勵（鏡像 bot quests.json 的 rewardItems，如 { cd_ticket: 1 }）。 */
+  rewardItems?: Record<string, number>;
   target: number;
   period: "daily" | "weekly";
 }
+
+// 任務道具獎勵的中文標籤（鏡像 bot src/features/quests/questRewards.js 的 ITEM_REWARD_DEFS）。
+export const QUEST_ITEM_REWARDS: Record<string, string> = {
+  cd_ticket: "🎫 CD 縮短券",
+};
 
 export const DAILY_QUESTS: QuestDef[] = [
   { id: "daily_morning", period: "daily", name: "早安打卡", description: "07:00–10:00 在指定頻道發言", reward: 150, target: 1 },
@@ -212,6 +219,8 @@ export const DAILY_QUESTS: QuestDef[] = [
   { id: "daily_dungeon_floor3", period: "daily", name: "深淵探索", description: "當日通關 3F 以上樓層 ≥ 3 次", reward: 400, target: 3 },
   { id: "daily_farm_harvest", period: "daily", name: "今日豐收", description: "當日從農場收成 ≥ 4 次", reward: 200, target: 4 },
   { id: "daily_farm_plant", period: "daily", name: "晨間耕作", description: "當日種植任意作物 ≥ 1 次", reward: 100, target: 1 },
+  { id: "daily_cd_fish", period: "daily", name: "勤釣不倦", description: "當日成功釣魚 ≥ 8 次", reward: 150, rewardItems: { cd_ticket: 1 }, target: 8 },
+  { id: "daily_cd_mine", period: "daily", name: "勤挖不輟", description: "當日成功挖礦 ≥ 12 次", reward: 150, rewardItems: { cd_ticket: 1 }, target: 12 },
 ];
 
 export const WEEKLY_QUESTS: QuestDef[] = [
@@ -228,6 +237,8 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: "weekly_dungeon_ice", period: "weekly", name: "冰窟洗禮", description: "本週冰窟通關 ≥ 3 次（需先解鎖冰窟主題）", reward: 2200, target: 3 },
   { id: "weekly_farm_harvest", period: "weekly", name: "週末市集", description: "本週累積收成 ≥ 25 次", reward: 1500, target: 25 },
   { id: "weekly_farm_rose", period: "weekly", name: "黑玫瑰栽培家", description: "本週成功收成黑玫瑰 ≥ 1 次", reward: 2500, target: 1 },
+  { id: "weekly_cd_fish", period: "weekly", name: "海釣達人", description: "本週成功釣魚 ≥ 60 次", reward: 500, rewardItems: { cd_ticket: 3 }, target: 60 },
+  { id: "weekly_cd_mine", period: "weekly", name: "礦坑常駐", description: "本週成功挖礦 ≥ 80 次", reward: 500, rewardItems: { cd_ticket: 3 }, target: 80 },
   { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 6000, target: 50 },
 ];
 
