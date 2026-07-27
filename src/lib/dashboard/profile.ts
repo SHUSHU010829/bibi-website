@@ -1,13 +1,15 @@
 // Dashboard 用的唯讀資料聚合。
 //
-// 共用 donation 的 MongoDB 連線（getDonationDb 已快取 client）。網站本身對 bot 的
-// MongoDB 沒有寫入權限，所有欄位都按照 bibi-bot 端的 schema 平讀，不做反向相依。
+// 網站部署在 Vercel、連不到 bot 所在 Vultr 的內網 Mongo，故透過 getRemoteDb()（打
+// bot 的 /api/v1/dashboard/query，見 remoteDb.ts）平讀 bibi-bot 端 schema，不做反向
+// 相依、無任何寫入。getRemoteDb 對照 mongodb driver 的 collection API，故以下彙總邏輯
+// 與直連 Mongo 時完全一致。
 //
 // 找不到 doc 時回傳 0 值預設物件，而不是 null，方便上層渲染——「玩家還沒玩過」也
-// 是合法狀態，不應該讓使用者看到「資料缺失」的錯誤畫面。連線失敗才會回 null，由
-// 上層決定如何降級。
+// 是合法狀態，不應該讓使用者看到「資料缺失」的錯誤畫面。設定缺失 / bot 不可用時
+// getRemoteDb 回 null，由上層決定如何降級。
 
-import { getDonationDb, getDonationRecordsCollection } from "@/lib/donation/mongo";
+import { getRemoteDb } from "@/lib/dashboard/remoteDb";
 import {
   DAILY_QUESTS,
   WEEKLY_QUESTS,
@@ -123,7 +125,7 @@ export async function getCoinSummary(
   userId: string,
   guildId: string,
 ): Promise<CoinSummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const doc = await db
     .collection("UserCoins")
@@ -139,7 +141,7 @@ export async function getLevelSummary(
   userId: string,
   guildId: string,
 ): Promise<LevelSummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const doc = await db
     .collection("UserLevels")
@@ -161,7 +163,7 @@ export async function getMiningSummary(
   userId: string,
   guildId: string,
 ): Promise<MiningSummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const miningDoc = await db
     .collection("MiningProfiles")
@@ -240,7 +242,7 @@ export async function getFoodStockpile(
   userId: string,
   guildId: string,
 ): Promise<FoodStockpile | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const doc = await db
     .collection("MiningProfiles")
@@ -323,20 +325,21 @@ export async function getDonationHistory(
   guildId: string,
   limit = 10,
 ): Promise<DonationHistoryItem[]> {
-  const col = await getDonationRecordsCollection();
-  if (!col) return [];
-  const docs = await col
+  const db = await getRemoteDb();
+  if (!db) return [];
+  const docs = await db
+    .collection("DonationRecords")
     .find({ userId, guildId })
     .sort({ grantedAt: -1 })
     .limit(limit)
     .toArray();
   return docs.map((d) => ({
-    tradeNo: d.tradeNo,
-    amountNtd: d.amountNtd,
-    tierId: d.tierId,
-    platform: d.platform,
-    perks: d.perks,
-    grantedAt: d.grantedAt,
+    tradeNo: String(d.tradeNo ?? ""),
+    amountNtd: Number(d.amountNtd ?? 0),
+    tierId: d.tierId == null ? null : String(d.tierId),
+    platform: String(d.platform ?? ""),
+    perks: Array.isArray(d.perks) ? (d.perks as string[]) : null,
+    grantedAt: d.grantedAt instanceof Date ? d.grantedAt : new Date(String(d.grantedAt ?? Date.now())),
   }));
 }
 
@@ -375,7 +378,7 @@ export async function getActiveBuffs(
   userId: string,
   guildId: string,
 ): Promise<ActiveBuff[] | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const doc = await db
     .collection("UserCoins")
@@ -405,7 +408,7 @@ export async function getBackpack(
   userId: string,
   guildId: string,
 ): Promise<BackpackSummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const [doc, invDocs] = await Promise.all([
     db.collection("MiningProfiles").findOne({ userId, guildId }),
@@ -518,7 +521,7 @@ export async function getEquipment(
   userId: string,
   guildId: string,
 ): Promise<EquipmentSummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const doc = await db
     .collection("MiningProfiles")
@@ -594,7 +597,7 @@ export async function getQuestStatus(
   userId: string,
   guildId: string,
 ): Promise<QuestStatus | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const col = db.collection("QuestProgress");
   const dailyPeriod = periodKeyForToday();
@@ -997,7 +1000,7 @@ export async function getTaxHistory(
   guildId: string,
   period: TaxHistoryPeriod,
 ): Promise<TaxHistorySummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const col = db.collection("CoinTransactions");
   const match: Record<string, unknown> = {
@@ -1032,7 +1035,9 @@ export async function getTaxHistory(
         before,
         effectiveRate: rate,
         createdAt:
-          d.createdAt instanceof Date ? d.createdAt : new Date(d.createdAt),
+          d.createdAt instanceof Date
+            ? d.createdAt
+            : new Date(d.createdAt as string | number),
         date: String(d.date ?? ""),
       };
     }),
@@ -1056,7 +1061,7 @@ export async function getInviteStats(
   userId: string,
   guildId: string,
 ): Promise<InviteStats | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const col = db.collection("InviteRecords");
   const agg = await col
@@ -1115,7 +1120,7 @@ export async function getDuelHistory(
   guildId: string,
   limit = 10,
 ): Promise<DuelHistorySummary | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const col = db.collection("DuelGames");
   const filter = {
@@ -1139,7 +1144,7 @@ export async function getDuelHistory(
       const completed =
         d.completed_at instanceof Date
           ? d.completed_at
-          : new Date(d.completed_at ?? d.updated_at ?? Date.now());
+          : new Date((d.completed_at ?? d.updated_at ?? Date.now()) as string | number);
       return {
         isWin,
         opponentId: String(opponentId ?? ""),
@@ -1246,7 +1251,7 @@ export async function getLeaderboard(
   viewerId: string | null,
   limit = 10,
 ): Promise<LeaderboardResult | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
 
   // 各類別映射：collection / field / 子顯示
@@ -1355,7 +1360,7 @@ export async function getLotteryDigest(
   guildId: string,
   userId: string,
 ): Promise<{ open: LotteryDrawSummary[]; recent: LotteryDrawSummary[] } | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const drawsCol = db.collection("LotteryDraws");
   const ticketsCol = db.collection("LotteryTickets");
@@ -1428,7 +1433,7 @@ export async function getCoinHistory(
     page: number;
   },
 ): Promise<CoinHistoryPage | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const col = db.collection("CoinTransactions");
   const page = Math.max(0, Math.min(COIN_HISTORY_MAX_PAGE - 1, opts.page));
@@ -1467,7 +1472,10 @@ export async function getCoinHistory(
       source: String(d.source ?? ""),
       meta: (d.meta as Record<string, unknown>) ?? {},
       date: String(d.date ?? ""),
-      createdAt: d.createdAt instanceof Date ? d.createdAt : new Date(d.createdAt),
+      createdAt:
+        d.createdAt instanceof Date
+          ? d.createdAt
+          : new Date(d.createdAt as string | number),
     })),
     total,
     pageSize: COIN_HISTORY_PAGE_SIZE,
@@ -1510,7 +1518,7 @@ export async function getQuestAssignment(
   userId: string,
   guildId: string,
 ): Promise<QuestAssignmentBundle | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const col = db.collection("QuestAssignments");
   const dailyPeriod = periodKeyForToday();
@@ -1574,7 +1582,7 @@ export async function getProfileBuffSources(
   userId: string,
   guildId: string,
 ): Promise<{ food: FoodBuff[]; donorLuck: DonorLuckBuff | null } | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const doc = await db.collection("MiningProfiles").findOne(
     { userId, guildId },
@@ -1646,7 +1654,7 @@ export async function getGuildClubMembership(
   userId: string,
   guildId: string,
 ): Promise<GuildClubInfo | null | "no_membership"> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const member = await db
     .collection("GuildClubMembers")
@@ -1721,7 +1729,7 @@ export async function getFarmStatus(
   userId: string,
   guildId: string,
 ): Promise<FarmStatus | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const profile = await db
     .collection("MiningProfiles")
@@ -1844,7 +1852,7 @@ export async function getStockPortfolio(
   userId: string,
   guildId: string,
 ): Promise<StockPortfolio | null> {
-  const db = await getDonationDb();
+  const db = await getRemoteDb();
   if (!db) return null;
   const docs = await db
     .collection("UserPortfolio")
