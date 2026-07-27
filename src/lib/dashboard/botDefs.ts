@@ -219,8 +219,9 @@ export const DAILY_QUESTS: QuestDef[] = [
   { id: "daily_dungeon_floor3", period: "daily", name: "深淵探索", description: "當日通關 3F 以上樓層 ≥ 3 次", reward: 400, target: 3 },
   { id: "daily_farm_harvest", period: "daily", name: "今日豐收", description: "當日從農場收成 ≥ 4 次", reward: 200, target: 4 },
   { id: "daily_farm_plant", period: "daily", name: "晨間耕作", description: "當日種植任意作物 ≥ 1 次", reward: 100, target: 1 },
-  { id: "daily_cd_fish", period: "daily", name: "勤釣不倦", description: "當日成功釣魚 ≥ 8 次", reward: 150, rewardItems: { cd_ticket: 1 }, target: 8 },
-  { id: "daily_cd_mine", period: "daily", name: "勤挖不輟", description: "當日成功挖礦 ≥ 12 次", reward: 150, rewardItems: { cd_ticket: 1 }, target: 12 },
+  { id: "daily_cd_fish", period: "daily", name: "勤釣不倦", description: "當日成功釣魚 ≥ 8 次", reward: 150, rewardItems: { cd_ticket: 2 }, target: 8 },
+  { id: "daily_cd_mine", period: "daily", name: "勤挖不輟", description: "當日成功挖礦 ≥ 12 次", reward: 150, rewardItems: { cd_ticket: 2 }, target: 12 },
+  { id: "daily_cd_dungeon", period: "daily", name: "地城速通", description: "當日完成地下城探索 ≥ 10 次", reward: 200, rewardItems: { cd_ticket: 2 }, target: 10 },
 ];
 
 export const WEEKLY_QUESTS: QuestDef[] = [
@@ -237,10 +238,29 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: "weekly_dungeon_ice", period: "weekly", name: "冰窟洗禮", description: "本週冰窟通關 ≥ 3 次（需先解鎖冰窟主題）", reward: 2200, target: 3 },
   { id: "weekly_farm_harvest", period: "weekly", name: "週末市集", description: "本週累積收成 ≥ 25 次", reward: 1500, target: 25 },
   { id: "weekly_farm_rose", period: "weekly", name: "黑玫瑰栽培家", description: "本週成功收成黑玫瑰 ≥ 1 次", reward: 2500, target: 1 },
-  { id: "weekly_cd_fish", period: "weekly", name: "海釣達人", description: "本週成功釣魚 ≥ 60 次", reward: 500, rewardItems: { cd_ticket: 3 }, target: 60 },
-  { id: "weekly_cd_mine", period: "weekly", name: "礦坑常駐", description: "本週成功挖礦 ≥ 80 次", reward: 500, rewardItems: { cd_ticket: 3 }, target: 80 },
+  { id: "weekly_cd_fish", period: "weekly", name: "海釣達人", description: "本週成功釣魚 ≥ 60 次", reward: 500, rewardItems: { cd_ticket: 5 }, target: 60 },
+  { id: "weekly_cd_mine", period: "weekly", name: "礦坑常駐", description: "本週成功挖礦 ≥ 80 次", reward: 500, rewardItems: { cd_ticket: 5 }, target: 80 },
+  { id: "weekly_cd_farm", period: "weekly", name: "豐收季", description: "本週累積收成 ≥ 30 次", reward: 500, rewardItems: { cd_ticket: 5 }, target: 30 },
   { id: "weekly_cook_50", period: "weekly", name: "週末大廚", description: "本週完成烹飪 ≥ 50 次", reward: 6000, target: 50 },
 ];
+
+// 任務里程碑（鏡像 src/config/quests.json questSystem.milestones）：完成 N 個當期任務額外送 CD 券。
+export interface QuestMilestoneDef {
+  id: string;
+  name: string;
+  count: number;
+  rewardItems: Record<string, number>;
+}
+export const QUEST_MILESTONES: { daily: QuestMilestoneDef[]; weekly: QuestMilestoneDef[] } = {
+  daily: [
+    { id: "daily_ms_3", name: "每日任務達人", count: 3, rewardItems: { cd_ticket: 2 } },
+    { id: "daily_ms_5", name: "每日全勤", count: 5, rewardItems: { cd_ticket: 3 } },
+  ],
+  weekly: [
+    { id: "weekly_ms_3", name: "週常任務達人", count: 3, rewardItems: { cd_ticket: 3 } },
+    { id: "weekly_ms_5", name: "週常全勤", count: 5, rewardItems: { cd_ticket: 6 } },
+  ],
+};
 
 // 任務指派制（鏡像 src/config/quests.json questSystem.assignment）
 export const QUEST_ASSIGNMENT = {
