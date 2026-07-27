@@ -16,7 +16,7 @@ function Unconfigured() {
         <span className="d-greeting-hi">股市</span>
         <p className="d-greeting-sub">
           股市資料尚未設定。請設定 <code>PRIMARY_GUILD_ID</code> 與{" "}
-          <code>MONGODB_URI_READONLY</code> 後再試。
+          <code>BOT_API_BASE_URL</code> 後再試。
         </p>
       </div>
     </div>
