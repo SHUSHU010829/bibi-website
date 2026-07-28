@@ -65,7 +65,7 @@ export default function Home() {
           </div>
 
           <div className="hero-ribbon reveal" style={{ animationDelay: ".24s" }}>
-            <div className="stat"><div className="n">6<em>+</em></div><div className="k">內建玩法系統</div></div>
+            <div className="stat"><div className="n">14<em>+</em></div><div className="k">內建玩法系統</div></div>
             <div className="stat"><div className="n">24<em>/</em>7</div><div className="k">不睡覺的莊家</div></div>
             <div className="stat"><div className="n">∞</div><div className="k">每日簽到不間斷</div></div>
             <div className="stat"><div className="n">1</div><div className="k">把肝變現的機器人</div></div>

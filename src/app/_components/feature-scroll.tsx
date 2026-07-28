@@ -10,7 +10,14 @@ type FeatureKey =
   | "lotto"
   | "stock"
   | "econ"
-  | "level";
+  | "level"
+  | "dungeon"
+  | "farm"
+  | "guild"
+  | "trade"
+  | "theft"
+  | "event"
+  | "cook";
 
 type Feature = {
   k: FeatureKey;
@@ -50,6 +57,34 @@ const FEATURES: Feature[] = [
   {
     k: "level", idx: "07", tag: "Social", name: "等級", en: "LEVELS", href: "/docs/leveling",
     blurb: "多嘴就有獎勵。聊天升級、解鎖稱號、季賽搶排名——安靜的人，這裡吃虧。",
+  },
+  {
+    k: "dungeon", idx: "08", tag: "Game", name: "地城", en: "DUNGEON", href: "/docs/dungeon",
+    blurb: "跟怪物拼血條的多輪戰鬥，礦坑暴君、冰晶女王等首領輪番上陣——全服合力打世界 BOSS，接上連段傷害直接 ×1.3。傳說之劍砍斷太多次？恭喜你，本週斷劍王，詛咒認命戴著。",
+  },
+  {
+    k: "farm", idx: "09", tag: "Game", name: "農場", en: "FARMING", href: "/docs/farming",
+    blurb: "半夜田鼠烏鴉會來洗劫你的作物，得提刀護院。撐過去才種得出傳說級黑玫瑰——限定種子從地城首領身上掉，收成還有機率挖到打造神器的素材。",
+  },
+  {
+    k: "guild", idx: "10", tag: "Social", name: "公會", en: "GUILD", href: "/docs/guild",
+    blurb: "一個人扛不住，全公會一起扛。捐料蓋熔爐、升訓練場，膳坊點滿還能開流水席——一鍵開席，全員同時吃 buff 衝副本。",
+  },
+  {
+    k: "trade", idx: "11", tag: "Sim", name: "交易", en: "TRADING", href: "/docs/trading",
+    blurb: "不只是擺攤賣東西。掛收購單讓別人分批賣你、開競標搶稀有礦、或直接以物易物換到你缺的貨——一整套訂單簿，價格公道還防坑人。",
+  },
+  {
+    k: "theft", idx: "12", tag: "Game", name: "偷竊", en: "THEFT", href: "/docs/theft",
+    blurb: "半夜摸進別人錢包順手牽羊，得手了神不知鬼不覺；失風就得靠鑽暗巷、飛簷走壁甩開追兵。被偷了別急，花錢請偵探抓人——只是偵探有時候自己就是內鬼。",
+  },
+  {
+    k: "event", idx: "13", tag: "Core", name: "世界事件", en: "EVENTS", href: "/docs/world-events",
+    blurb: "挖礦、釣魚、打副本都可能意外觸發全服任務，大家一起捐物資衝目標——達標全服直接吃 48 小時 buff，慢一步就錯過，手腳要快。",
+  },
+  {
+    k: "cook", idx: "14", tag: "Game", name: "料理", en: "COOKING", href: "/docs/cooking",
+    blurb: "魚跟菜煮成料理不會馬上見效，放進食物倉庫挑時機吃，新鮮度越高效果越強。拿煤炭下去炭烤還能升級加強版，吃剩放到過期也能變堆肥回田裡。",
   },
 ];
 
@@ -143,6 +178,83 @@ function Preview({ k }: { k: FeatureKey }) {
         <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-4)" }}>稱號：嘴最碎的礦工</div>
       </div>
     );
+  if (k === "dungeon")
+    return (
+      <div className="pv">
+        <span className="pv-label">世界 BOSS</span>
+        <div className="pv-lv" style={{ marginTop: 26 }}>
+          <span className="badge">討伐</span>
+          <div className="bar">
+            <div style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-3)", marginBottom: 8 }}>連段加成 ×1.3</div>
+            <div className="pv-bar"><i /></div>
+          </div>
+        </div>
+        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-4)" }}>本週斷劍王：詛咒纏身中</div>
+      </div>
+    );
+  if (k === "farm")
+    return (
+      <div className="pv">
+        <span className="pv-label">🌹黑玫瑰 · 24H</span>
+        <div style={{ marginTop: 30, fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-3)" }}>生長進度</div>
+        <div className="pv-bar" style={{ marginTop: 10 }}><i /></div>
+        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-4)" }}>⚠ 田鼠來襲，警戒中</div>
+      </div>
+    );
+  if (k === "guild")
+    return (
+      <div className="pv">
+        <span className="pv-label">公會會館 Lv.5</span>
+        <div className="pv-coins" style={{ marginTop: 24 }}>
+          <div className="pv-stack"><i /><i /><i /></div>
+          <div className="pv-amount">流水席 <em>開席中</em></div>
+        </div>
+        <div style={{ marginTop: 14, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-4)" }}>全員 +25% 副本傷害・120 分鐘</div>
+      </div>
+    );
+  if (k === "trade")
+    return (
+      <div className="pv">
+        <span className="pv-label">ORDER BOOK</span>
+        <div className="pv-line">
+          <svg viewBox="0 0 240 70" preserveAspectRatio="none">
+            <path className="area" d="M0,60 L34,50 L68,54 L102,30 L136,38 L170,18 L204,26 L240,10 L240,70 L0,70 Z" />
+            <path className="stroke" d="M0,60 L34,50 L68,54 L102,30 L136,38 L170,18 L204,26 L240,10" />
+            <circle className="dot" cx="240" cy="10" r="3.5" />
+          </svg>
+        </div>
+      </div>
+    );
+  if (k === "theft")
+    return (
+      <div className="pv">
+        <span className="pv-label">夜間行動</span>
+        <div className="pv-chips" style={{ marginTop: 26 }}>
+          <span className="pv-chip">🌆</span>
+          <span className="pv-chip win">🌫️</span>
+          <span className="pv-chip" style={{ background: "transparent", borderStyle: "dashed", color: "var(--ink-4)" }}>?</span>
+        </div>
+        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 13, color: "var(--ink)" }}>逃脫成功・神不知鬼不覺</div>
+      </div>
+    );
+  if (k === "event")
+    return (
+      <div className="pv">
+        <span className="pv-label">⛏ 礦災修復</span>
+        <div style={{ marginTop: 30, fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-3)" }}>全服捐獻進度</div>
+        <div className="pv-bar" style={{ marginTop: 10 }}><i /></div>
+        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-4)" }}>達標全服 +buff・48 小時</div>
+      </div>
+    );
+  if (k === "cook")
+    return (
+      <div className="pv">
+        <span className="pv-label">🥡 食物倉庫</span>
+        <div style={{ marginTop: 30, fontFamily: "var(--mono)", fontSize: 12, color: "var(--ink-3)" }}>新鮮度</div>
+        <div className="pv-bar" style={{ marginTop: 10 }}><i /></div>
+        <div style={{ marginTop: 12, fontFamily: "var(--mono)", fontSize: 11, color: "var(--ink-4)" }}>炭烤加持・保鮮 +50%</div>
+      </div>
+    );
   return null;
 }
 
@@ -204,7 +316,7 @@ export default function FeatureScroll() {
           {FEATURES.map((f) => (
             <Link className="feat" key={f.k} data-key={f.k} href={f.href}>
               <div className="feat-top">
-                <span className="feat-idx">{f.idx} / 07</span>
+                <span className="feat-idx">{f.idx} / 14</span>
                 <span className="feat-tag">{f.tag}</span>
               </div>
               <h3 className="feat-name">{f.name}<span className="en">{f.en}</span></h3>
