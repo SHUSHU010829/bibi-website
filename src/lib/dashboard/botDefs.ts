@@ -46,9 +46,9 @@ export interface PickaxeDef {
 
 export const PICKAXES: Record<string, PickaxeDef> = {
   wood: { name: "木鎬", emoji: "⛏️", luckBonus: 0, qtyBonus: 0, cdReductionMs: 0, durability: null },
-  iron: { name: "鐵鎬", emoji: "⛏️", luckBonus: 0.05, qtyBonus: 0, cdReductionMs: 1800000, durability: 50 },
+  iron: { name: "鐵鎬", emoji: "⛏️", luckBonus: 0.05, qtyBonus: 0, cdReductionMs: 1800000, durability: 30 },
   gold: { name: "黃金鎬", emoji: "⛏️", luckBonus: 0.08, qtyBonus: 0, cdReductionMs: 2700000, durability: 50 },
-  diamond: { name: "鑽石鎬", emoji: "⛏️", luckBonus: 0.12, qtyBonus: 1, cdReductionMs: 3600000, durability: 50 },
+  diamond: { name: "鑽石鎬", emoji: "⛏️", luckBonus: 0.12, qtyBonus: 1, cdReductionMs: 3600000, durability: 80 },
 };
 
 export interface RodDef {
@@ -64,9 +64,9 @@ export interface RodDef {
 
 export const RODS: Record<string, RodDef> = {
   bamboo: { name: "竹釣竿", emoji: "🎣", successBonus: 0, rareBonus: 0, qtyBonus: 0, bonusChance: 0, cdReductionMs: 0, durability: null },
-  carbon: { name: "碳纖釣竿", emoji: "🎏", successBonus: 0.12, rareBonus: 0.5, qtyBonus: 0, bonusChance: 0.12, cdReductionMs: 1800000, durability: 50 },
+  carbon: { name: "碳纖釣竿", emoji: "🎏", successBonus: 0.12, rareBonus: 0.5, qtyBonus: 0, bonusChance: 0.12, cdReductionMs: 1800000, durability: 30 },
   gold: { name: "黃金釣竿", emoji: "🥇", successBonus: 0.2, rareBonus: 1.0, qtyBonus: 0, bonusChance: 0.2, cdReductionMs: 2700000, durability: 50 },
-  mythril: { name: "秘銀釣竿", emoji: "🔱", successBonus: 0.28, rareBonus: 1.5, qtyBonus: 1, bonusChance: 0.25, cdReductionMs: 3600000, durability: 50 },
+  mythril: { name: "秘銀釣竿", emoji: "🔱", successBonus: 0.28, rareBonus: 1.5, qtyBonus: 1, bonusChance: 0.25, cdReductionMs: 3600000, durability: 80 },
 };
 
 export interface WeaponDef {
@@ -391,6 +391,8 @@ export const FERTILIZERS: Record<string, { name: string; emoji: string }> = {
   compost:       { name: "廚餘堆肥",  emoji: "🍂" },
   monster_slime: { name: "怪物黏液",  emoji: "💧" },
   moonlight_dew: { name: "月光露水",  emoji: "🌟" },
+  small_fish:    { name: "魚粉",      emoji: "🐟" },
+  octopus:       { name: "章魚",      emoji: "🦑" },
 };
 
 export const FARM_PLOT_TIERS = [
