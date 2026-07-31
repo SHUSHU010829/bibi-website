@@ -25,6 +25,7 @@ export const ORES: Record<string, MineralDef> = {
   iron: { name: "鐵礦", emoji: "🔩", rarity: "稀有", price: 60 },
   gold: { name: "黃金", emoji: "🥇", rarity: "稀有", price: 200 },
   diamond: { name: "鑽石", emoji: "💎", rarity: "傳說", price: 800 },
+  magic_crystal: { name: "魔晶礦", emoji: "🔮", rarity: "傳說", price: 1000 },
 };
 
 export const FISH: Record<string, MineralDef> = {

@@ -441,7 +441,7 @@ export async function getBackpack(
   const d = doc as Record<string, unknown>;
   const backpack = (d.backpack as Record<string, number>) ?? {};
   // backpack 同時放礦石 + 肥料；拆給 UI 顯示更乾淨
-  const oreKeys = new Set(["stone", "coal", "iron", "gold", "diamond"]);
+  const oreKeys = new Set(["stone", "coal", "iron", "gold", "diamond", "magic_crystal"]);
   const oreBag: Record<string, number> = {};
   const fertilizers: Record<string, number> = {};
   for (const [k, v] of Object.entries(backpack)) {
