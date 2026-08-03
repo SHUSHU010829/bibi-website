@@ -1407,8 +1407,8 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               {pickaxe.durability === null
                 ? "永久"
                 : eq.pickaxeDurability !== null
-                  ? `${fmt(eq.pickaxeDurability)} / ${fmt(pickaxe.durability)}`
-                  : `— / ${fmt(pickaxe.durability)}`}
+                  ? `${fmt(eq.pickaxeDurability)} / ${fmt(eq.pickaxeMaxDurability ?? pickaxe.durability)}`
+                  : `— / ${fmt(eq.pickaxeMaxDurability ?? pickaxe.durability)}`}
             </div>
           </div>
         </div>
@@ -1432,8 +1432,8 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               {rod.durability === null
                 ? "永久"
                 : eq.fishingRodDurability !== null
-                  ? `${fmt(eq.fishingRodDurability)} / ${fmt(rod.durability)}`
-                  : `— / ${fmt(rod.durability)}`}
+                  ? `${fmt(eq.fishingRodDurability)} / ${fmt(eq.fishingRodMaxDurability ?? rod.durability)}`
+                  : `— / ${fmt(eq.fishingRodMaxDurability ?? rod.durability)}`}
             </div>
           </div>
         </div>
@@ -1455,11 +1455,16 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               {weapon.durability === null
                 ? "永久"
                 : eq.weaponDurability !== null
-                  ? `${fmt(eq.weaponDurability)} / ${fmt(weapon.durability)}`
-                  : `— / ${fmt(weapon.durability)}`}
+                  ? `${fmt(eq.weaponDurability)} / ${fmt(eq.weaponMaxDurability ?? weapon.durability)}`
+                  : `— / ${fmt(eq.weaponMaxDurability ?? weapon.durability)}`}
             </div>
           </div>
         </div>
+        {eq.equipmentMaxDurabilityPct > 0 && (
+          <div className="d-feature-meta" style={{ gridColumn: "1 / -1" }}>
+            🏰 公會鐵匠鋪：耐久上限 +{eq.equipmentMaxDurabilityPct}%（已計入上方分母，鎬／劍／盾／釣竿共用）
+          </div>
+        )}
       </div>
 
       <div className="d-grid-3">

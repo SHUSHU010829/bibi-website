@@ -9,13 +9,17 @@
 // 是合法狀態，不應該讓使用者看到「資料缺失」的錯誤畫面。設定缺失 / bot 不可用時
 // getRemoteDb 回 null，由上層決定如何降級。
 
-import { getRemoteDb } from "@/lib/dashboard/remoteDb";
+import { getRemoteDb, type RemoteDb } from "@/lib/dashboard/remoteDb";
 import {
   DAILY_QUESTS,
   WEEKLY_QUESTS,
   BADGES,
   FOOD_STORAGE,
   GUILD_CLUB_LEVELS,
+  GUILD_BUILDINGS,
+  PICKAXES,
+  RODS,
+  WEAPONS,
   QUEST_ASSIGNMENT,
   type BadgeDef,
   type GuildClubLevelDef,
@@ -482,10 +486,16 @@ export async function getBackpack(
 export interface EquipmentSummary {
   pickaxe: string;
   pickaxeDurability: number | null;
+  /** 有效耐久上限：玩家自身的 base（磨石/維修工具會改動）再吃公會鐵匠鋪 % */
+  pickaxeMaxDurability: number | null;
   fishingRod: string;
   fishingRodDurability: number | null;
+  fishingRodMaxDurability: number | null;
   weapon: string;
   weaponDurability: number | null;
+  weaponMaxDurability: number | null;
+  /** 鐵匠鋪的裝備耐久上限加成（%），0 代表沒有公會或沒蓋鐵匠鋪 */
+  equipmentMaxDurabilityPct: number;
   stamina: number | null;
 }
 
@@ -530,25 +540,84 @@ export async function getEquipment(
     return {
       pickaxe: "wood",
       pickaxeDurability: null,
+      pickaxeMaxDurability: null,
       fishingRod: "bamboo",
       fishingRodDurability: null,
+      fishingRodMaxDurability: null,
       weapon: "fist",
       weaponDurability: null,
+      weaponMaxDurability: null,
+      equipmentMaxDurabilityPct: 0,
       stamina: null,
     };
   }
   const d = doc as Record<string, unknown>;
+  const pct = await getEquipmentMaxDurabilityPct(db, userId, guildId);
+  // bot 端是 compute-on-read：DB 只存原始 base，加成在讀取時才換算
+  // （bibi-bot buildingService.effectiveMaxDurability）。這裡必須做同一件事，
+  // 否則網站顯示的分母會跟 Discord 裡看到的對不起來。
+  const effMax = (raw: unknown, fallback: number | null): number | null => {
+    const base = raw != null ? Number(raw) : fallback;
+    if (base == null || !Number.isFinite(base)) return null;
+    return Math.floor(base * (1 + pct / 100));
+  };
+  const pickaxe = String(d.pickaxe ?? "wood");
+  const rod = String(d.fishing_rod ?? "bamboo");
+  const weapon = String(d.weapon ?? "fist");
   return {
-    pickaxe: String(d.pickaxe ?? "wood"),
+    pickaxe,
     pickaxeDurability:
       d.pickaxe_durability != null ? Number(d.pickaxe_durability) : null,
-    fishingRod: String(d.fishing_rod ?? "bamboo"),
+    pickaxeMaxDurability: effMax(
+      d.pickaxe_max_durability,
+      PICKAXES[pickaxe]?.durability ?? null,
+    ),
+    fishingRod: rod,
     fishingRodDurability:
       d.rod_durability != null ? Number(d.rod_durability) : null,
-    weapon: String(d.weapon ?? "fist"),
+    fishingRodMaxDurability: effMax(
+      d.rod_max_durability,
+      RODS[rod]?.durability ?? null,
+    ),
+    weapon,
     weaponDurability: d.weapon_durability != null ? Number(d.weapon_durability) : null,
+    weaponMaxDurability: effMax(
+      d.weapon_max_durability,
+      WEAPONS[weapon]?.durability ?? null,
+    ),
+    equipmentMaxDurabilityPct: pct,
     stamina: resolveStaminaForDisplay(d.stamina, d.stamina_updated_at),
   };
+}
+
+// 公會鐵匠鋪的裝備耐久上限 %（鏡像 guild_buildings.json 的 blacksmith）。
+// 沒公會 / 沒蓋鐵匠鋪回 0。
+async function getEquipmentMaxDurabilityPct(
+  db: RemoteDb,
+  userId: string,
+  guildId: string,
+): Promise<number> {
+  const member = await db
+    .collection("GuildClubMembers")
+    .findOne({ userId, guildId })
+    .catch(() => null);
+  if (!member) return 0;
+  const club = await db
+    .collection("GuildsClub")
+    .findOne({
+      guild_club_id: (member as Record<string, unknown>).guild_club_id,
+      disbanded_at: null,
+    })
+    .catch(() => null);
+  if (!club) return 0;
+  const lv = Number(
+    ((club as Record<string, unknown>).buildings as Record<string, unknown>)
+      ?.blacksmith ?? 0,
+  );
+  if (!lv) return 0;
+  const row = GUILD_BUILDINGS.blacksmith?.levels.find((r) => r.level === lv);
+  const buff = row?.buffs?.find((b) => b.type === "equipment_max_durability_pct");
+  return Number(buff?.value ?? 0);
 }
 
 // ── 任務 ──────────────────────────────────────────────────────────────────
