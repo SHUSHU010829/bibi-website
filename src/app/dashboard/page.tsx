@@ -1346,6 +1346,9 @@ function BackpackView({ bag }: { bag: BackpackSummary }) {
             <span className="d-list-key">
               <span className="d-emoji">🪱</span>
               稀有魚餌
+              <span className="d-sub">
+                自動吃餌：{bag.rareBaitAuto ? "開啟" : "關閉"}
+              </span>
             </span>
             <span className="d-list-val">{fmt(bag.rareBait)}</span>
           </div>

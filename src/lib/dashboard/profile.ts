@@ -374,6 +374,8 @@ export interface BackpackSummary {
   /** backpack 內肥料相關鍵：compost / monster_slime / moonlight_dew（coal 也算肥料但已列在 ore） */
   fertilizers: Record<string, number>;
   rareBait: number;
+  /** 上鉤時是否自動吃稀有魚餌（MiningProfiles.rare_bait_auto，預設關閉） */
+  rareBaitAuto: boolean;
   backpackSlots: number;
   legendaryFragments: number;
 }
@@ -438,6 +440,7 @@ export async function getBackpack(
       seedBag: {},
       fertilizers: {},
       rareBait: 0,
+      rareBaitAuto: false,
       backpackSlots: 100,
       legendaryFragments: 0,
     };
@@ -478,6 +481,7 @@ export async function getBackpack(
     seedBag: (d.seed_bag as Record<string, number>) ?? {},
     fertilizers,
     rareBait: Number(d.rare_bait ?? 0),
+    rareBaitAuto: d.rare_bait_auto === true,
     backpackSlots: 100 + Number(d.backpack_bonus_slots ?? 0),
     legendaryFragments: Number(d.legendary_fragments ?? 0),
   };
