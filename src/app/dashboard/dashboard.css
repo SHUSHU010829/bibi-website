@@ -600,6 +600,10 @@
   width: 22px;
   text-align: center;
 }
+.d-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+}
 .d-list-val {
   font-family: var(--mono);
   font-size: 15px;
