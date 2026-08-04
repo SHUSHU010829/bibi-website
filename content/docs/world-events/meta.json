@@ -3,6 +3,7 @@
   "description": "全伺服器共同目標 — 觸發、捐獻、達標啟動全服 buff",
   "pages": [
     "index",
+    "mainline",
     "events-list",
     "donation",
     "faq"

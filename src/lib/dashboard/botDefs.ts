@@ -25,6 +25,7 @@ export const ORES: Record<string, MineralDef> = {
   iron: { name: "鐵礦", emoji: "🔩", rarity: "稀有", price: 60 },
   gold: { name: "黃金", emoji: "🥇", rarity: "稀有", price: 200 },
   diamond: { name: "鑽石", emoji: "💎", rarity: "傳說", price: 800 },
+  magic_crystal: { name: "魔晶礦", emoji: "🔮", rarity: "傳說", price: 1000 },
 };
 
 export const FISH: Record<string, MineralDef> = {
@@ -46,9 +47,10 @@ export interface PickaxeDef {
 
 export const PICKAXES: Record<string, PickaxeDef> = {
   wood: { name: "木鎬", emoji: "⛏️", luckBonus: 0, qtyBonus: 0, cdReductionMs: 0, durability: null },
-  iron: { name: "鐵鎬", emoji: "⛏️", luckBonus: 0.05, qtyBonus: 0, cdReductionMs: 1800000, durability: 50 },
+  iron: { name: "鐵鎬", emoji: "⛏️", luckBonus: 0.05, qtyBonus: 0, cdReductionMs: 1800000, durability: 30 },
   gold: { name: "黃金鎬", emoji: "⛏️", luckBonus: 0.08, qtyBonus: 0, cdReductionMs: 2700000, durability: 50 },
-  diamond: { name: "鑽石鎬", emoji: "⛏️", luckBonus: 0.12, qtyBonus: 1, cdReductionMs: 3600000, durability: 50 },
+  diamond: { name: "鑽石鎬", emoji: "⛏️", luckBonus: 0.12, qtyBonus: 1, cdReductionMs: 3600000, durability: 80 },
+  magic: { name: "魔晶鎬", emoji: "🔮", luckBonus: 0.15, qtyBonus: 2, cdReductionMs: 4500000, durability: 100 },
 };
 
 export interface RodDef {
@@ -64,9 +66,10 @@ export interface RodDef {
 
 export const RODS: Record<string, RodDef> = {
   bamboo: { name: "竹釣竿", emoji: "🎣", successBonus: 0, rareBonus: 0, qtyBonus: 0, bonusChance: 0, cdReductionMs: 0, durability: null },
-  carbon: { name: "碳纖釣竿", emoji: "🎏", successBonus: 0.12, rareBonus: 0.5, qtyBonus: 0, bonusChance: 0.12, cdReductionMs: 1800000, durability: 50 },
+  carbon: { name: "碳纖釣竿", emoji: "🎏", successBonus: 0.12, rareBonus: 0.5, qtyBonus: 0, bonusChance: 0.12, cdReductionMs: 1800000, durability: 30 },
   gold: { name: "黃金釣竿", emoji: "🥇", successBonus: 0.2, rareBonus: 1.0, qtyBonus: 0, bonusChance: 0.2, cdReductionMs: 2700000, durability: 50 },
-  mythril: { name: "秘銀釣竿", emoji: "🔱", successBonus: 0.28, rareBonus: 1.5, qtyBonus: 1, bonusChance: 0.25, cdReductionMs: 3600000, durability: 50 },
+  mythril: { name: "秘銀釣竿", emoji: "🔱", successBonus: 0.28, rareBonus: 1.5, qtyBonus: 1, bonusChance: 0.25, cdReductionMs: 3600000, durability: 80 },
+  magic: { name: "魔晶釣竿", emoji: "🔮", successBonus: 0.28, rareBonus: 2.0, qtyBonus: 2, bonusChance: 0.31, cdReductionMs: 4500000, durability: 100 },
 };
 
 export interface WeaponDef {
@@ -86,6 +89,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
   gold_sword: { name: "黃金劍", emoji: "🌟", atk: 80, def: 18, critRate: 0.06, durability: 60 },
   diamond_sword: { name: "鑽石劍", emoji: "💎", atk: 120, def: 28, critRate: 0.1, durability: 80 },
   legendary_sword: { name: "傳說之劍", emoji: "🔥", atk: 180, def: 40, critRate: 0.2, durability: 120 },
+  magic_sword: { name: "傳說·魔晶劍", emoji: "🔮", atk: 220, def: 50, critRate: 0.25, durability: 145 },
 };
 
 // 基礎 ATK（dungeon.baseAtk），單獨拿出來方便加總顯示
@@ -110,6 +114,7 @@ export const SHIELDS: Record<string, ShieldDef> = {
   gold_shield:   { name: "黃金盾", emoji: "🟡", def: 28, blockRate: 0.35, reflectRate: 0.05, durability: 70,  unlockLevel: 30, tier: "v2" },
   diamond_shield:{ name: "鑽石盾", emoji: "💠", def: 42, blockRate: 0.45, reflectRate: 0.10, durability: 90,  unlockLevel: 50, tier: "v2" },
   legendary_shield: { name: "傳說之盾", emoji: "🔥", def: 65, blockRate: 0.60, reflectRate: 0.20, durability: 120, unlockLevel: 75, tier: "v2" },
+  magic_shield: { name: "魔晶盾", emoji: "🔮", def: 80, blockRate: 0.65, reflectRate: 0.25, durability: 145, unlockLevel: 85, tier: "v2" },
 };
 
 // ── Phase H+ 地下城主題 / 樓層 ──────────────────────────────────────────────
@@ -391,6 +396,8 @@ export const FERTILIZERS: Record<string, { name: string; emoji: string }> = {
   compost:       { name: "廚餘堆肥",  emoji: "🍂" },
   monster_slime: { name: "怪物黏液",  emoji: "💧" },
   moonlight_dew: { name: "月光露水",  emoji: "🌟" },
+  small_fish:    { name: "魚粉",      emoji: "🐟" },
+  octopus:       { name: "章魚",      emoji: "🦑" },
 };
 
 export const FARM_PLOT_TIERS = [
@@ -455,6 +462,7 @@ export function guildClubBuffLabel(buff: GuildClubBuff): string {
   switch (buff.type) {
     case "mining_qty_bonus":               return `⛏️ 挖礦數量 +${buff.value}`;
     case "mining_luck_pct":                return `🍀 挖礦幸運 +${Math.round(buff.value * 100)}%`;
+    case "deep_mining_luck_pct":           return `🔮 深層礦脈幸運 +${buff.value}%`;
     case "mining_cooldown_pct":            return `⏱️ 挖礦冷卻 -${buff.value}%`;
     case "fishing_cooldown_pct":           return `🎣 釣魚冷卻 -${buff.value}%`;
     case "fishing_success_rate_pct":       return `🎣 釣魚成功率 +${buff.value}%`;
@@ -469,10 +477,11 @@ export function guildClubBuffLabel(buff: GuildClubBuff): string {
     case "harvest_coin_pct":               return `💰 收成金幣 +${buff.value}%`;
     case "cooking_crit_pct":               return `✨ 烹飪美味暴擊 +${buff.value}%`;
     case "farm_low_tier_extra_count":      return `🥕 紅蘿蔔/玉米收成 +${buff.value} 個`;
-    case "weapon_max_durability_pct":      return `🗡️ 武器耐久上限 +${buff.value}%`;
+    case "equipment_max_durability_pct":      return `🗡️ 裝備耐久上限 +${buff.value}%（鎬/劍/盾/釣竿）`;
     case "equipment_repair_discount_pct":  return `🔧 裝備修復材料 -${buff.value}%`;
     case "combat_durability_save_pct":     return `🛡️ 戰鬥耐久節省 ${buff.value}%`;
-    default:                               return `${buff.type} +${buff.value}`;
+    // 沒有對應標籤時不能把原始 key 印給玩家看（見 AGENTS.md）
+    default:                               return `未知加成 +${buff.value}`;
   }
 }
 
@@ -548,7 +557,7 @@ export const GUILD_BUILDINGS: Record<string, GuildBuildingKindDef> = {
     id: "warehouse",
     label: "倉庫擴建",
     emoji: "📦",
-    maxLevel: 5,
+    maxLevel: 7,
     unlockClubLevel: 2,
     levels: [
       { level: 1, cost: { building_material: 1,  coins: 5000  }, capacity_bonus: 50 },
@@ -556,6 +565,8 @@ export const GUILD_BUILDINGS: Record<string, GuildBuildingKindDef> = {
       { level: 3, cost: { building_material: 4,  coins: 15000 }, capacity_bonus: 200 },
       { level: 4, cost: { building_material: 8,  steel_ingot: 2, coins: 30000 }, capacity_bonus: 400 },
       { level: 5, cost: { building_material: 15, steel_ingot: 5, coins: 50000 }, capacity_bonus: 800 },
+      { level: 6, cost: { building_material: 25, steel_ingot: 8,  magic_alloy: 2, coins: 80000 },  capacity_bonus: 1200 },
+      { level: 7, cost: { building_material: 40, steel_ingot: 15, magic_alloy: 5, coins: 130000 }, capacity_bonus: 1600 },
     ],
   },
   farm_kitchen: {
@@ -598,21 +609,21 @@ export const GUILD_BUILDINGS: Record<string, GuildBuildingKindDef> = {
     unlockClubLevel: 4,
     levels: [
       { level: 1, cost: { building_material: 2, steel_ingot: 3 },          buffs: [
-        { type: "weapon_max_durability_pct", value: 5 },
+        { type: "equipment_max_durability_pct", value: 5 },
       ]},
       { level: 2, cost: { building_material: 4, steel_ingot: 6 },          buffs: [
-        { type: "weapon_max_durability_pct", value: 10 },
+        { type: "equipment_max_durability_pct", value: 10 },
       ]},
       { level: 3, cost: { building_material: 6, steel_ingot: 10, coins: 15000 }, buffs: [
-        { type: "weapon_max_durability_pct", value: 15 },
+        { type: "equipment_max_durability_pct", value: 15 },
         { type: "equipment_repair_discount_pct", value: 10 },
       ]},
       { level: 4, cost: { building_material: 10, steel_ingot: 15, coins: 30000 }, buffs: [
-        { type: "weapon_max_durability_pct", value: 20 },
+        { type: "equipment_max_durability_pct", value: 20 },
         { type: "equipment_repair_discount_pct", value: 25 },
       ]},
       { level: 5, cost: { building_material: 15, steel_ingot: 20, coins: 50000 }, buffs: [
-        { type: "weapon_max_durability_pct", value: 20 },
+        { type: "equipment_max_durability_pct", value: 20 },
         { type: "equipment_repair_discount_pct", value: 40 },
         { type: "combat_durability_save_pct", value: 5 },
       ]},
@@ -685,6 +696,18 @@ export const GUILD_BANQUET_MENUS: Record<string, GuildBanquetMenuDef> = {
     durationMs: 5_400_000,
     description: "黑玫瑰熬煮的高湯與熔岩魚的烈焰精華，全公會今晚天時地利人和",
   },
+  magic_crystal_feast: {
+    id: "magic_crystal_feast",
+    name: "魔晶熬煮宴",
+    emoji: "🔮",
+    materials: { magic_crystal: 20, lava_fish: 12, steel_ingot: 8 },
+    buffs: [
+      { type: "deep_mining_luck_pct", value: 10 },
+      { type: "dungeon_damage_pct", value: 10 },
+    ],
+    durationMs: 5_400_000,
+    description: "魔晶礦入鍋熬出的幽藍高湯，讓全公會在深層礦脈裡看得見別人看不見的礦脈",
+  },
 };
 
 export const GUILD_CLUB_ROLE_LABELS: Record<string, string> = {
@@ -751,3 +774,46 @@ export const STOCK_TYPE_LABELS: Record<string, string> = {
   blue: "🏛️ 藍籌",
   meme: "🎢 迷因",
 };
+
+// ── 合成材料 / 公會倉庫物資（鏡像 src/config/craft.json 的 materials
+//    與 src/config/guild_warehouse.json 的 items）────────────────────────────
+//
+// 這些 id 會出現在合成配方、公會建築成本、活動捐獻清單裡。少一筆就會
+// 在畫面上露出英文 id，違反 AGENTS.md 的「一律顯示中文」。
+
+export const CRAFT_MATERIALS: Record<string, MineralDef> = {
+  legendary_fragment:   { name: "傳說素材碎片", emoji: "✨" },
+  broken_net_fragment:  { name: "破損漁網碎片", emoji: "🕸️" },
+  broken_trap_fragment: { name: "破損陷阱碎片", emoji: "🪤" },
+  treasure_map_fragment:{ name: "藏寶圖碎片",   emoji: "🗺️" },
+  stone_shard:          { name: "碎石",         emoji: "🪨" },
+  sealing_ammo:         { name: "封魔彈藥",     emoji: "💥" },
+  pioneer_hammer:       { name: "拓荒錘",       emoji: "🔨" },
+};
+
+/** 只存在於公會倉庫、個人背包拿不到的物資 */
+export const GUILD_WAREHOUSE_ITEMS: Record<string, MineralDef> = {
+  building_material: { name: "建材",     emoji: "🧱" },
+  steel_ingot:       { name: "鋼錠",     emoji: "⛓️" },
+  magic_alloy:       { name: "魔晶合金", emoji: "🔷" },
+};
+
+/**
+ * 任何 id → 中文名稱的單一入口。組畫面字串前一律先過這裡，
+ * 不要在各元件各自複製一份名稱表（見 AGENTS.md）。
+ */
+export function itemLabel(id: string): string {
+  const def =
+    ORES[id] ||
+    FISH[id] ||
+    CRAFT_MATERIALS[id] ||
+    GUILD_WAREHOUSE_ITEMS[id] ||
+    CROPS[id] ||
+    SEEDS[id] ||
+    FERTILIZERS[id];
+  if (def) return `${def.emoji ?? ""} ${def.name}`.trim();
+  if (id === "coins") return "🪙 逼幣";
+  const equip = PICKAXES[id] || RODS[id] || WEAPONS[id] || SHIELDS[id];
+  if (equip) return `${equip.emoji ?? ""} ${equip.name}`.trim();
+  return SHOP_ITEMS[id]?.name ?? id;
+}

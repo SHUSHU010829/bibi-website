@@ -91,36 +91,6 @@ export const dynamic = "force-dynamic";
 
 const INVITE_URL = "https://discord.gg/shushu010829";
 
-const PICKAXE_NAMES: Record<string, string> = {
-  wood: "木鎬",
-  iron: "鐵鎬",
-  gold: "黃金鎬",
-  diamond: "鑽石鎬",
-};
-
-const ROD_NAMES: Record<string, string> = {
-  bamboo: "竹釣竿",
-  carbon: "碳纖釣竿",
-  gold: "黃金釣竿",
-  mythril: "秘銀釣竿",
-};
-
-const ORE_NAMES: Record<string, { name: string; emoji: string }> = {
-  stone: { name: "石頭", emoji: "🪨" },
-  coal: { name: "煤炭", emoji: "🪵" },
-  iron: { name: "鐵礦", emoji: "🔩" },
-  gold: { name: "黃金", emoji: "🥇" },
-  diamond: { name: "鑽石", emoji: "💎" },
-};
-
-const FISH_NAMES: Record<string, { name: string; emoji: string }> = {
-  small_fish: { name: "小雜魚", emoji: "🐟" },
-  crucian: { name: "鯽魚", emoji: "🎣" },
-  shark: { name: "鯊魚", emoji: "🦈" },
-  octopus: { name: "章魚", emoji: "🐙" },
-  lava_fish: { name: "熔岩魚", emoji: "🐉" },
-};
-
 const PLATFORM_NAMES: Record<string, string> = {
   ecpay: "綠界",
   opay: "歐付寶",
@@ -1437,8 +1407,8 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               {pickaxe.durability === null
                 ? "永久"
                 : eq.pickaxeDurability !== null
-                  ? `${fmt(eq.pickaxeDurability)} / ${fmt(pickaxe.durability)}`
-                  : `— / ${fmt(pickaxe.durability)}`}
+                  ? `${fmt(eq.pickaxeDurability)} / ${fmt(eq.pickaxeMaxDurability ?? pickaxe.durability)}`
+                  : `— / ${fmt(eq.pickaxeMaxDurability ?? pickaxe.durability)}`}
             </div>
           </div>
         </div>
@@ -1462,8 +1432,8 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               {rod.durability === null
                 ? "永久"
                 : eq.fishingRodDurability !== null
-                  ? `${fmt(eq.fishingRodDurability)} / ${fmt(rod.durability)}`
-                  : `— / ${fmt(rod.durability)}`}
+                  ? `${fmt(eq.fishingRodDurability)} / ${fmt(eq.fishingRodMaxDurability ?? rod.durability)}`
+                  : `— / ${fmt(eq.fishingRodMaxDurability ?? rod.durability)}`}
             </div>
           </div>
         </div>
@@ -1485,11 +1455,16 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
               {weapon.durability === null
                 ? "永久"
                 : eq.weaponDurability !== null
-                  ? `${fmt(eq.weaponDurability)} / ${fmt(weapon.durability)}`
-                  : `— / ${fmt(weapon.durability)}`}
+                  ? `${fmt(eq.weaponDurability)} / ${fmt(eq.weaponMaxDurability ?? weapon.durability)}`
+                  : `— / ${fmt(eq.weaponMaxDurability ?? weapon.durability)}`}
             </div>
           </div>
         </div>
+        {eq.equipmentMaxDurabilityPct > 0 && (
+          <div className="d-feature-meta" style={{ gridColumn: "1 / -1" }}>
+            🏰 公會鐵匠鋪：耐久上限 +{eq.equipmentMaxDurabilityPct}%（已計入上方分母，鎬／劍／盾／釣竿共用）
+          </div>
+        )}
       </div>
 
       <div className="d-grid-3">
@@ -2458,8 +2433,8 @@ function HeroRow({
   level: LevelSummary;
   mining: MiningSummary;
 }) {
-  const pickaxeName = PICKAXE_NAMES[mining.pickaxe] ?? mining.pickaxe;
-  const rodName = ROD_NAMES[mining.fishingRod] ?? mining.fishingRod;
+  const pickaxeName = PICKAXES[mining.pickaxe]?.name ?? mining.pickaxe;
+  const rodName = RODS[mining.fishingRod]?.name ?? mining.fishingRod;
   const progressPct = Math.round(level.progress * 100);
   return (
     <div className="d-grid-2">
@@ -2590,8 +2565,8 @@ function ActivityRow({ mining }: { mining: MiningSummary }) {
 }
 
 function CollectionRow({ mining }: { mining: MiningSummary }) {
-  const oreEntries = Object.entries(ORE_NAMES);
-  const fishEntries = Object.entries(FISH_NAMES);
+  const oreEntries = Object.entries(ORES);
+  const fishEntries = Object.entries(FISH);
   const cropEntries = Object.entries(CROPS);
   const seedEntries = Object.entries(SEEDS);
   return (
