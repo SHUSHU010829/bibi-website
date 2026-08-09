@@ -1456,17 +1456,19 @@ export async function getLotteryDigest(
       .toArray(),
   ]);
 
-  // 為當期撈自己持票數
+  // 為當期撈自己持票數。一筆 ticket doc 可用 quantity 代表多張相同號碼的票
+  // （bot 端購買 / 訂閱都會聚合），所以要累加 quantity 而不是數 doc。
   const myTicketCounts = new Map<string, number>();
   await Promise.all(
     openDocs.map(async (d) => {
       const drawId = String(d.drawId);
-      const count = await ticketsCol.countDocuments({
-        drawId,
-        userId,
-        guildId,
-      });
-      myTicketCounts.set(drawId, count);
+      const [agg] = await ticketsCol
+        .aggregate([
+          { $match: { drawId, userId, guildId } },
+          { $group: { _id: null, tickets: { $sum: { $ifNull: ["$quantity", 1] } } } },
+        ])
+        .toArray();
+      myTicketCounts.set(drawId, Number(agg?.tickets ?? 0));
     }),
   );
 
