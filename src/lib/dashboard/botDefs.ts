@@ -795,7 +795,7 @@ export const CRAFT_MATERIALS: Record<string, MineralDef> = {
 export const GUILD_WAREHOUSE_ITEMS: Record<string, MineralDef> = {
   building_material: { name: "建材",     emoji: "🧱" },
   steel_ingot:       { name: "鋼錠",     emoji: "⛓️" },
-  magic_alloy:       { name: "魔晶合金", emoji: "🔷" },
+  magic_alloy:       { name: "魔晶合金", emoji: "✨" },
 };
 
 /**
