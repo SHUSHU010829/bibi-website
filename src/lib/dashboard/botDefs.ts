@@ -706,7 +706,7 @@ export const GUILD_BANQUET_MENUS: Record<string, GuildBanquetMenuDef> = {
       { type: "dungeon_damage_pct", value: 10 },
     ],
     durationMs: 5_400_000,
-    description: "魔晶礦入鍋熬出的幽藍高湯，讓全公會在深層礦脈裡看得見別人看不見的礦脈",
+    description: "魔晶粉熬進湯底，深層礦脈的稀有礦今晚特別捧場",
   },
 };
 
