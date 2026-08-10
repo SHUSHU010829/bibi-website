@@ -42,7 +42,6 @@ export interface PickaxeDef {
   luckBonus: number;
   qtyBonus: number;
   cdReductionMs: number;
-  cdReductionPct?: number;
   durability: number | null;
 }
 
@@ -51,7 +50,7 @@ export const PICKAXES: Record<string, PickaxeDef> = {
   iron: { name: "鐵鎬", emoji: "⛏️", luckBonus: 0.05, qtyBonus: 0, cdReductionMs: 1800000, durability: 30 },
   gold: { name: "黃金鎬", emoji: "⛏️", luckBonus: 0.08, qtyBonus: 0, cdReductionMs: 2700000, durability: 50 },
   diamond: { name: "鑽石鎬", emoji: "⛏️", luckBonus: 0.12, qtyBonus: 1, cdReductionMs: 3600000, durability: 80 },
-  magic: { name: "魔晶鎬", emoji: "🔮", luckBonus: 0.15, qtyBonus: 2, cdReductionMs: 3600000, cdReductionPct: 25, durability: 100 },
+  magic: { name: "魔晶鎬", emoji: "🔮", luckBonus: 0.15, qtyBonus: 2, cdReductionMs: 4500000, durability: 100 },
 };
 
 export interface RodDef {

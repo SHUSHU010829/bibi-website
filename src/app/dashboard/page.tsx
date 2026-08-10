@@ -1404,7 +1404,6 @@ function EquipmentView({ eq }: { eq: EquipmentSummary }) {
             </div>
             <div className="d-feature-meta">
               CD 縮短 {Math.round(pickaxe.cdReductionMs / 60000)} 分
-              {pickaxe.cdReductionPct ? ` 後再 -${pickaxe.cdReductionPct}%` : ""}
             </div>
             <div className="d-feature-meta">
               耐久：
