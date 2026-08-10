@@ -558,12 +558,28 @@ export async function getEquipment(
   const d = doc as Record<string, unknown>;
   const pct = await getEquipmentMaxDurabilityPct(db, userId, guildId);
   // bot 端是 compute-on-read：DB 只存原始 base，加成在讀取時才換算
-  // （bibi-bot buildingService.effectiveMaxDurability）。這裡必須做同一件事，
+  // （bibi-bot equipDurability.effectiveMaxOf）。這裡必須做同一件事，
   // 否則網站顯示的分母會跟 Discord 裡看到的對不起來。
-  const effMax = (raw: unknown, fallback: number | null): number | null => {
-    const base = raw != null ? Number(raw) : fallback;
-    if (base == null || !Number.isFinite(base)) return null;
-    return Math.floor(base * (1 + pct / 100));
+  //
+  // 上限拆成兩個欄位：*_max_durability 是 config 原始上限，*_max_durability_bonus 是
+  // 維修工具 maxDelta 與劣質磨石 -10 的累計（可正可負，換裝備時不重設）。
+  // 鐵匠鋪 % 只加成原始上限，bonus 直接相加：floor(base ×(1+pct%)) + bonus。
+  // 尚未拆分的舊文件沒有 bonus 欄位，其 *_max_durability 仍是混合值——比照 bot 的
+  // normalize()，用「混合值 - config 原始上限」還原出 bonus，兩邊才會算出同一個數字。
+  const effMax = (
+    raw: unknown,
+    bonusRaw: unknown,
+    configBase: number | null,
+  ): number | null => {
+    const stored = raw != null ? Number(raw) : configBase;
+    if (stored == null || !Number.isFinite(stored)) return null;
+    let base = stored;
+    let bonus = bonusRaw != null ? Number(bonusRaw) : NaN;
+    if (!Number.isFinite(bonus)) {
+      bonus = configBase != null ? stored - configBase : 0;
+      base = configBase ?? stored;
+    }
+    return Math.floor(base * (1 + pct / 100)) + bonus;
   };
   const pickaxe = String(d.pickaxe ?? "wood");
   const rod = String(d.fishing_rod ?? "bamboo");
@@ -574,6 +590,7 @@ export async function getEquipment(
       d.pickaxe_durability != null ? Number(d.pickaxe_durability) : null,
     pickaxeMaxDurability: effMax(
       d.pickaxe_max_durability,
+      d.pickaxe_max_durability_bonus,
       PICKAXES[pickaxe]?.durability ?? null,
     ),
     fishingRod: rod,
@@ -581,12 +598,14 @@ export async function getEquipment(
       d.rod_durability != null ? Number(d.rod_durability) : null,
     fishingRodMaxDurability: effMax(
       d.rod_max_durability,
+      d.rod_max_durability_bonus,
       RODS[rod]?.durability ?? null,
     ),
     weapon,
     weaponDurability: d.weapon_durability != null ? Number(d.weapon_durability) : null,
     weaponMaxDurability: effMax(
       d.weapon_max_durability,
+      d.weapon_max_durability_bonus,
       WEAPONS[weapon]?.durability ?? null,
     ),
     equipmentMaxDurabilityPct: pct,
