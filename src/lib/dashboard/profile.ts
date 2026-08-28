@@ -562,7 +562,8 @@ export async function getEquipment(
   // 否則網站顯示的分母會跟 Discord 裡看到的對不起來。
   //
   // 上限拆成兩個欄位：*_max_durability 是 config 原始上限，*_max_durability_bonus 是
-  // 維修工具 maxDelta 與劣質磨石 -10 的累計（可正可負，換裝備時不重設）。
+  // 維修工具 maxDelta 與劣質磨石 -10 的累計（可正可負，只有走升級配方換裝備時沿用，
+  // 重新打造 / 買一把新的則歸零）。
   // 鐵匠鋪 % 只加成原始上限，bonus 直接相加：floor(base ×(1+pct%)) + bonus。
   // 尚未拆分的舊文件沒有 bonus 欄位，其 *_max_durability 仍是混合值——比照 bot 的
   // normalize()，用「混合值 - config 原始上限」還原出 bonus，兩邊才會算出同一個數字。
