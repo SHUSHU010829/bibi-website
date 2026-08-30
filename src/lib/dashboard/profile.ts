@@ -1518,13 +1518,13 @@ export async function getLotteryDigest(
   };
 }
 
-// 對齊 bot src/features/lottery/lotteryConfig 或常見命名
+// 對齊 bot src/features/casino/lottery/numbers.js 的 LOTTERY_CONFIG（key 必須一致，
+// 否則 dashboard 會 fallback 成 6_49 / power_38_8 這種原始 id）
 export const LOTTERY_TYPE_LABELS: Record<string, { label: string; emoji: string }> =
   {
-    daily: { label: "每日樂透", emoji: "🎟️" },
-    weekly: { label: "週末大樂透", emoji: "🎰" },
-    super: { label: "超級樂透", emoji: "💫" },
-    mini: { label: "迷你樂透", emoji: "🪙" },
+    "6_49": { label: "大樂透 6/49", emoji: "🎰" },
+    "3_20": { label: "小樂透 3/20", emoji: "🎫" },
+    power_38_8: { label: "威力彩 6/38", emoji: "⚡" },
   };
 
 export async function getCoinHistory(
