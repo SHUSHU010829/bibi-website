@@ -788,6 +788,9 @@ export const CRAFT_MATERIALS: Record<string, MineralDef> = {
   treasure_map_fragment:{ name: "藏寶圖碎片",   emoji: "🗺️" },
   stone_shard:          { name: "碎石",         emoji: "🪨" },
   sealing_ammo:         { name: "封魔彈藥",     emoji: "💥" },
+  blast_charge:         { name: "粗製炸藥包",   emoji: "💣" },
+  lava_bomb:            { name: "熔岩燃燒彈",   emoji: "🛢️" },
+  thunder_talisman:     { name: "封魔雷符",     emoji: "⚡" },
   pioneer_hammer:       { name: "拓荒錘",       emoji: "🔨" },
 };
 
